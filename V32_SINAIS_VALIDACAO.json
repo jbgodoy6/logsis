@@ -1,0 +1,181 @@
+{
+  "wifiField": "WiFi_rssi",
+  "gsmFormat": "dbm default, csq configurable",
+  "mode": "same latest valid MDB43 as instrumentation, only inside selected period",
+  "signalMeaning": "radio strength in dBm; not internet reachability",
+  "cases": [
+    {
+      "case": "gsm_dbm_confirmed",
+      "actual": {
+        "WIFI_LOCAL": null,
+        "GSM_LOCAL": -53,
+        "MODO_LOCAL": "AUTO"
+      },
+      "bars": true
+    },
+    {
+      "case": "wifi_exact",
+      "actual": {
+        "WIFI_LOCAL": -65,
+        "GSM_LOCAL": null,
+        "MODO_LOCAL": "MANUAL"
+      },
+      "bars": false
+    },
+    {
+      "case": "wifi_folded",
+      "actual": {
+        "WIFI_LOCAL": -80,
+        "GSM_LOCAL": -83,
+        "MODO_LOCAL": "STOP"
+      },
+      "bars": true
+    },
+    {
+      "case": "both_radios",
+      "actual": {
+        "WIFI_LOCAL": -52,
+        "GSM_LOCAL": -69,
+        "MODO_LOCAL": "AUTO"
+      },
+      "bars": true
+    },
+    {
+      "case": "gsm_csq_22",
+      "actual": {
+        "WIFI_LOCAL": -65,
+        "GSM_LOCAL": -69,
+        "MODO_LOCAL": "AUTO"
+      },
+      "bars": true
+    },
+    {
+      "case": "gsm_csq_zero",
+      "actual": {
+        "WIFI_LOCAL": null,
+        "GSM_LOCAL": -113,
+        "MODO_LOCAL": "AUTO"
+      },
+      "bars": true
+    },
+    {
+      "case": "gsm_csq_31",
+      "actual": {
+        "WIFI_LOCAL": null,
+        "GSM_LOCAL": -51,
+        "MODO_LOCAL": "AUTO"
+      },
+      "bars": true
+    },
+    {
+      "case": "gsm_csq_99_unknown",
+      "actual": {
+        "WIFI_LOCAL": null,
+        "GSM_LOCAL": null,
+        "MODO_LOCAL": "AUTO"
+      },
+      "bars": false
+    },
+    {
+      "case": "gsm_positive_not_dbm",
+      "actual": {
+        "WIFI_LOCAL": null,
+        "GSM_LOCAL": null,
+        "MODO_LOCAL": "AUTO"
+      },
+      "bars": false
+    },
+    {
+      "case": "malformed_wifi",
+      "actual": {
+        "WIFI_LOCAL": null,
+        "GSM_LOCAL": -53,
+        "MODO_LOCAL": "INVÁLIDO"
+      },
+      "bars": true
+    },
+    {
+      "case": "null_sample",
+      "actual": {
+        "WIFI_LOCAL": null,
+        "GSM_LOCAL": null,
+        "MODO_LOCAL": "SEM DADOS"
+      },
+      "bars": false
+    },
+    {
+      "case": "no_samples",
+      "actual": {
+        "WIFI_LOCAL": null,
+        "GSM_LOCAL": null,
+        "MODO_LOCAL": "SEM DADOS"
+      },
+      "bars": false
+    },
+    {
+      "case": "sparse_latest_row_keeps_mode",
+      "actual": {
+        "WIFI_LOCAL": null,
+        "GSM_LOCAL": -53,
+        "MODO_LOCAL": "AUTO"
+      },
+      "bars": true
+    },
+    {
+      "case": "outside_window",
+      "actual": {
+        "WIFI_LOCAL": null,
+        "GSM_LOCAL": null,
+        "MODO_LOCAL": "SEM DADOS"
+      },
+      "bars": false
+    },
+    {
+      "case": "historical_window",
+      "actual": {
+        "WIFI_LOCAL": -70,
+        "GSM_LOCAL": -53,
+        "MODO_LOCAL": "MANUAL"
+      },
+      "bars": true
+    }
+  ],
+  "ui": [
+    {
+      "mode": "AUTO",
+      "gsmDbm": -53,
+      "sparseRowModeRecovered": true,
+      "colour": "rgb(103, 204, 228)",
+      "width": 320,
+      "iconsLoaded": 2,
+      "textFits": true
+    },
+    {
+      "mode": "MANUAL",
+      "gsmDbm": -53,
+      "sparseRowModeRecovered": false,
+      "colour": "rgb(233, 189, 121)",
+      "width": 320,
+      "iconsLoaded": 2,
+      "textFits": true
+    },
+    {
+      "mode": "STOP",
+      "gsmDbm": -53,
+      "sparseRowModeRecovered": false,
+      "colour": "rgb(150, 174, 196)",
+      "width": 320,
+      "iconsLoaded": 2,
+      "textFits": true
+    },
+    {
+      "mode": "SEM DADOS",
+      "gsmDbm": -53,
+      "sparseRowModeRecovered": false,
+      "colour": "rgb(150, 174, 196)",
+      "width": 320,
+      "iconsLoaded": 2,
+      "textFits": true
+    }
+  ]
+}
