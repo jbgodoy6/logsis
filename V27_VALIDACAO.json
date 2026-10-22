@@ -1,0 +1,125 @@
+{
+  "static": [
+    "V26 voltage SQL and mappings preserved",
+    "13 history panels preserved",
+    "percentage-based geometry",
+    "self-contained SVG artwork"
+  ],
+  "widths": [
+    {
+      "width": 320,
+      "imagesLoaded": 3,
+      "tableRows": 56,
+      "diagramX": [
+        88.5,
+        231.5
+      ],
+      "errors": []
+    },
+    {
+      "width": 360,
+      "imagesLoaded": 3,
+      "tableRows": 56,
+      "diagramX": [
+        98.5,
+        261.5
+      ],
+      "errors": []
+    },
+    {
+      "width": 390,
+      "imagesLoaded": 3,
+      "tableRows": 56,
+      "diagramX": [
+        106,
+        284
+      ],
+      "errors": []
+    },
+    {
+      "width": 430,
+      "imagesLoaded": 3,
+      "tableRows": 56,
+      "diagramX": [
+        116,
+        314
+      ],
+      "errors": []
+    },
+    {
+      "width": 768,
+      "imagesLoaded": 3,
+      "tableRows": 56,
+      "diagramX": [
+        200.5,
+        567.5
+      ],
+      "errors": []
+    },
+    {
+      "width": 844,
+      "imagesLoaded": 3,
+      "tableRows": 56,
+      "diagramX": [
+        219.5,
+        624.5
+      ],
+      "errors": []
+    }
+  ],
+  "states": [
+    {
+      "name": "rede",
+      "colours": {
+        "rede": "rgb(242, 73, 92)",
+        "gmg": "rgb(233, 189, 121)",
+        "postRede": "rgb(242, 73, 92)",
+        "postGmg": "rgb(242, 73, 92)",
+        "x": [
+          106,
+          284
+        ]
+      }
+    },
+    {
+      "name": "abertos",
+      "colours": {
+        "rede": "rgb(242, 73, 92)",
+        "gmg": "rgb(242, 73, 92)",
+        "postRede": "rgb(229, 238, 247)",
+        "postGmg": "rgb(229, 238, 247)",
+        "x": [
+          106,
+          284
+        ]
+      }
+    },
+    {
+      "name": "sem_dados",
+      "colours": {
+        "rede": "rgb(103, 204, 228)",
+        "gmg": "rgb(233, 189, 121)",
+        "postRede": "rgb(229, 238, 247)",
+        "postGmg": "rgb(229, 238, 247)",
+        "x": [
+          106,
+          284
+        ]
+      }
+    },
+    {
+      "name": "simultaneos",
+      "colours": {
+        "rede": "rgb(242, 73, 92)",
+        "gmg": "rgb(242, 73, 92)",
+        "postRede": "rgb(242, 73, 92)",
+        "postGmg": "rgb(242, 73, 92)",
+        "x": [
+          106,
+          284
+        ]
+      }
+    }
+  ],
+  "normalChrome390": "passed"
+}
