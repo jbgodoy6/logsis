@@ -1,0 +1,133 @@
+{
+  "static": [
+    "same-size, same-height contacts centred side by side",
+    "all native connection targets resolved",
+    "pre-source and post-contact colour bindings present"
+  ],
+  "scenarios": [
+    {
+      "name": "sem_tensao",
+      "rede": 0,
+      "gmg": 0,
+      "k1": 0,
+      "k2": 0,
+      "bus": 0,
+      "colours": {
+        "rede": "rgb(103, 204, 228)",
+        "gmg": "rgb(233, 189, 121)",
+        "postRede": "rgb(229, 238, 247)",
+        "postGmg": "rgb(229, 238, 247)",
+        "bus": "rgb(229, 238, 247)",
+        "output": "rgb(229, 238, 247)"
+      },
+      "errors": []
+    },
+    {
+      "name": "rede_alimentando",
+      "rede": 1,
+      "gmg": 0,
+      "k1": 1,
+      "k2": 0,
+      "bus": 1,
+      "colours": {
+        "rede": "rgb(242, 73, 92)",
+        "gmg": "rgb(233, 189, 121)",
+        "postRede": "rgb(242, 73, 92)",
+        "postGmg": "rgb(242, 73, 92)",
+        "bus": "rgb(242, 73, 92)",
+        "output": "rgb(242, 73, 92)"
+      },
+      "errors": []
+    },
+    {
+      "name": "gerador_alimentando",
+      "rede": 0,
+      "gmg": 1,
+      "k1": 0,
+      "k2": 1,
+      "bus": 1,
+      "colours": {
+        "rede": "rgb(103, 204, 228)",
+        "gmg": "rgb(242, 73, 92)",
+        "postRede": "rgb(242, 73, 92)",
+        "postGmg": "rgb(242, 73, 92)",
+        "bus": "rgb(242, 73, 92)",
+        "output": "rgb(242, 73, 92)"
+      },
+      "errors": []
+    },
+    {
+      "name": "fontes_vivas_contatos_abertos",
+      "rede": 1,
+      "gmg": 1,
+      "k1": 0,
+      "k2": 0,
+      "bus": 0,
+      "colours": {
+        "rede": "rgb(242, 73, 92)",
+        "gmg": "rgb(242, 73, 92)",
+        "postRede": "rgb(229, 238, 247)",
+        "postGmg": "rgb(229, 238, 247)",
+        "bus": "rgb(229, 238, 247)",
+        "output": "rgb(229, 238, 247)"
+      },
+      "errors": []
+    },
+    {
+      "name": "barramento_por_k2_com_k1_aberto",
+      "rede": 1,
+      "gmg": 1,
+      "k1": 0,
+      "k2": 1,
+      "bus": 1,
+      "colours": {
+        "rede": "rgb(242, 73, 92)",
+        "gmg": "rgb(242, 73, 92)",
+        "postRede": "rgb(242, 73, 92)",
+        "postGmg": "rgb(242, 73, 92)",
+        "bus": "rgb(242, 73, 92)",
+        "output": "rgb(242, 73, 92)"
+      },
+      "errors": []
+    },
+    {
+      "name": "sem_dados",
+      "rede": null,
+      "gmg": null,
+      "k1": null,
+      "k2": null,
+      "bus": null,
+      "colours": {
+        "rede": "rgb(103, 204, 228)",
+        "gmg": "rgb(233, 189, 121)",
+        "postRede": "rgb(229, 238, 247)",
+        "postGmg": "rgb(229, 238, 247)",
+        "bus": "rgb(229, 238, 247)",
+        "output": "rgb(229, 238, 247)"
+      },
+      "errors": []
+    },
+    {
+      "name": "contatos_simultaneos",
+      "rede": 1,
+      "gmg": 1,
+      "k1": 1,
+      "k2": 1,
+      "bus": 1,
+      "colours": {
+        "rede": "rgb(242, 73, 92)",
+        "gmg": "rgb(242, 73, 92)",
+        "postRede": "rgb(242, 73, 92)",
+        "postGmg": "rgb(242, 73, 92)",
+        "bus": "rgb(242, 73, 92)",
+        "output": "rgb(242, 73, 92)"
+      },
+      "errors": []
+    }
+  ],
+  "widths": [
+    1366,
+    1440,
+    1920
+  ]
+}

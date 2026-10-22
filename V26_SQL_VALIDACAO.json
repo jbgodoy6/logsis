@@ -1,0 +1,15 @@
+{
+  "truthTableCases": 81,
+  "edgeCases": 4,
+  "result": "passed",
+  "checks": [
+    "all source/contact combinations including unknown",
+    "empty interval",
+    "sentinel voltage invalid",
+    "latest missing row not forward-filled",
+    "single positive phase detects presence",
+    "existing measurement SQL preserved",
+    "instrumentation queries/mappings preserved",
+    "13 history panels preserved apart from position"
+  ]
+}
