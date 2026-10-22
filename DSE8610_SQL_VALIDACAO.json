@@ -1,0 +1,97 @@
+{
+  "cases": [
+    {
+      "case": "generator_feeding",
+      "values": {
+        "TENSAO_GMG": 1,
+        "TENSAO_BUS": 1,
+        "DISJUNTOR_GCB": 1,
+        "MODO_LOCAL": "AUTO"
+      }
+    },
+    {
+      "case": "other_groups_feeding",
+      "values": {
+        "TENSAO_GMG": 0,
+        "TENSAO_BUS": 1,
+        "DISJUNTOR_GCB": 0,
+        "MODO_LOCAL": "AUTO"
+      }
+    },
+    {
+      "case": "both_sources_with_open_breaker",
+      "values": {
+        "TENSAO_GMG": 1,
+        "TENSAO_BUS": 1,
+        "DISJUNTOR_GCB": 0,
+        "MODO_LOCAL": "MANUAL"
+      }
+    },
+    {
+      "case": "dead_bus",
+      "values": {
+        "TENSAO_GMG": 1,
+        "TENSAO_BUS": 0,
+        "DISJUNTOR_GCB": 0,
+        "MODO_LOCAL": "STOP"
+      }
+    },
+    {
+      "case": "all_zero",
+      "values": {
+        "TENSAO_GMG": 0,
+        "TENSAO_BUS": 0,
+        "DISJUNTOR_GCB": 0,
+        "MODO_LOCAL": "STOP"
+      }
+    },
+    {
+      "case": "unknown_sources",
+      "values": {
+        "TENSAO_GMG": null,
+        "TENSAO_BUS": null,
+        "DISJUNTOR_GCB": null,
+        "MODO_LOCAL": "SEM DADOS"
+      }
+    },
+    {
+      "case": "invalid_breaker",
+      "values": {
+        "TENSAO_GMG": 1,
+        "TENSAO_BUS": 1,
+        "DISJUNTOR_GCB": null,
+        "MODO_LOCAL": "AUTO"
+      }
+    },
+    {
+      "case": "mode_other",
+      "values": {
+        "TENSAO_GMG": 1,
+        "TENSAO_BUS": 1,
+        "DISJUNTOR_GCB": 1,
+        "MODO_LOCAL": "OUTRO"
+      }
+    },
+    {
+      "case": "empty_window",
+      "values": {
+        "TENSAO_GMG": null,
+        "TENSAO_BUS": null,
+        "DISJUNTOR_GCB": null,
+        "MODO_LOCAL": "SEM DADOS"
+      }
+    },
+    {
+      "case": "sparse_mode",
+      "values": {
+        "TENSAO_GMG": 1,
+        "TENSAO_BUS": 1,
+        "DISJUNTOR_GCB": 1,
+        "MODO_LOCAL": "AUTO"
+      }
+    }
+  ],
+  "newUid": "logsis-dse8610-v1-bus",
+  "modeField": "MDB40",
+  "breaker": "MDB52 / 0 open 1 closed"
+}

@@ -1,0 +1,35 @@
+{
+  "uid": "logsis-dse8610-v1-bus",
+  "channels": 52,
+  "widths": [
+    {
+      "width": 320,
+      "channels": 52,
+      "textOverflow": 0
+    },
+    {
+      "width": 390,
+      "channels": 52,
+      "textOverflow": 0
+    },
+    {
+      "width": 768,
+      "channels": 52,
+      "textOverflow": 0
+    },
+    {
+      "width": 1366,
+      "channels": 52,
+      "textOverflow": 0
+    },
+    {
+      "width": 1920,
+      "channels": 52,
+      "textOverflow": 0
+    }
+  ],
+  "historyPanels": 9,
+  "import": "passed",
+  "historyQueries": "passed",
+  "errors": []
+}
