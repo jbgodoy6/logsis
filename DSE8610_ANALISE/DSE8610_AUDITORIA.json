@@ -16,7 +16,11 @@
   "unconfigured_count": 48,
   "user_confirmations": {
     "MDB52_equipment": "Disjuntor que acopla este gerador ao barramento BUS, confirmado pelo usuário",
-    "MDB52_open_closed_values": "pendentes"
+    "MDB52_open_closed_values": {
+      "0": "aberto",
+      "1": "fechado",
+      "source": "confirmado pelo usuário"
+    }
   },
   "function_codes_raw": {
     "3": 26,

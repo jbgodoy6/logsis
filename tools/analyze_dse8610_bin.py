@@ -51,7 +51,7 @@ def extract(raw):
         'serial': {k: values[k] for k in SERIAL_KEYS if k in values},
         'configured_count': sum(r['status'] == 'configurado' for r in records),
         'unconfigured_count': sum(r['status'] == 'não configurado' for r in records),
-        'user_confirmations': {'MDB52_equipment': 'Disjuntor que acopla este gerador ao barramento BUS, confirmado pelo usuário', 'MDB52_open_closed_values': 'pendentes'},
+        'user_confirmations': {'MDB52_equipment': 'Disjuntor que acopla este gerador ao barramento BUS, confirmado pelo usuário', 'MDB52_open_closed_values': {'0': 'aberto', '1': 'fechado', 'source': 'confirmado pelo usuário'}},
         'function_codes_raw': dict(collections.Counter(r['FNC'] for r in records if r['status'] == 'configurado')),
         'records': records,
     }
@@ -109,7 +109,7 @@ Essa organização é compatível com **0=STOP, 1=AUTO, 2=MANUAL**, caso o colet
 
 MDB52 contém `DM=DISJUNTOR DO BARRAMENTO INATIVA`, `DH=DISJUNTOR DO BARRAMENTO ATIVA`, `TH=0`, `TL=0`, `BIT=-1`, `FNC=3`, endereço 48659.
 
-O arquivo **não declara** que esse campo seja um contato auxiliar de posição, que 0 signifique aberto ou que 1 signifique fechado. O nome no BIN, isoladamente, não distingue esses papéis nem separa comando de retorno de posição. O usuário confirmou que o equipamento associado a MDB52 é **o disjuntor que acopla este gerador ao BUS**. Essa confirmação identifica sua função na planta; os valores de aberto/fechado e a natureza do sinal ainda precisam ser conferidos antes de animar o contato.
+O arquivo **não declara** que esse campo seja um contato auxiliar de posição, que 0 signifique aberto ou que 1 signifique fechado. O nome no BIN, isoladamente, não distingue esses papéis nem separa comando de retorno de posição. O usuário confirmou que o equipamento associado a MDB52 é **o disjuntor que acopla este gerador ao BUS**. O usuário também confirmou **0=aberto e 1=fechado**. A planta utilizará essa interpretação para o disjuntor de acoplamento, com origem explicitamente registrada como confirmação do usuário, e não como dedução do nome no BIN. Valores ausentes ou diferentes de 0/1 serão posição desconhecida.
 
 Não foram encontrados canais explicitamente rotulados como sincronismo, ângulo de fase, autorização de fechamento, quantidade de grupos em paralelo ou potência agregada do BUS. A existência de tensões nas duas fontes não comprova sincronismo nem paralelismo. Os demais geradores podem ser desenhados como referência ao sistema compartilhado, sem inventar quantidade ou estados individuais.
 
@@ -125,7 +125,7 @@ Não foram encontrados canais explicitamente rotulados como sincronismo, ângulo
 
 ```mermaid
 flowchart LR
-    G["Gerador DSE8610"] --> D["Disjuntor do gerador / MDB52 / polaridade a confirmar"]
+    G["Gerador DSE8610"] --> D["Disjuntor do gerador / MDB52 / 0 aberto, 1 fechado"]
     D --> B["BUS comum / MDB29 a MDB35"]
     O["Outros geradores / referência"] --- B
     B --> C["Carga / edifício"]
@@ -133,7 +133,7 @@ flowchart LR
 
 O desenho não terá concessionária nem chave de transferência entre rede e gerador. As leituras do GMG ficam associadas ao seu desenho; as leituras MDB29–MDB35 ficam associadas ao BUS. O padrão visual e o comportamento responsivo da V32 podem ser mantidos em um único JSON para a nova planta. O dashboard DSE8610 deverá ter UID e tabela `Id_Logsis` próprios, preservando a planta DSE7420 já aprovada; não haverá dashboards distintos para celular e computador.
 
-A cor do BUS deve decorrer de suas próprias medições, após validar escalas e indisponibilidade. Ele pode estar energizado pelos outros grupos com o disjuntor deste gerador aberto. O desenho não deve apagar o BUS apenas porque este gerador parou, nem indicar corrente/direção de potência somente por haver tensão. Sem retorno de posição validado, o disjuntor deve permanecer como posição desconhecida. Ausência de dado não equivale a zero.
+A cor do BUS deve decorrer de suas próprias medições, após validar escalas e indisponibilidade. Ele pode estar energizado pelos outros grupos com o disjuntor deste gerador aberto. O desenho não deve apagar o BUS apenas porque este gerador parou, nem indicar corrente/direção de potência somente por haver tensão. Para MDB52, 0 representa aberto e 1 fechado conforme confirmado pelo usuário. Qualquer outro valor ou ausência deve permanecer como posição desconhecida. Ausência de dado não equivale a zero.
 
 ## Mapeamento completo dos canais configurados
 
@@ -149,7 +149,7 @@ Os 48 slots MDB53–MDB100 têm ID, função e endereço iguais a −1 e rótulo
 
 1. Confirmar a variante DSE8610 e o que o coletor entrega em `mdb1`…`mdb52`: tipos, ordem de palavras, escalas e eventual extração de bits.
 2. Comparar MDB40 com STOP/AUTO/MANUAL no controlador.
-3. A função do equipamento MDB52 já foi confirmada pelo usuário: acoplamento deste gerador ao BUS. Falta observar os valores de aberto/fechado e confirmar a natureza do sinal.
+3. A função e os estados de MDB52 já foram confirmados pelo usuário: disjuntor de acoplamento deste gerador ao BUS, 0=aberto e 1=fechado. Conferir essa correspondência durante o teste da futura planta no equipamento.
 4. Se a tela precisar afirmar “sincronizado” ou “em paralelo”, identificar os registros específicos; este BIN não os nomeia.
 
 O pacote contém apenas a análise de mapeamento, não um dashboard importável. As configurações não relacionadas aos MDBs não foram incluídas nos arquivos de saída.
