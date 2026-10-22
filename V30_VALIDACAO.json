@@ -1,0 +1,113 @@
+{
+  "static": [
+    "V26 voltage SQL and mappings preserved",
+    "13 history panels preserved",
+    "percentage-based geometry",
+    "self-contained SVG artwork",
+    "four indicators: height 3, value font 26px",
+    "14 source readings below their illustrations",
+    "56 channels assigned once in seven themed groups",
+    "all reading panels share one SQL query",
+    "same UID; no alternate device dashboard",
+    "imported via Grafana UI"
+  ],
+  "widths": [
+    {
+      "width": 320,
+      "channels": 56,
+      "scrollPositions": 9,
+      "textClipping": 0
+    },
+    {
+      "width": 390,
+      "channels": 56,
+      "scrollPositions": 9,
+      "textClipping": 0
+    },
+    {
+      "width": 768,
+      "channels": 56,
+      "scrollPositions": 9,
+      "textClipping": 0
+    },
+    {
+      "width": 1366,
+      "channels": 56,
+      "scrollPositions": 9,
+      "textClipping": 0
+    },
+    {
+      "width": 1920,
+      "channels": 56,
+      "scrollPositions": 9,
+      "textClipping": 0
+    }
+  ],
+  "states": [
+    {
+      "name": "rede",
+      "colours": {
+        "rede": "rgb(242, 73, 92)",
+        "gmg": "rgb(233, 189, 121)",
+        "postRede": "rgb(242, 73, 92)",
+        "postGmg": "rgb(242, 73, 92)",
+        "x": [
+          182.25,
+          512.75
+        ]
+      }
+    },
+    {
+      "name": "gmg",
+      "colours": {
+        "rede": "rgb(103, 204, 228)",
+        "gmg": "rgb(242, 73, 92)",
+        "postRede": "rgb(242, 73, 92)",
+        "postGmg": "rgb(242, 73, 92)",
+        "x": [
+          182.25,
+          512.75
+        ]
+      }
+    },
+    {
+      "name": "abertos",
+      "colours": {
+        "rede": "rgb(242, 73, 92)",
+        "gmg": "rgb(242, 73, 92)",
+        "postRede": "rgb(229, 238, 247)",
+        "postGmg": "rgb(229, 238, 247)",
+        "x": [
+          182.25,
+          512.75
+        ]
+      }
+    },
+    {
+      "name": "sem_dados",
+      "colours": {
+        "rede": "rgb(103, 204, 228)",
+        "gmg": "rgb(233, 189, 121)",
+        "postRede": "rgb(229, 238, 247)",
+        "postGmg": "rgb(229, 238, 247)",
+        "x": [
+          182.25,
+          512.75
+        ]
+      }
+    },
+    {
+      "name": "simultaneos",
+      "colours": {
+        "rede": "rgb(242, 73, 92)",
+        "gmg": "rgb(242, 73, 92)",
+        "postRede": "rgb(242, 73, 92)",
+        "postGmg": "rgb(242, 73, 92)",
+        "x": [
+          182.25,
+          512.75
+        ]
+      }
+    }
+  ]
+}
