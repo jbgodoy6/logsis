@@ -1,0 +1,110 @@
+{
+  "wifiField": "WiFi_rssi",
+  "foldedIdentifierFallback": "wifi_rssi",
+  "samples": "latest record in selected period; no backfill",
+  "signalMeaning": "raw RSSI, no claim of internet reachability",
+  "cases": [
+    {
+      "case": "gsm_only_schema",
+      "actual": {
+        "WIFI_LOCAL": null,
+        "GSM_LOCAL": 22,
+        "MODO_LOCAL": "AUTO"
+      }
+    },
+    {
+      "case": "wifi_exact",
+      "actual": {
+        "WIFI_LOCAL": -65,
+        "GSM_LOCAL": null,
+        "MODO_LOCAL": "MANUAL"
+      }
+    },
+    {
+      "case": "wifi_folded",
+      "actual": {
+        "WIFI_LOCAL": -80,
+        "GSM_LOCAL": 31,
+        "MODO_LOCAL": "STOP"
+      }
+    },
+    {
+      "case": "both_radios",
+      "actual": {
+        "WIFI_LOCAL": -52,
+        "GSM_LOCAL": 12,
+        "MODO_LOCAL": "AUTO"
+      }
+    },
+    {
+      "case": "malformed_wifi",
+      "actual": {
+        "WIFI_LOCAL": null,
+        "GSM_LOCAL": 99,
+        "MODO_LOCAL": "INVÁLIDO"
+      }
+    },
+    {
+      "case": "null_sample",
+      "actual": {
+        "WIFI_LOCAL": null,
+        "GSM_LOCAL": null,
+        "MODO_LOCAL": "SEM DADOS"
+      }
+    },
+    {
+      "case": "no_samples",
+      "actual": {
+        "WIFI_LOCAL": null,
+        "GSM_LOCAL": null,
+        "MODO_LOCAL": "SEM DADOS"
+      }
+    },
+    {
+      "case": "latest_null_not_backfilled",
+      "actual": {
+        "WIFI_LOCAL": null,
+        "GSM_LOCAL": null,
+        "MODO_LOCAL": "SEM DADOS"
+      }
+    },
+    {
+      "case": "outside_window",
+      "actual": {
+        "WIFI_LOCAL": null,
+        "GSM_LOCAL": null,
+        "MODO_LOCAL": "SEM DADOS"
+      }
+    }
+  ],
+  "ui": [
+    {
+      "mode": "AUTO",
+      "colour": "rgb(103, 204, 228)",
+      "width": 320,
+      "iconsLoaded": 2,
+      "textFits": true
+    },
+    {
+      "mode": "MANUAL",
+      "colour": "rgb(233, 189, 121)",
+      "width": 320,
+      "iconsLoaded": 2,
+      "textFits": true
+    },
+    {
+      "mode": "STOP",
+      "colour": "rgb(150, 174, 196)",
+      "width": 320,
+      "iconsLoaded": 2,
+      "textFits": true
+    },
+    {
+      "mode": "SEM DADOS",
+      "colour": "rgb(150, 174, 196)",
+      "width": 320,
+      "iconsLoaded": 2,
+      "textFits": true
+    }
+  ]
+}
