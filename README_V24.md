@@ -8,6 +8,10 @@ Baixe `V24_IMPORTAR.zip`, extraia e selecione `V24_IMPORTAR.json` em **Dashboard
 
 A V24 usa UID próprio (`logsis-dse7420-v24-engineering`), permitindo comparar com a V23 sem substituí-la. Mantém o datasource PostgreSQL de UID `zKW_ld27k` e a constante `Id_Logsis` herdados da V23.
 
+### Revisão de apresentação
+
+A planta e a instrumentação completa ficam abertas, uma imediatamente abaixo da outra. A seção **Históricos e alertas** permanece recolhível. Os avisos de não homologação foram retirados da tela conforme solicitado; isso não altera consultas, estados ou o resultado dos testes de campo que ainda serão realizados.
+
 ## O que mudou no desenho
 
 - A torre usa perfis metálicos, treliças, travessas, cadeias de isoladores, fundações e curvas de cabos.
@@ -27,7 +31,7 @@ Permanecem as pendências técnicas da V23: sinais MDB55/MDB56 do QTA não homol
 
 `V24_PREVIEW.png` é uma captura do Grafana 11.2.2 com dados exclusivamente simulados.
 
-`V24_VALIDACAO.json` registra verificações de integridade das consultas e históricos, nomes e destinos das conexões, limites do desenho, upload do arquivo pela interface web, leituras renderizadas e expansão dos 56 canais em 1366, 1440 e 1920 pixels. Também foi testado um intervalo sem dados, sem reutilizar leitura antiga. Não foram observados erros de consulta ou de JavaScript nesses testes.
+`V24_VALIDACAO.json` registra verificações de integridade das consultas e históricos, nomes e destinos das conexões, limites do desenho, upload do arquivo pela interface web e presença dos 56 canais já abertos em 1366, 1440 e 1920 pixels. Também foi testado um intervalo sem dados, sem reutilizar leitura antiga. Não foram observados erros de consulta ou de JavaScript nesses testes.
 
 A largura de referência do desenho continua sendo 1321 pixels; em telas largas pode sobrar espaço à direita. O teste desktop usa modo kiosk e zoom de 100%. Não há layout móvel homologado.
 

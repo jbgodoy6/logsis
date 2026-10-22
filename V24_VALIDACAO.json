@@ -2,8 +2,12 @@
   "static": [
     "Main SQL unchanged",
     "Field configuration unchanged",
-    "56-channel instrumentation unchanged",
-    "All 13 history panels unchanged",
+    "Instrumentation SQL unchanged",
+    "Instrumentation units and mappings unchanged",
+    "All 13 history panels preserved apart from vertical placement",
+    "Instrumentation directly below plant",
+    "Only history collapses at dashboard level",
+    "No homologation notices in dashboard JSON",
     "Unique element names",
     "Native connections resolve their targets",
     "Native connection arrows disabled",
@@ -14,21 +18,21 @@
   "web": [
     {
       "width": 1366,
-      "nativeLines": 723,
+      "nativeLines": 724,
       "channels": 56,
       "errors": [],
       "importByFile": true
     },
     {
       "width": 1440,
-      "nativeLines": 723,
+      "nativeLines": 724,
       "channels": 56,
       "errors": [],
       "importByFile": false
     },
     {
       "width": 1920,
-      "nativeLines": 723,
+      "nativeLines": 724,
       "channels": 56,
       "errors": [],
       "importByFile": false

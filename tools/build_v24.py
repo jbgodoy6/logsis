@@ -153,8 +153,6 @@ line(499,410,499,449,STEEL,1.8)
 poly([(493,443),(499,449),(505,443)],STEEL,1)
 text('Saída QTA',380,461,239,19,'BARRAMENTO DE CARGA',11,INK,'center')
 text('Estado temporal QTA',364,493,274,17,'POSIÇÕES NO PERÍODO SELECIONADO',9,MUTED,'center')
-shape('Aviso QTA',357,528,286,26,'#24231f','#645239',border=.6)
-text('Aviso QTA legenda',365,532,270,17,'SINAIS DO QTA NÃO HOMOLOGADOS',10,AMBER,'center')
 
 # Generator side elevation, constructed as an illustrative mechanical assembly.
 # The dimensions and geometry are generic, not a manufacturer-certified GA drawing.
@@ -279,16 +277,36 @@ panel['gridPos']['h'] = 24
 panel['title'] = 'LOGSIS / Engenharia da instalação'
 panel['options']['root']['connections'] = []
 for p in d['panels'][2:]: p['gridPos']['y']+=3
-d.update(title='LOGSIS / DSE7420 — V24 Engineering',uid='logsis-dse7420-v24-engineering',id=None,version=1,
+d.update(title='LOGSIS / DSE7420 — V24 Engineering',uid='logsis-dse7420-v24-engineering',id=None,version=2,
          tags=['LOGSIS','DSE7420','V24','supervisão'],description='V24 Engineering: ilustração técnica vetorial nativa. Consultas, escalas, instrumentação e históricos preservados da V23. QTA não homologado.')
-out=ROOT/'dist/V24_IMPORTAR.json'
-out.parent.mkdir(parents=True,exist_ok=True)
-out.write_text(json.dumps(d,ensure_ascii=True,separators=(',',':'),allow_nan=False)+'\n',encoding='ascii')
-with zipfile.ZipFile(ROOT/'dist/V24_IMPORTAR.zip','w',zipfile.ZIP_DEFLATED) as z: z.write(out,out.name)
 assert panel['targets']==source['panels'][1]['targets']
 assert panel['fieldConfig']==source['panels'][1]['fieldConfig']
 assert d['panels'][2]['panels']==source['panels'][2]['panels']
 assert d['panels'][3]['panels']==source['panels'][3]['panels']
+
+# Requested presentation: plant and instrumentation always visible, history collapsible.
+instrument = d['panels'][2]['panels'][0]
+history = d['panels'][3]
+panel['gridPos']['y'] = 0
+instrument['gridPos']['y'] = panel['gridPos']['h']
+history['gridPos']['y'] = instrument['gridPos']['y'] + instrument['gridPos']['h']
+history['title'] = 'HISTÓRICOS E ALERTAS — expandir / recolher'
+offset = history['gridPos']['y'] + 1 - history['panels'][0]['gridPos']['y']
+for child in history['panels']:
+    child['gridPos']['y'] += offset
+for p in [panel, instrument]:
+    p['description'] = p['description'].replace('QTA não homologado; ', '')
+    for e in p['options']['root']['elements']:
+        t = e.get('config', {}).get('text', {})
+        if 'fixed' in t:
+            t['fixed'] = t['fixed'].replace('QTA não homologado. ', '')
+d['description'] = d['description'].replace(' QTA não homologado.', '')
+d['panels'] = [panel, instrument, history]
+
+out=ROOT/'dist/V24_IMPORTAR.json'
+out.parent.mkdir(parents=True,exist_ok=True)
+out.write_text(json.dumps(d,ensure_ascii=True,separators=(',',':'),allow_nan=False)+'\n',encoding='ascii')
+with zipfile.ZipFile(ROOT/'dist/V24_IMPORTAR.zip','w',zipfile.ZIP_DEFLATED) as z: z.write(out,out.name)
 print('Gerado:',out)
 print('Elementos:',len(elements),'Conexões vetoriais:',sum(len(e.get('connections',[])) for e in elements))
 print('Consultas, escalas, instrumentação e históricos idênticos à V23.')
