@@ -1,0 +1,189 @@
+{
+  "result": "passed",
+  "widths": [
+    {
+      "width": 320,
+      "channels": 52,
+      "textClipping": 0
+    },
+    {
+      "width": 390,
+      "channels": 52,
+      "textClipping": 0
+    },
+    {
+      "width": 768,
+      "channels": 52,
+      "textClipping": 0
+    },
+    {
+      "width": 1366,
+      "channels": 52,
+      "textClipping": 0
+    },
+    {
+      "width": 1920,
+      "channels": 52,
+      "textClipping": 0
+    }
+  ],
+  "states": [
+    {
+      "name": "OUTROS_GRUPOS",
+      "breaker": "aberto",
+      "mode": "STOP",
+      "lineColours": {
+        "gmg": [
+          233,
+          189,
+          121
+        ],
+        "bus": [
+          242,
+          73,
+          92
+        ],
+        "post": [
+          242,
+          73,
+          92
+        ]
+      },
+      "autoRefresh": true
+    },
+    {
+      "name": "WARNING",
+      "breaker": "aberto",
+      "mode": "MANUAL",
+      "lineColours": {
+        "gmg": [
+          242,
+          73,
+          92
+        ],
+        "bus": [
+          242,
+          73,
+          92
+        ],
+        "post": [
+          242,
+          73,
+          92
+        ]
+      },
+      "autoRefresh": true
+    },
+    {
+      "name": "TRIP",
+      "breaker": "aberto",
+      "mode": "TESTE C/ CARGA",
+      "lineColours": {
+        "gmg": [
+          242,
+          73,
+          92
+        ],
+        "bus": [
+          229,
+          238,
+          247
+        ],
+        "post": [
+          229,
+          238,
+          247
+        ]
+      },
+      "autoRefresh": true
+    },
+    {
+      "name": "SHUTDOWN",
+      "breaker": "aberto",
+      "mode": "TESTE S/ CARGA",
+      "lineColours": {
+        "gmg": [
+          233,
+          189,
+          121
+        ],
+        "bus": [
+          242,
+          73,
+          92
+        ],
+        "post": [
+          242,
+          73,
+          92
+        ]
+      },
+      "autoRefresh": true
+    },
+    {
+      "name": "OFF",
+      "breaker": "fechado",
+      "mode": "OFF",
+      "lineColours": {
+        "gmg": [
+          233,
+          189,
+          121
+        ],
+        "bus": [
+          229,
+          238,
+          247
+        ],
+        "post": [
+          229,
+          238,
+          247
+        ]
+      },
+      "autoRefresh": true
+    },
+    {
+      "name": "INVALIDO",
+      "breaker": "indisponivel",
+      "mode": "AUTO",
+      "lineColours": {
+        "gmg": [
+          242,
+          73,
+          92
+        ],
+        "bus": [
+          242,
+          73,
+          92
+        ],
+        "post": [
+          242,
+          73,
+          92
+        ]
+      },
+      "autoRefresh": true
+    }
+  ],
+  "filteredStates": [
+    {
+      "end": "now-90m",
+      "breaker": "aberto"
+    },
+    {
+      "end": "now",
+      "breaker": "fechado"
+    }
+  ],
+  "period": {
+    "hours": 3.5,
+    "kwh": 18,
+    "baselineOutsideFilter": true
+  },
+  "import": "UI upload/Overwrite passed",
+  "histories": 11,
+  "errors": [],
+  "scope": "Grafana 11.2.2 with synthetic data in isolated Docker; lab table restored; no production or physical switching"
+}

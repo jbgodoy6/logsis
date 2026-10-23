@@ -1,0 +1,14 @@
+{
+  "result": "passed",
+  "uid": "logsis-dse8610-v1-bus",
+  "channels": 52,
+  "sourceBreakerCombinations": 27,
+  "modeCases": 9,
+  "alarmCombinations": 27,
+  "sparseAndRadioCases": 9,
+  "timezoneCases": 12,
+  "periodCases": 56,
+  "historyQueries": 11,
+  "scope": "Isolated PostgreSQL with synthetic data; no production device access",
+  "busRule": "Measured BUS independent of this generator and its breaker"
+}
