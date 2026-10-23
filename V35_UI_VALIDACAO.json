@@ -1,0 +1,17 @@
+{
+  "result": "passed",
+  "import": "Grafana API accepted",
+  "widths": [
+    {
+      "width": 390,
+      "periodCards": "rendered",
+      "horizontalOverflow": false
+    },
+    {
+      "width": 1366,
+      "periodCards": "rendered",
+      "horizontalOverflow": false
+    }
+  ],
+  "queryErrors": []
+}

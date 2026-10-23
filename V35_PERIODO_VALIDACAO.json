@@ -1,0 +1,152 @@
+{
+  "result": "passed",
+  "cases": 29,
+  "regression": "Existing panels unchanged except four stat widths/positions",
+  "results": [
+    {
+      "panelId": 14,
+      "case": "normal",
+      "expected": 0.016666666666666666
+    },
+    {
+      "panelId": 14,
+      "case": "irregular",
+      "expected": 0.016666666666666666
+    },
+    {
+      "panelId": 14,
+      "case": "stationary",
+      "expected": 0.0
+    },
+    {
+      "panelId": 14,
+      "case": "zero_start",
+      "expected": 0.016666666666666666
+    },
+    {
+      "panelId": 14,
+      "case": "reset",
+      "expected": null
+    },
+    {
+      "panelId": 14,
+      "case": "reset_recovers",
+      "expected": null
+    },
+    {
+      "panelId": 14,
+      "case": "single",
+      "expected": null
+    },
+    {
+      "panelId": 14,
+      "case": "empty",
+      "expected": null
+    },
+    {
+      "panelId": 14,
+      "case": "sentinel",
+      "expected": 0.016666666666666666
+    },
+    {
+      "panelId": 14,
+      "case": "null",
+      "expected": 0.016666666666666666
+    },
+    {
+      "panelId": 14,
+      "case": "outside",
+      "expected": 0.016666666666666666
+    },
+    {
+      "panelId": 14,
+      "case": "conflict",
+      "expected": null
+    },
+    {
+      "panelId": 14,
+      "case": "same_duplicate",
+      "expected": 0.016666666666666666
+    },
+    {
+      "panelId": 15,
+      "case": "normal",
+      "expected": 6.0
+    },
+    {
+      "panelId": 15,
+      "case": "irregular",
+      "expected": 6.0
+    },
+    {
+      "panelId": 15,
+      "case": "stationary",
+      "expected": 0.0
+    },
+    {
+      "panelId": 15,
+      "case": "zero_start",
+      "expected": 6.0
+    },
+    {
+      "panelId": 15,
+      "case": "reset",
+      "expected": null
+    },
+    {
+      "panelId": 15,
+      "case": "reset_recovers",
+      "expected": null
+    },
+    {
+      "panelId": 15,
+      "case": "single",
+      "expected": null
+    },
+    {
+      "panelId": 15,
+      "case": "empty",
+      "expected": null
+    },
+    {
+      "panelId": 15,
+      "case": "sentinel",
+      "expected": 6.0
+    },
+    {
+      "panelId": 15,
+      "case": "null",
+      "expected": 6.0
+    },
+    {
+      "panelId": 15,
+      "case": "outside",
+      "expected": 6.0
+    },
+    {
+      "panelId": 15,
+      "case": "conflict",
+      "expected": null
+    },
+    {
+      "panelId": 15,
+      "case": "same_duplicate",
+      "expected": 6.0
+    },
+    {
+      "panelId": 15,
+      "case": "divisor_0",
+      "expected": null
+    },
+    {
+      "panelId": 15,
+      "case": "divisor_-10",
+      "expected": null
+    },
+    {
+      "panelId": 15,
+      "case": "divisor_1",
+      "expected": 60
+    }
+  ]
+}
