@@ -1,0 +1,67 @@
+{
+  "result": "passed",
+  "cases": [
+    {
+      "width": 1366,
+      "selectedEndUTC": "12:10",
+      "contacts": [
+        "fechado",
+        "aberto"
+      ],
+      "labelsVisible": true,
+      "clipping": 0
+    },
+    {
+      "width": 1366,
+      "selectedEndUTC": "12:20",
+      "contacts": [
+        "aberto",
+        "aberto"
+      ],
+      "labelsVisible": true,
+      "clipping": 0
+    },
+    {
+      "width": 1366,
+      "selectedEndUTC": "13:00",
+      "contacts": [
+        "aberto",
+        "fechado"
+      ],
+      "labelsVisible": true,
+      "clipping": 0
+    },
+    {
+      "width": 390,
+      "selectedEndUTC": "12:10",
+      "contacts": [
+        "fechado",
+        "aberto"
+      ],
+      "labelsVisible": true,
+      "clipping": 0
+    },
+    {
+      "width": 390,
+      "selectedEndUTC": "12:20",
+      "contacts": [
+        "aberto",
+        "aberto"
+      ],
+      "labelsVisible": true,
+      "clipping": 0
+    },
+    {
+      "width": 390,
+      "selectedEndUTC": "13:00",
+      "contacts": [
+        "aberto",
+        "fechado"
+      ],
+      "labelsVisible": true,
+      "clipping": 0
+    }
+  ],
+  "queryErrors": [],
+  "scope": "Isolated Grafana/PostgreSQL; original lab table restored; no physical switching"
+}

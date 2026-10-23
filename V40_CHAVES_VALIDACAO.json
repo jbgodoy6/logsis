@@ -1,0 +1,128 @@
+{
+  "result": "passed",
+  "truthTableCases": 81,
+  "filteredSparseCases": 12,
+  "regression": "Period panels and full historical row identical to V39",
+  "cases": [
+    {
+      "name": "voltage_packet_without_contacts",
+      "expected": [
+        1,
+        0,
+        0,
+        1,
+        0
+      ]
+    },
+    {
+      "name": "contact_only_packet_keeps_voltages",
+      "expected": [
+        0,
+        1,
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "name": "different_contact_timestamps",
+      "expected": [
+        1,
+        1,
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "name": "zero_is_open",
+      "expected": [
+        0,
+        0,
+        1,
+        1,
+        0
+      ]
+    },
+    {
+      "name": "invalid_does_not_revive_old_closed",
+      "expected": [
+        null,
+        0,
+        1,
+        1,
+        null
+      ]
+    },
+    {
+      "name": "outside_window_never_used",
+      "expected": [
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
+    },
+    {
+      "name": "one_contact_without_voltage",
+      "expected": [
+        1,
+        null,
+        null,
+        null,
+        null
+      ]
+    },
+    {
+      "name": "conflicting_same_instant",
+      "expected": [
+        null,
+        0,
+        1,
+        1,
+        null
+      ]
+    },
+    {
+      "name": "duplicate_same_state",
+      "expected": [
+        0,
+        0,
+        1,
+        1,
+        0
+      ]
+    },
+    {
+      "name": "selected_end_before_transfer",
+      "expected": [
+        0,
+        0,
+        1,
+        1,
+        0
+      ]
+    },
+    {
+      "name": "selected_end_after_transfer",
+      "expected": [
+        0,
+        1,
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "name": "empty_window",
+      "expected": [
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
+    }
+  ]
+}
