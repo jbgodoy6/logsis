@@ -1,0 +1,283 @@
+{
+  "result": "passed",
+  "periodCases": 53,
+  "alarmCombinations": 27,
+  "connectedCurvesWithPoints": [
+    1000,
+    1001,
+    1002,
+    1003,
+    1004,
+    1005,
+    1006,
+    1007
+  ],
+  "timezone": "America/Sao_Paulo",
+  "tests": [
+    {
+      "panelId": 14,
+      "case": "screenshot_shape",
+      "expected": 0.69
+    },
+    {
+      "panelId": 14,
+      "case": "minor_internal_drop",
+      "expected": 0.016666666666666666
+    },
+    {
+      "panelId": 14,
+      "case": "reset_internal_recovers",
+      "expected": 0.027777777777777776
+    },
+    {
+      "panelId": 14,
+      "case": "reset_final_below_base",
+      "expected": null
+    },
+    {
+      "panelId": 14,
+      "case": "incompatible_prior_only_one_inside",
+      "expected": null
+    },
+    {
+      "panelId": 14,
+      "case": "baseline_zero_internal_zero",
+      "expected": 0.05555555555555555
+    },
+    {
+      "panelId": 14,
+      "case": "baseline_before_one_inside",
+      "expected": 0.016666666666666666
+    },
+    {
+      "panelId": 14,
+      "case": "last_baseline_only",
+      "expected": 0.016666666666666666
+    },
+    {
+      "panelId": 14,
+      "case": "baseline_exact_start",
+      "expected": 0.016666666666666666
+    },
+    {
+      "panelId": 14,
+      "case": "irregular",
+      "expected": 0.016666666666666666
+    },
+    {
+      "panelId": 14,
+      "case": "constant",
+      "expected": 0.0
+    },
+    {
+      "panelId": 14,
+      "case": "zero_baseline",
+      "expected": 0.016666666666666666
+    },
+    {
+      "panelId": 14,
+      "case": "incompatible_prior",
+      "expected": 0.008333333333333333
+    },
+    {
+      "panelId": 14,
+      "case": "incompatible_prior_recovers",
+      "expected": 0.05277777777777778
+    },
+    {
+      "panelId": 14,
+      "case": "no_baseline",
+      "expected": 0.016666666666666666
+    },
+    {
+      "panelId": 14,
+      "case": "baseline_only",
+      "expected": null
+    },
+    {
+      "panelId": 14,
+      "case": "empty",
+      "expected": null
+    },
+    {
+      "panelId": 14,
+      "case": "null_baseline",
+      "expected": 0.016666666666666666
+    },
+    {
+      "panelId": 14,
+      "case": "sentinel_baseline",
+      "expected": 0.016666666666666666
+    },
+    {
+      "panelId": 14,
+      "case": "negative_baseline",
+      "expected": 0.016666666666666666
+    },
+    {
+      "panelId": 14,
+      "case": "invalid_inside",
+      "expected": 0.016666666666666666
+    },
+    {
+      "panelId": 14,
+      "case": "exclude_after_end",
+      "expected": 0.016666666666666666
+    },
+    {
+      "panelId": 14,
+      "case": "baseline_conflict",
+      "expected": null
+    },
+    {
+      "panelId": 14,
+      "case": "final_conflict",
+      "expected": null
+    },
+    {
+      "panelId": 14,
+      "case": "same_duplicate",
+      "expected": 0.016666666666666666
+    },
+    {
+      "panelId": 15,
+      "case": "screenshot_shape",
+      "expected": 248.4
+    },
+    {
+      "panelId": 15,
+      "case": "minor_internal_drop",
+      "expected": 6.0
+    },
+    {
+      "panelId": 15,
+      "case": "reset_internal_recovers",
+      "expected": 10.0
+    },
+    {
+      "panelId": 15,
+      "case": "reset_final_below_base",
+      "expected": null
+    },
+    {
+      "panelId": 15,
+      "case": "incompatible_prior_only_one_inside",
+      "expected": null
+    },
+    {
+      "panelId": 15,
+      "case": "baseline_zero_internal_zero",
+      "expected": 20.0
+    },
+    {
+      "panelId": 15,
+      "case": "baseline_before_one_inside",
+      "expected": 6.0
+    },
+    {
+      "panelId": 15,
+      "case": "last_baseline_only",
+      "expected": 6.0
+    },
+    {
+      "panelId": 15,
+      "case": "baseline_exact_start",
+      "expected": 6.0
+    },
+    {
+      "panelId": 15,
+      "case": "irregular",
+      "expected": 6.0
+    },
+    {
+      "panelId": 15,
+      "case": "constant",
+      "expected": 0.0
+    },
+    {
+      "panelId": 15,
+      "case": "zero_baseline",
+      "expected": 6.0
+    },
+    {
+      "panelId": 15,
+      "case": "incompatible_prior",
+      "expected": 3.0
+    },
+    {
+      "panelId": 15,
+      "case": "incompatible_prior_recovers",
+      "expected": 19.0
+    },
+    {
+      "panelId": 15,
+      "case": "no_baseline",
+      "expected": 6.0
+    },
+    {
+      "panelId": 15,
+      "case": "baseline_only",
+      "expected": null
+    },
+    {
+      "panelId": 15,
+      "case": "empty",
+      "expected": null
+    },
+    {
+      "panelId": 15,
+      "case": "null_baseline",
+      "expected": 6.0
+    },
+    {
+      "panelId": 15,
+      "case": "sentinel_baseline",
+      "expected": 6.0
+    },
+    {
+      "panelId": 15,
+      "case": "negative_baseline",
+      "expected": 6.0
+    },
+    {
+      "panelId": 15,
+      "case": "invalid_inside",
+      "expected": 6.0
+    },
+    {
+      "panelId": 15,
+      "case": "exclude_after_end",
+      "expected": 6.0
+    },
+    {
+      "panelId": 15,
+      "case": "baseline_conflict",
+      "expected": null
+    },
+    {
+      "panelId": 15,
+      "case": "final_conflict",
+      "expected": null
+    },
+    {
+      "panelId": 15,
+      "case": "same_duplicate",
+      "expected": 6.0
+    },
+    {
+      "panelId": 15,
+      "case": "divisor_0",
+      "expected": null
+    },
+    {
+      "panelId": 15,
+      "case": "divisor_-10",
+      "expected": null
+    },
+    {
+      "panelId": 15,
+      "case": "divisor_1",
+      "expected": 60
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "result": "passed",
+  "period": {
+    "from": "now-6h",
+    "baseline": "now-7h",
+    "final": "now-1m",
+    "hours": 0.69,
+    "kwh": 18,
+    "baseDiscarded": true
+  },
+  "endpointDifference": "0.69 h * / 18.00 kWh *",
+  "alarmImages": [
+    "WARNING",
+    "TRIP",
+    "SHUTDOWN"
+  ],
+  "queryErrors": [],
+  "scope": "isolated synthetic data; original lab table restored"
+}
