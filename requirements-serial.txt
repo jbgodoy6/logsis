@@ -1,0 +1,2 @@
+# Opcional: necessário somente para o teste RS485/USB.
+pyserial>=3.5,<4

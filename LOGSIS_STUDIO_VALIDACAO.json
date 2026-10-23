@@ -1,0 +1,43 @@
+{
+  "version": "7.0.0",
+  "result": "passed",
+  "models": {
+    "DSE7420": {
+      "channels": 53,
+      "grafana": "V41"
+    },
+    "DSE8610": {
+      "channels": 52,
+      "grafana": "V3"
+    }
+  },
+  "automatedTests": {
+    "coreAndTransport": 18,
+    "tkWorkflows": 8,
+    "total": 26
+  },
+  "guiSizes": [
+    [
+      1460,
+      920
+    ],
+    [
+      1120,
+      740
+    ]
+  ],
+  "integration": "LOGSIS_STUDIO_GRAFANA_VALIDACAO.json",
+  "checks": [
+    "Fixed one-based MDB to zero-based BIN indices",
+    "No automatic reordering of imported BIN",
+    "Reserved slots disabled and incompatible exports blocked",
+    "Unknown settings and original encoding/line endings preserved",
+    "Distinct stable dashboard UIDs per model/table",
+    "TCP fragmented replies and RTU CRC/exceptions",
+    "Local Modbus read updates Tk through queue",
+    "Existing DSE7420 V41 and DSE8610 V3 queries preserved"
+  ],
+  "scope": "Linux/Tk, local Modbus simulators and isolated PostgreSQL; no physical equipment test or production access",
+  "distributionSmoke": "ZIP extracted to a separate folder; Tk startup and both model exports passed",
+  "releaseFiles": 18
+}

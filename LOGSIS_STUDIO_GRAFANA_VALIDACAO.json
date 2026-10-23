@@ -1,0 +1,53 @@
+{
+  "result": "passed",
+  "scope": "BIN-to-SQL integration in isolated PostgreSQL; no production access",
+  "models": [
+    {
+      "model": "DSE7420",
+      "channels": 53,
+      "decodedFromBinSlots": true,
+      "grafanaFields": {
+        "MDB01": 4.5,
+        "MDB09": 220.1,
+        "MDB30": 240.3,
+        "MDB36": 103.5,
+        "MDB37": 218.0,
+        "MDB40": 2,
+        "MDB41": 1,
+        "MDB42": 0,
+        "MDB43": 1,
+        "MDB52": 1,
+        "MODO_LOCAL": "MANUAL",
+        "GSM_LOCAL": -53,
+        "WIFI_LOCAL": -67,
+        "MDB53": 0
+      },
+      "periodHours": 3.5,
+      "periodKwh": 18.0
+    },
+    {
+      "model": "DSE8610",
+      "channels": 52,
+      "decodedFromBinSlots": true,
+      "grafanaFields": {
+        "MDB01": 4.5,
+        "MDB09": 220.1,
+        "MDB30": 230.2,
+        "MDB36": 103.5,
+        "MDB37": 218.0,
+        "MDB40": 2,
+        "MDB41": 1,
+        "MDB42": 0,
+        "MDB43": 1,
+        "MDB52": 1,
+        "MODO_LOCAL": "MANUAL",
+        "GSM_LOCAL": -53,
+        "WIFI_LOCAL": -67,
+        "TENSAO_BUS": 1,
+        "GERADOR_ALARME": "GERADOR / SHUTDOWN"
+      },
+      "periodHours": 3.5,
+      "periodKwh": 18.0
+    }
+  ]
+}
