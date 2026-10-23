@@ -1,0 +1,39 @@
+{
+  "result": "passed",
+  "sqlModesTested": [
+    {
+      "value": 0,
+      "display": "STOP"
+    },
+    {
+      "value": 1,
+      "display": "AUTO"
+    },
+    {
+      "value": 2,
+      "display": "MANUAL"
+    },
+    {
+      "value": 3,
+      "display": "TESTE C/ CARGA"
+    },
+    {
+      "value": 6,
+      "display": "TESTE S/ CARGA"
+    },
+    {
+      "value": 7,
+      "display": "OFF"
+    },
+    {
+      "value": 4,
+      "display": "INVÁLIDO"
+    },
+    {
+      "value": null,
+      "display": "SEM DADOS"
+    }
+  ],
+  "instrumentationMappingsChecked": 11,
+  "scope": "Isolated PostgreSQL; mode display only; no production access"
+}
