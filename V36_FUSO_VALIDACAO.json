@@ -1,0 +1,80 @@
+{
+  "result": "passed",
+  "timezone": "America/Sao_Paulo",
+  "cases": [
+    {
+      "columnType": "timestamp with time zone",
+      "sessionTimezone": "UTC",
+      "utc": "2026-10-23 14:58:00",
+      "brasilia": "23/10 11:58"
+    },
+    {
+      "columnType": "timestamp with time zone",
+      "sessionTimezone": "UTC",
+      "utc": "2026-10-23 01:30:00",
+      "brasilia": "22/10 22:30"
+    },
+    {
+      "columnType": "timestamp with time zone",
+      "sessionTimezone": "America/Sao_Paulo",
+      "utc": "2026-10-23 14:58:00",
+      "brasilia": "23/10 11:58"
+    },
+    {
+      "columnType": "timestamp with time zone",
+      "sessionTimezone": "America/Sao_Paulo",
+      "utc": "2026-10-23 01:30:00",
+      "brasilia": "22/10 22:30"
+    },
+    {
+      "columnType": "timestamp with time zone",
+      "sessionTimezone": "Asia/Tokyo",
+      "utc": "2026-10-23 14:58:00",
+      "brasilia": "23/10 11:58"
+    },
+    {
+      "columnType": "timestamp with time zone",
+      "sessionTimezone": "Asia/Tokyo",
+      "utc": "2026-10-23 01:30:00",
+      "brasilia": "22/10 22:30"
+    },
+    {
+      "columnType": "timestamp without time zone",
+      "sessionTimezone": "UTC",
+      "utc": "2026-10-23 14:58:00",
+      "brasilia": "23/10 11:58"
+    },
+    {
+      "columnType": "timestamp without time zone",
+      "sessionTimezone": "UTC",
+      "utc": "2026-10-23 01:30:00",
+      "brasilia": "22/10 22:30"
+    },
+    {
+      "columnType": "timestamp without time zone",
+      "sessionTimezone": "America/Sao_Paulo",
+      "utc": "2026-10-23 14:58:00",
+      "brasilia": "23/10 11:58"
+    },
+    {
+      "columnType": "timestamp without time zone",
+      "sessionTimezone": "America/Sao_Paulo",
+      "utc": "2026-10-23 01:30:00",
+      "brasilia": "22/10 22:30"
+    },
+    {
+      "columnType": "timestamp without time zone",
+      "sessionTimezone": "Asia/Tokyo",
+      "utc": "2026-10-23 14:58:00",
+      "brasilia": "23/10 11:58"
+    },
+    {
+      "columnType": "timestamp without time zone",
+      "sessionTimezone": "Asia/Tokyo",
+      "utc": "2026-10-23 01:30:00",
+      "brasilia": "22/10 22:30"
+    }
+  ],
+  "regression": "All panels except main unifilar identical to V35; period queries unchanged",
+  "naiveTimestampAssumption": "UTC, matching the reported three-hour difference"
+}
