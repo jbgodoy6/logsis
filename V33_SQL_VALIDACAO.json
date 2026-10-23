@@ -1,0 +1,34 @@
+{
+  "truthTableCases": 81,
+  "edgeCases": 4,
+  "snapshot": {
+    "TENSAO_REDE_PRESENTE": 0,
+    "TENSAO_GMG_PRESENTE": 1,
+    "TENSAO_SAIDA_PRESENTE": 0,
+    "MDB52": 0,
+    "MDB53": 0,
+    "MODO_LOCAL": "MANUAL",
+    "QTA_PARALELISMO": 0,
+    "QTA_ESTADO": "AMBOS FORA DA CARGA",
+    "MDB01": null,
+    "MDB03": null,
+    "MDB28": null,
+    "MDB39": null,
+    "MDB36": 5.811111111111111,
+    "MDB37": 18.8,
+    "MDB46": 1,
+    "MDB49": 1
+  },
+  "result": "passed",
+  "refresh": "5s",
+  "scope": "supervision only; not a physical transfer test",
+  "checks": [
+    "correct 52/53 contacts and 40 mode",
+    "unknown values never force open or closed",
+    "both-closed conflict remains visible",
+    "source voltage independent before contacts; inferred common bus after",
+    "sentinels 65535/32767/32765/2147483647 rejected",
+    "empty selected interval",
+    "sparse telemetry does not erase latest electrical sample"
+  ]
+}

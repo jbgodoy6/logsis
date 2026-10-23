@@ -1,0 +1,223 @@
+{
+  "widths": [
+    {
+      "width": 320,
+      "channels": 53,
+      "textClipping": 0
+    },
+    {
+      "width": 390,
+      "channels": 53,
+      "textClipping": 0
+    },
+    {
+      "width": 768,
+      "channels": 53,
+      "textClipping": 0
+    },
+    {
+      "width": 1366,
+      "channels": 53,
+      "textClipping": 0
+    },
+    {
+      "width": 1920,
+      "channels": 53,
+      "textClipping": 0
+    }
+  ],
+  "autoRefreshTransitions": [
+    {
+      "name": "rede",
+      "expected": [
+        "fechado",
+        "aberto"
+      ],
+      "rendered": [
+        {
+          "state": "fechado",
+          "geometry": "vertical"
+        },
+        {
+          "state": "aberto",
+          "geometry": "inclinado"
+        }
+      ],
+      "colours": {
+        "rede": "rgb(242, 73, 92)",
+        "gmg": "rgb(242, 73, 92)",
+        "postRede": "rgb(242, 73, 92)",
+        "postGmg": "rgb(242, 73, 92)",
+        "x": [
+          182.25,
+          512.75
+        ]
+      }
+    },
+    {
+      "name": "abertos",
+      "expected": [
+        "aberto",
+        "aberto"
+      ],
+      "rendered": [
+        {
+          "state": "aberto",
+          "geometry": "inclinado"
+        },
+        {
+          "state": "aberto",
+          "geometry": "inclinado"
+        }
+      ],
+      "colours": {
+        "rede": "rgb(242, 73, 92)",
+        "gmg": "rgb(242, 73, 92)",
+        "postRede": "rgb(229, 238, 247)",
+        "postGmg": "rgb(229, 238, 247)",
+        "x": [
+          182.25,
+          512.75
+        ]
+      }
+    },
+    {
+      "name": "gerador",
+      "expected": [
+        "aberto",
+        "fechado"
+      ],
+      "rendered": [
+        {
+          "state": "aberto",
+          "geometry": "inclinado"
+        },
+        {
+          "state": "fechado",
+          "geometry": "vertical"
+        }
+      ],
+      "colours": {
+        "rede": "rgb(103, 204, 228)",
+        "gmg": "rgb(242, 73, 92)",
+        "postRede": "rgb(242, 73, 92)",
+        "postGmg": "rgb(242, 73, 92)",
+        "x": [
+          182.25,
+          512.75
+        ]
+      }
+    },
+    {
+      "name": "abertos_retorno",
+      "expected": [
+        "aberto",
+        "aberto"
+      ],
+      "rendered": [
+        {
+          "state": "aberto",
+          "geometry": "inclinado"
+        },
+        {
+          "state": "aberto",
+          "geometry": "inclinado"
+        }
+      ],
+      "colours": {
+        "rede": "rgb(242, 73, 92)",
+        "gmg": "rgb(242, 73, 92)",
+        "postRede": "rgb(229, 238, 247)",
+        "postGmg": "rgb(229, 238, 247)",
+        "x": [
+          182.25,
+          512.75
+        ]
+      }
+    },
+    {
+      "name": "rede_retorno",
+      "expected": [
+        "fechado",
+        "aberto"
+      ],
+      "rendered": [
+        {
+          "state": "fechado",
+          "geometry": "vertical"
+        },
+        {
+          "state": "aberto",
+          "geometry": "inclinado"
+        }
+      ],
+      "colours": {
+        "rede": "rgb(242, 73, 92)",
+        "gmg": "rgb(242, 73, 92)",
+        "postRede": "rgb(242, 73, 92)",
+        "postGmg": "rgb(242, 73, 92)",
+        "x": [
+          182.25,
+          512.75
+        ]
+      }
+    },
+    {
+      "name": "alerta_ambos",
+      "expected": [
+        "fechado",
+        "fechado"
+      ],
+      "rendered": [
+        {
+          "state": "fechado",
+          "geometry": "vertical"
+        },
+        {
+          "state": "fechado",
+          "geometry": "vertical"
+        }
+      ],
+      "colours": {
+        "rede": "rgb(242, 73, 92)",
+        "gmg": "rgb(242, 73, 92)",
+        "postRede": "rgb(242, 73, 92)",
+        "postGmg": "rgb(242, 73, 92)",
+        "x": [
+          182.25,
+          512.75
+        ]
+      }
+    },
+    {
+      "name": "invalido",
+      "expected": [
+        "indisponivel",
+        "aberto"
+      ],
+      "rendered": [
+        {
+          "state": "indisponivel",
+          "geometry": "desconhecido"
+        },
+        {
+          "state": "aberto",
+          "geometry": "inclinado"
+        }
+      ],
+      "colours": {
+        "rede": "rgb(242, 73, 92)",
+        "gmg": "rgb(242, 73, 92)",
+        "postRede": "rgb(229, 238, 247)",
+        "postGmg": "rgb(229, 238, 247)",
+        "x": [
+          182.25,
+          512.75
+        ]
+      }
+    }
+  ],
+  "import": "passed",
+  "errors": [],
+  "scope": "Grafana simulation; no command to or verification of physical switching"
+}
