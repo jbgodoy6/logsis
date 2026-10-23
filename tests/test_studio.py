@@ -19,7 +19,7 @@ from logsis_studio.transport import ModbusError, crc16, decode, parse_pdu, read_
 
 class ProfileTests(unittest.TestCase):
     def test_exact_mapping_and_zero_based_bin(self):
-        common = {1: (1024, 3, -1), 8: (1031, 3, -1), 9: (1032, 30, -1), 22: (1536, 30, -1), 28: (1557, 3, -1), 36: (1798, 30, -1), 37: (1800, 30, -1), 40: (772, 3, -1), 41: (774, 3, 10), 42: (774, 3, 11), 43: (774, 3, 12), 44: (43521, 3, -1), 51: (43535, 3, -1), 52: (48659, 3, -1)}
+        common = {1: (1024, 3, -1), 8: (1031, 3, -1), 9: (1032, 30, -1), 22: (1536, 30, -1), 28: (1557, 3, -1), 36: (1798, 30, -1), 37: (1800, 30, -1), 40: (772, 3, -1), 41: (774, 3, 10), 42: (774, 3, 11), 43: (774, 3, 12), 44: (43521, 3, -1), 51: (43535, 3, -1)}
         for model, count in [('DSE7420', 53), ('DSE8610', 52)]:
             with self.subTest(model=model):
                 p = Project.new(model)
@@ -32,11 +32,28 @@ class ProfileTests(unittest.TestCase):
                     self.assertEqual(tuple(params[f'MDBA_{k}{index}'] for k in ['ID', 'FNC', 'ADDR']), ('-1', '-1', '-1'))
                 self.assertEqual(int(params['MDBA_ADDR28']), 1059 if model == 'DSE7420' else 1091)
                 self.assertEqual(int(params['MDBA_ADDR29']), 1060 if model == 'DSE7420' else 1092)
-                if model == 'DSE7420': self.assertEqual(params['MDBA_ADDR52'], '48660')
+                self.assertEqual(tuple(int(params[f'MDBA_{k}51']) for k in ['ADDR', 'FNC', 'BIT']), (48653 if model == 'DSE7420' else 48659, 3, -1))
+                if model == 'DSE7420': self.assertEqual(params['MDBA_ADDR52'], '48654')
                 self.assertNotIn('MDB_RST', params)
                 self.assertNotIn('MDB_DLY', params)
                 self.assertIn('MDB_RST_FAILURE', params)
                 self.assertIn('MDB_R_DELAY', params)
+
+    def test_previous_transfer_addresses_require_explicit_profile_update(self):
+        p = Project.new('DSE7420')
+        legacy = p.document.render({f'MDBA_{k}{i}': v for i, row in enumerate(p.rows) for k, v in row.items()} | {'MDBA_ADDR51': '48659', 'MDBA_ADDR52': '48660'})
+        imported = Project.from_bytes(legacy)
+        self.assertEqual(imported.rows[51]['ADDR'], '48659')
+        self.assertTrue(imported.validate())
+        with self.assertRaises(ValueError): imported.bin_bytes()
+        imported.apply_profile()
+        self.assertEqual(imported.validate(), [])
+        self.assertEqual([row['ADDR'] for row in imported.rows[51:53]], ['48653', '48654'])
+        with zipfile.ZipFile(io.BytesIO(imported.bundle_bytes('id_demo', 'Demo'))) as archive:
+            params = BinDocument.from_bytes(archive.read('DSE7420.bin')).params
+            self.assertEqual((params['MDBA_ADDR51'], params['MDBA_ADDR52']), ('48653', '48654'))
+            report = json.loads(archive.read('COMPATIBILIDADE.json'))
+            self.assertEqual([c['address'] for c in report['channels_map'][51:53]], [48653, 48654])
 
     def test_profiles_match_independent_audited_bin(self):
         audit = json.loads((Path(__file__).resolve().parents[1] / 'DSE8610_ANALISE/DSE8610_AUDITORIA.json').read_text())

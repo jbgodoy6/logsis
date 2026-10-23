@@ -1,5 +1,5 @@
 {
-  "version": "7.0.0",
+  "version": "7.0.1",
   "result": "passed",
   "models": {
     "DSE7420": {
@@ -12,9 +12,9 @@
     }
   },
   "automatedTests": {
-    "coreAndTransport": 18,
+    "coreAndTransport": 19,
     "tkWorkflows": 8,
-    "total": 26
+    "total": 27
   },
   "guiSizes": [
     [
@@ -35,7 +35,8 @@
     "Distinct stable dashboard UIDs per model/table",
     "TCP fragmented replies and RTU CRC/exceptions",
     "Local Modbus read updates Tk through queue",
-    "Existing DSE7420 V41 and DSE8610 V3 queries preserved"
+    "Existing DSE7420 V41 and DSE8610 V3 queries preserved",
+    "DSE7420 MDB52=48653 and MDB53=48654; legacy addresses blocked until explicit profile reapplication; DSE8610 MDB52=48659 preserved"
   ],
   "scope": "Linux/Tk, local Modbus simulators and isolated PostgreSQL; no physical equipment test or production access",
   "distributionSmoke": "ZIP extracted to a separate folder; Tk startup and both model exports passed",

@@ -2,7 +2,9 @@
 
 Editor e gerador de configuração LogSis com **perfis fixos alinhados aos dashboards DSE7420 V41 e DSE8610 V3**. Interface escura, navegação lateral, busca de canais, conferência de compatibilidade e exportação conjunta do BIN e do Grafana.
 
-[Baixar programa completo](LOGSIS_STUDIO_7_0.zip) · [Interface](LOGSIS_STUDIO_7_INICIO.png) · [Mapa de canais](LOGSIS_STUDIO_7_MAPA.png) · [Exportação](LOGSIS_STUDIO_7_EXPORTACAO.png)
+[Baixar programa completo](LOGSIS_STUDIO_7_0_1.zip) · [Interface](LOGSIS_STUDIO_7_INICIO.png) · [Mapa de canais](LOGSIS_STUDIO_7_MAPA.png) · [Exportação](LOGSIS_STUDIO_7_EXPORTACAO.png)
+
+Na versão **7.0.1**, os endereços das duas chaves do DSE7420 foram corrigidos. Para atualizar um BIN anterior, abra-o, reaplique o perfil DSE7420 e gere um novo BIN. A ordem das MDBs e as consultas do Grafana permanecem as mesmas.
 
 ## Abrir o programa
 
@@ -56,7 +58,7 @@ A tabela aceita nomes como `id_269086509881540` ou `public.id_planta`. O UID ini
 
 O DSE8610 continua **sem concessionária e com apenas um gerador desenhado**. Seu BUS é medido independentemente do estado do disjuntor. Os slots restantes até 100 são desativados no perfil completo.
 
-Endereços centrais: modo 772; alarmes no registro 774, com BIT10/11/12; horímetro 1798; energia 1800. As fontes se distinguem pelo MDB29: rede/1059 no DSE7420 e BUS/1091 no DSE8610. MDB52 usa endereço 48659; somente o DSE7420 usa MDB53/48660.
+Endereços centrais: modo 772; alarmes no registro 774, com BIT10/11/12; horímetro 1798; energia 1800. As fontes se distinguem pelo MDB29: rede/1059 no DSE7420 e BUS/1091 no DSE8610. No DSE7420, MDB52/K1 (rede) usa endereço **48653** e MDB53/K2 (gerador) usa **48654**. No DSE8610, MDB52 (disjuntor de acoplamento) permanece em **48659**. Os estados continuam 0 = aberto e 1 = fechado.
 
 A exportação bloqueia posições, endereços, funções, bits ou Slave IDs incompatíveis e slots extras ativos. Ao abrir um BIN divergente, o Studio **aponta o problema e não reorganiza nem corrige os canais silenciosamente**. Aplique explicitamente o perfil para normalizar. Textos e limites podem ser editados sem alterar a posição dos canais.
 
