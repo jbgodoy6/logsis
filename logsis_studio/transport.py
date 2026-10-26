@@ -134,11 +134,25 @@ def decode(channel: Channel, row, registers, low_first=False, energy_divisor='10
     if expected == 1 and channel.signed:
         unavailable = not -32759 <= signed <= 32759
     value = bit if bit is not None else signed if channel.signed else unsigned
-    divisor = number(energy_divisor) if channel.number == 37 else Decimal(channel.divisor)
+    energy = channel.role.startswith('energy_') if channel.role else channel.number == 37
+    divisor = number(energy_divisor) if energy else Decimal(channel.divisor)
     if divisor <= 0:
         raise ModbusError('O divisor de engenharia deve ser positivo.')
     engineering = None if unavailable and bit is None else Decimal(value) / divisor
     state = ''
+    if channel.role:
+        if channel.role == 'mode':
+            state = {**MODES,4:'AUTO / RETORNO MANUAL',5:'CONFIGURAÇÃO'}.get(unsigned,'MODO INVÁLIDO') if engineering is not None else 'SEM DADOS'
+        elif channel.role.startswith(('input_','led_')) or channel.role in ['warning','trip','shutdown']:
+            if unavailable or value not in [0,1]:
+                state, engineering = 'ESTADO INVÁLIDO', None
+            elif channel.role.startswith('led_'):
+                state = 'LED ATIVO' if value else 'LED INATIVO'
+            elif channel.role.startswith('input_'):
+                state = 'ON' if value else 'OFF'
+            else:
+                state = 'ATIVO' if value else 'INATIVO'
+        return Reading(tuple(registers), unsigned, signed, engineering, state, bit)
     if channel.number == 40:
         state = MODES.get(unsigned, 'MODO INVÁLIDO') if engineering is not None else 'SEM DADOS'
     elif channel.number >= 41 and channel.group != 'Manutenção':

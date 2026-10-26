@@ -1,0 +1,104 @@
+{
+  "version": "8.0.0",
+  "result": "passed",
+  "models": {
+    "DSE7420": {
+      "label": "DSE7420",
+      "channels": 59,
+      "kind": "legacy"
+    },
+    "DSE8610": {
+      "label": "DSE8610",
+      "channels": 58,
+      "kind": "legacy"
+    },
+    "DSE4520": {
+      "label": "DSE4520 MkII",
+      "channels": 57,
+      "kind": "engine_transfer"
+    },
+    "DSE6120": {
+      "label": "DSE6120 MkII",
+      "channels": 58,
+      "kind": "engine_transfer"
+    },
+    "DSE6320": {
+      "label": "DSE6320",
+      "channels": 57,
+      "kind": "engine_transfer"
+    },
+    "DSE7320": {
+      "label": "DSE7320 MkII",
+      "channels": 57,
+      "kind": "engine_transfer"
+    },
+    "DSE8620": {
+      "label": "DSE8620",
+      "channels": 59,
+      "kind": "engine_transfer"
+    },
+    "DSE8660": {
+      "label": "DSE8660",
+      "channels": 58,
+      "kind": "mains_bus"
+    },
+    "DSE8680": {
+      "label": "DSE8680",
+      "channels": 58,
+      "kind": "bus_tie"
+    }
+  },
+  "automatedTests": {
+    "coreAndTransport": 31,
+    "tkWorkflows": 11,
+    "total": 42
+  },
+  "manualSource": {
+    "file": "Modbus - Deep Sea.pdf",
+    "version": "GenComm 2.93",
+    "revision": "2015-04-13",
+    "sha256": "db29595cbd59f39695f68e07e58cfd20b9daa22f14483448e2ccee6fea29c2ee"
+  },
+  "preservation": {
+    "baseline": "Studio 7.2",
+    "defaultBinDefinitionAndDashboardHashesMatch": true,
+    "records": {
+      "DSE7420": {
+        "bin_sha256": "68c8b9fdac78c0aefddb736ac337cdb880e21b0ef3f4bbf295e325dd7d4b8a86",
+        "definition_sha256": "70cb07a83e4e88cedfe1d994bf2eea8e46913dbb8aa1d7c6487288edfa13e033",
+        "dashboard_sha256": "54e609ec28a78c03d1352bdfc676829b33a929ab5b38145cc92631446a0c3c58"
+      },
+      "DSE8610": {
+        "bin_sha256": "7d18090b56db368241f59f29d821a94bfb88a84c2137c51060545abceca4b55c",
+        "definition_sha256": "9d7ad04dda23618fac5ba63a9169f4015b0468bbb722a9e15e98972ac60f1c28",
+        "dashboard_sha256": "77c66d5f21a61dc519f37dd7bd39795464415d6e7afdc1c296b302de9ae21f4d"
+      }
+    }
+  },
+  "sqlValidation": "LOGSIS_STUDIO_8_VALIDACAO_SQL.json",
+  "legacySqlValidation": "LOGSIS_STUDIO_GRAFANA_VALIDACAO.json",
+  "grafanaUiValidation": "LOGSIS_STUDIO_8_VALIDACAO_UI.json",
+  "guiSizes": [
+    [
+      1460,
+      920
+    ],
+    [
+      1120,
+      740
+    ]
+  ],
+  "scope": "Software verification in Linux/Tk, local simulators and isolated PostgreSQL/Grafana. No physical device or production access. New family-based profiles are not a hardware/firmware certification.",
+  "checks": [
+    "Nine models selectable; MkII explicit for 4520, 6120 and 7320",
+    "Role-based conversions and labels instead of assuming MDB positions across models",
+    "6120 MkII flexible A-D at 43533/43535/43537/43539",
+    "8660 and 8680 have no engine hour-meter or engine maintenance channels",
+    "8680 BUS2 voltage/frequency/power separated from BUS1; no invented BUS2 energy counter",
+    "LED indicators never labeled as confirmed physical contacts in new models",
+    "Ambiguous BIN signatures require a compatible selected model",
+    "Period calculations retain pre-filter baselines and reset diagnostics"
+  ],
+  "releaseFiles": 22,
+  "distributionSmoke": "Passed after extracting the complete ZIP into a separate folder: 9 BIN roundtrips, 9 package exports, JSON parsing, Brasília timezone and Tk startup/model selection"
+}

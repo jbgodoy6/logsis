@@ -1,0 +1,12 @@
+{
+  "DSE7420": {
+    "bin_sha256": "68c8b9fdac78c0aefddb736ac337cdb880e21b0ef3f4bbf295e325dd7d4b8a86",
+    "definition_sha256": "70cb07a83e4e88cedfe1d994bf2eea8e46913dbb8aa1d7c6487288edfa13e033",
+    "dashboard_sha256": "54e609ec28a78c03d1352bdfc676829b33a929ab5b38145cc92631446a0c3c58"
+  },
+  "DSE8610": {
+    "bin_sha256": "7d18090b56db368241f59f29d821a94bfb88a84c2137c51060545abceca4b55c",
+    "definition_sha256": "9d7ad04dda23618fac5ba63a9169f4015b0468bbb722a9e15e98972ac60f1c28",
+    "dashboard_sha256": "77c66d5f21a61dc519f37dd7bd39795464415d6e7afdc1c296b302de9ae21f4d"
+  }
+}

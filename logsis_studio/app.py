@@ -9,7 +9,7 @@ from tkinter import filedialog, font, messagebox, ttk
 import traceback
 
 from . import __version__
-from .core import Project, RESOURCES, atomic_write, integer, number, safe_text, safe_value
+from .core import Project, RESOURCES, atomic_write, integer, number, safe_text, safe_value, available_models, load_profile
 from .transport import decode, read_rtu, read_tcp, request_parameters
 
 BG, PANEL, SIDE, INPUT = '#0b111b', '#111c2a', '#080e17', '#172535'
@@ -39,7 +39,7 @@ class Studio(tk.Tk):
 
     def __init__(self):
         super().__init__()
-        self.title('LogSis Studio 7 • DSE7420 / DSE8610')
+        self.title('LogSis Studio 8 • Controladores DSE')
         width, height = min(1460, self.winfo_screenwidth() - 70), min(920, self.winfo_screenheight() - 70)
         self.geometry(f'{width}x{height}')
         self.minsize(1120, 720)
@@ -142,7 +142,7 @@ class Studio(tk.Tk):
         sidebar.pack(side='left', fill='y'); sidebar.pack_propagate(False)
         self.label(sidebar, 'L /', 30, CYAN, SIDE, True).pack(anchor='w', padx=22, pady=(26, 2))
         self.label(sidebar, 'LOGSIS', 22, INK, SIDE, True).pack(anchor='w', padx=22)
-        self.label(sidebar, 'S T U D I O   /   7', 10, MUTED, SIDE).pack(anchor='w', padx=23, pady=(3, 28))
+        self.label(sidebar, 'S T U D I O   /   8', 10, MUTED, SIDE).pack(anchor='w', padx=23, pady=(3, 28))
         self.label(sidebar, 'ESPAÇO DE TRABALHO', 8, MUTED, SIDE, True).pack(anchor='w', padx=22, pady=(10, 12))
         self.nav = []
         for i, title in enumerate(self.page_names):
@@ -153,15 +153,17 @@ class Studio(tk.Tk):
         footer.pack(side='bottom', fill='x', padx=22, pady=23)
         self.label(footer, 'BIN + GRAFANA', 10, GREEN, SIDE, True).pack(anchor='w')
         self.label(footer, 'Dois lados. O mesmo mapa.', 9, MUTED, SIDE).pack(anchor='w', pady=(6, 12))
-        self.label(footer, 'DSE7420  /  DSE8610', 9, MUTED, SIDE).pack(anchor='w')
+        self.label(footer, f'DSE / {len(available_models())} perfis de controlador', 9, MUTED, SIDE).pack(anchor='w')
         self.label(footer, f'Versão {__version__}', 8, MUTED, SIDE).pack(anchor='w', pady=(5, 0))
         host = ttk.Frame(self, padding=(24, 18, 24, 14)); host.pack(side='left', fill='both', expand=True)
         top = ttk.Frame(host); top.pack(fill='x', pady=(0, 16))
         self.label(top, 'ENGENHARIA  /  CONFIGURAÇÃO', 9, MUTED).pack(side='left')
         self.model_buttons = {}
-        for model in ['DSE8610', 'DSE7420']:
-            button = ttk.Button(top, text=model, style='Model.TButton', command=lambda m=model: self.switch_model(m))
-            button.pack(side='right', padx=(8, 0)); self.model_buttons[model] = button
+        self.model_labels = {(load_profile(model).label or model):model for model in available_models()}
+        self.model_var = tk.StringVar(value=self.project.profile.label or self.project.profile.model)
+        self.model_box = ttk.Combobox(top,textvariable=self.model_var,values=list(self.model_labels),state='readonly',width=24)
+        self.model_box.pack(side='right')
+        self.model_box.bind('<<ComboboxSelected>>',lambda _:self.select_model())
         titlebar = ttk.Frame(host); titlebar.pack(fill='x', pady=(0, 18))
         left = ttk.Frame(titlebar); left.pack(side='left', fill='x', expand=True)
         self.page_title = tk.StringVar()
@@ -208,14 +210,19 @@ class Studio(tk.Tk):
         self.topology.pack(fill='x', padx=20, pady=12)
         self.topology.bind('<Configure>', lambda _: self.draw_topology())
         self.flow_note = tk.StringVar()
-        tk.Label(flow, textvariable=self.flow_note, bg=PANEL, fg=MUTED, font=(self.family, 9), wraplength=850, justify='left', anchor='w').pack(anchor='w', padx=22, pady=(0, 16))
+        self.flow_label=tk.Label(flow, textvariable=self.flow_note, bg=PANEL, fg=MUTED, font=(self.family, 9), wraplength=850, justify='left', anchor='w')
+        self.flow_label.pack(anchor='w', padx=22, pady=(0, 16))
+        flow.bind('<Configure>',lambda event:self.flow_label.configure(wraplength=max(250,event.width-44)))
 
     def draw_topology(self):
         canvas = self.topology
         canvas.delete('all')
         width = max(canvas.winfo_width(), 500)
         items = [('Fontes', 'Rede + Gerador'), ('Transferência', 'K1 / K2'), ('Instalação', 'Carga')]
-        if self.project.profile.model == 'DSE8610': items = [('Fonte', 'Gerador'), ('Acoplamento', 'MDB52 / GCB'), ('Instalação', 'BUS + Carga')]
+        if self.project.profile.kind=='mains_bus': items=[('Fontes','Rede + BUS'),('Indicadores','LED rede / BUS'),('Instalação','Barramento + Carga')]
+        elif self.project.profile.kind=='bus_tie': items=[('Fonte 1','BUS 1'),('Acoplamento','Indicador LED'),('Fonte 2','BUS 2')]
+        elif self.project.profile.kind=='engine_transfer': items=[('Fontes','Rede + Gerador'),('Indicadores','LEDs do controlador'),('Instalação','Carga')]
+        elif self.project.profile.model == 'DSE8610': items = [('Fonte', 'Gerador'), ('Acoplamento', 'MDB52 / GCB'), ('Instalação', 'BUS + Carga')]
         gap = 36; cardw = (width - gap * 2 - 4) / 3
         for i, (caption, value) in enumerate(items):
             x = 2 + i * (cardw + gap)
@@ -377,9 +384,14 @@ class Studio(tk.Tk):
         self.energy_var.set(p.energy_divisor)
         self.maintenance_var.set(p.maintenance_alert_hours)
         self.serial_baud.set(p.general.get('MDB_BAUD', '19200'))
-        self.overview_model.set(p.profile.model)
+        self.overview_model.set(p.profile.label or p.profile.model)
+        self.model_var.set(p.profile.label or p.profile.model)
         self.overview_subtitle.set('Rede, transferência e gerador' if p.profile.model == 'DSE7420' else 'Gerador, acoplamento e barramento comum')
         self.flow_note.set('K1 usa MDB52 e K2 usa MDB53. Ambos com 0 aberto e 1 fechado.' if p.profile.model == 'DSE7420' else 'Um único gerador. O BUS é medido independentemente do estado do disjuntor MDB52.')
+        if p.profile.kind!='legacy':
+            labels={'engine_transfer':'Rede, gerador e motor','mains_bus':'Rede e barramento comum','bus_tie':'BUS 1, acoplamento e BUS 2'}
+            self.overview_subtitle.set(labels[p.profile.kind]+' · mapa GenComm 2.93')
+            self.flow_note.set('Família '+p.profile.manual_family+'. LEDs são indicadores, não retorno físico. '+('Flexíveis A–D seguem a tabela 61xx MkII.' if p.profile.model=='DSE6120' else 'Recursos dependem do hardware e firmware.'))
         self.group_filter.set('Todos os grupos')
         self.group_box.configure(values=['Todos os grupos'] + list(dict.fromkeys(c.group for c in p.profile.channels)))
         self.test_channel_box.configure(values=[f'MDB{c.number:02} · {c.name}' for c in p.profile.channels])
@@ -468,10 +480,13 @@ class Studio(tk.Tk):
         self.compat_status.set(f'{profile.count} canais · Grafana {profile.dashboard_version} · ' + ('mapa compatível' if not issues else f'{len(issues)} divergências'))
         self.audit_heading.set('Mapa compatível com o Grafana' if not issues else f'{len(issues)} divergências para corrigir')
         self.audit_summary.set(f'{profile.model} · {profile.count} canais obrigatórios · BIN e Grafana na mesma ordem')
+        if profile.kind!='legacy':self.audit_summary.set(f'{profile.label} · {profile.count} canais do mapa · disponibilidade por firmware')
         self.export_button.configure(state='normal' if not issues else 'disabled')
         text = '\n\n'.join((f'MDB{i.channel:02} · ' if i.channel else '') + i.message for i in issues)
         if not text:
             text = f'✓ {profile.count} canais nas posições corretas.\n\n✓ Endereços, funções e bits conferidos.\n\n✓ Slots restantes desativados.\n\n✓ MDB40: modos completos.\n\n✓ MDB41/42/43: Warning, Trip e Shutdown.\n\n✓ ' + ('MDB52/53: K1 e K2.' if profile.model == 'DSE7420' else 'MDB52: acoplamento ao BUS.') + '\n\nO pacote inclui BIN, Grafana, mapa CSV e relatório de compatibilidade.'
+        if not issues and profile.kind!='legacy':
+            text=f'✓ {profile.count} canais no mapa {profile.manual_family}.\n\n✓ BIN, CSV e SQL gerados do mesmo perfil.\n\n'+'\n\n'.join(profile.manual_notes or [])
         self.audit_text.configure(state='normal'); self.audit_text.delete('1.0', 'end'); self.audit_text.insert('end', text); self.audit_text.configure(state='disabled')
         return issues
 
@@ -494,6 +509,10 @@ class Studio(tk.Tk):
             messagebox.showinfo('Leitura em andamento', 'Aguarde o término da leitura para trocar o projeto.', parent=self)
             return False
         return not self.has_pending_changes() or messagebox.askyesno('Alterações não salvas', 'Descartar as alterações não salvas deste projeto?', parent=self)
+
+    def select_model(self):
+        self.switch_model(self.model_labels[self.model_var.get()])
+        self.model_var.set(self.project.profile.label or self.project.profile.model)
 
     def switch_model(self, model):
         if model == self.project.profile.model: return
@@ -534,9 +553,7 @@ class Studio(tk.Tk):
             self.show_page(4); messagebox.showerror('Salvar BIN', str(exc), parent=self)
 
     def reference_uid(self):
-        import json
-        template = json.loads((RESOURCES / self.project.profile.dashboard).read_text(encoding='utf-8'))
-        self.uid_var.set(template['uid'])
+        self.uid_var.set(self.project.dashboard_template()['uid'])
 
     def export_bundle(self):
         if not self.flush(): return

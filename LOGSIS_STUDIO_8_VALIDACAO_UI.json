@@ -1,0 +1,61 @@
+{
+  "result": "passed",
+  "models": [
+    {
+      "model": "DSE4520",
+      "widths": [
+        1440,
+        390
+      ],
+      "clipping": []
+    },
+    {
+      "model": "DSE6120",
+      "widths": [
+        1440,
+        390
+      ],
+      "clipping": []
+    },
+    {
+      "model": "DSE6320",
+      "widths": [
+        1440,
+        390
+      ],
+      "clipping": []
+    },
+    {
+      "model": "DSE7320",
+      "widths": [
+        1440,
+        390
+      ],
+      "clipping": []
+    },
+    {
+      "model": "DSE8620",
+      "widths": [
+        1440,
+        390
+      ],
+      "clipping": []
+    },
+    {
+      "model": "DSE8660",
+      "widths": [
+        1440,
+        390
+      ],
+      "clipping": []
+    },
+    {
+      "model": "DSE8680",
+      "widths": [
+        1440,
+        390
+      ],
+      "clipping": []
+    }
+  ]
+}

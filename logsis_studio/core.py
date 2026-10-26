@@ -67,6 +67,9 @@ class Channel:
     unit: str
     divisor: int
     params: dict
+    role: str = ''
+    signed_value: bool | None = None
+    label_variable: str = ''
 
     @property
     def index(self):
@@ -74,6 +77,10 @@ class Channel:
 
     @property
     def input_letter(self):
+        if self.role.startswith('input_'):
+            return self.role.removeprefix('input_').replace('flex_', 'Flex_')
+        if self.role:
+            return None
         if self.group == 'Entradas' and 44 <= self.number <= 51:
             return chr(65 + self.number - 44)
         if self.group == 'Entradas flexíveis':
@@ -82,6 +89,8 @@ class Channel:
 
     @property
     def signed(self):
+        if self.signed_value is not None:
+            return self.signed_value
         return self.number in [2, 3] or 19 <= self.number <= 28 or (self.group == 'Manutenção' and self.number >= 53)
 
 
@@ -93,12 +102,20 @@ class Profile:
     dashboard: str
     dashboard_version: str
     channels: tuple[Channel, ...]
+    label: str = ''
+    kind: str = 'legacy'
+    manual_family: str = ''
+    manual_notes: list[str] | None = None
+
+
+def available_models():
+    return tuple(json.loads((RESOURCES / 'profiles.json').read_text(encoding='utf-8')))
 
 
 def load_profile(model: str) -> Profile:
     profiles = json.loads((RESOURCES / 'profiles.json').read_text(encoding='utf-8'))
     if model not in profiles:
-        raise ValueError('Selecione DSE7420 ou DSE8610.')
+        raise ValueError('Controlador não reconhecido. Selecione um dos perfis disponíveis.')
     raw = profiles[model]
     channels = tuple(Channel(**entry) for entry in raw['channels'])
     if [c.number for c in channels] != list(range(1, raw['count'] + 1)):
@@ -173,6 +190,21 @@ class Issue:
 
 def nominal_limits(channel: Channel, nominal: dict) -> tuple[str, str] | None:
     n = channel.number
+    if channel.role:
+        role = channel.role
+        if '_v_' in role:
+            ll = float(number(nominal['voltage'], 'Tensão nominal'))
+            base = ll / math.sqrt(3) if role.endswith(('l1n','l2n','l3n')) else ll
+            low, high = base*.9*10, base*1.1*10
+        elif role.endswith('_frequency'):
+            base = number(nominal['frequency']); low, high = base*Decimal('.9')*10, base*Decimal('1.1')*10
+        elif role == 'battery':
+            base = number(nominal['battery']); low, high = base*Decimal('.8')*10, base*Decimal('1.2')*10
+        elif role == 'rpm':
+            base = number(nominal['rpm']); low, high = base*Decimal('.9'), base*Decimal('1.1')
+        else:
+            return None
+        return tuple(str(number(v).quantize(Decimal('1'), rounding=ROUND_HALF_UP)) for v in (low, high))
     if n in range(9, 15) or n in range(30, 36):
         ll = float(number(nominal['voltage'], 'Tensão nominal'))
         base = ll / math.sqrt(3) if n in [9, 10, 11, 30, 31, 32] else ll
@@ -221,11 +253,24 @@ class Project:
         for index in range(100):
             rows.append({field: document.params.get(f'MDBA_{field}{index}', DEFAULT_MDB[field]) for field in MDB_FIELDS})
         # Distinguishing source roles matters more than the number of active channels.
-        candidate = rows[28]['ADDR'].strip()
-        model = 'DSE8610' if candidate == '1091' else 'DSE7420' if candidate == '1059' else fallback_model
+        candidates = []
+        for key in available_models():
+            profile = load_profile(key)
+            if all(all(rows[c.index][field].strip() == c.params[field].strip() for field in ['ADDR','FNC','BIT']) for c in profile.channels) and all(row['ID'].strip() in ['', '-1'] for row in rows[profile.count:]):
+                candidates.append(key)
+        if len(candidates) == 1:
+            model = candidates[0]
+        elif candidates:
+            if fallback_model not in candidates:
+                raise ValueError('Mapa compartilhado por ' + ', '.join(candidates) + '. Selecione o modelo do equipamento antes de abrir este BIN.')
+            model = fallback_model
+        else:
+            candidate = rows[28]['ADDR'].strip()
+            model = fallback_model if fallback_model not in ['DSE7420','DSE8610'] else 'DSE8610' if candidate == '1091' else 'DSE7420' if candidate == '1059' else fallback_model
         project = cls(model, document, rows)
         ids = {row['ID'].strip() for row in rows[:project.profile.count] if row['ID'].strip() not in ['', '-1']}
         project.slave = next(iter(ids)) if len(ids) == 1 else '10'
+        project.model_candidates = candidates
         project.source = Path(source) if source else None
         return project
 
@@ -330,7 +375,14 @@ class Project:
         return edited if edited and edited != channel.params['DM'] else channel.name
 
     def channel_divisor(self, channel):
-        return number(self.energy_divisor) if channel.number == 37 else Decimal(channel.divisor)
+        energy = channel.role.startswith('energy_') if channel.role else channel.number == 37
+        return number(self.energy_divisor) if energy else Decimal(channel.divisor)
+
+    def dashboard_template(self):
+        if self.profile.kind != 'legacy':
+            from .manual_dashboard import build_dashboard
+            return build_dashboard(self.profile)
+        return json.loads((RESOURCES / self.profile.dashboard).read_text(encoding='utf-8'))
 
     def csv_bytes(self):
         output = io.StringIO(newline='')
@@ -354,14 +406,16 @@ class Project:
         alert_hours = number(self.maintenance_alert_hours, 'Aviso de manutenção')
         if alert_hours < 0:
             raise ValueError('O aviso de manutenção não pode ser negativo.')
-        dashboard = json.loads((RESOURCES / self.profile.dashboard).read_text(encoding='utf-8'))
+        dashboard = self.dashboard_template()
         dashboard.update(id=None, uid=uid, title=f'LOGSIS / {plant.strip()} — {self.profile.model}', version=1)
         labels = {}
         for channel in self.profile.channels:
             variable_name = None
-            if channel.input_letter:
+            if channel.label_variable:
+                variable_name = channel.label_variable
+            elif channel.input_letter:
                 variable_name = 'Nome_Entrada_' + channel.input_letter
-            elif channel.group == 'Manutenção' and channel.number >= 53:
+            elif not channel.role and channel.group == 'Manutenção' and channel.number >= 53:
                 first = 54 if self.profile.model == 'DSE7420' else 53
                 variable_name = 'Nome_Manutencao_' + str(channel.number - first + 1)
             if variable_name:
@@ -400,7 +454,7 @@ class Project:
             'dashboard_reference': self.profile.dashboard_version, 'channels': self.profile.count,
             'table': table, 'dashboard_uid': dashboard['uid'], 'datasource_uid': datasource,
             'sha256_bin': hashlib.sha256(binary).hexdigest(), 'compatible': True,
-            'mode_field': 'mdb40', 'mode_codes': MODES,
+            'mode_field': next((c.column for c in self.profile.channels if c.role=='mode'), 'mdb40'), 'mode_codes': ({**MODES,4:'AUTO / RETORNO MANUAL',5:'CONFIGURAÇÃO'} if self.profile.kind!='legacy' else MODES),
             'alarm_fields': {'warning': 'mdb41 / bit 10', 'trip': 'mdb42 / bit 11', 'shutdown': 'mdb43 / bit 12'},
             'breaker': 'mdb52 / 0 aberto, 1 fechado',
             'transfer_generator': 'mdb53 / 0 aberto, 1 fechado' if self.profile.model == 'DSE7420' else None,
@@ -412,6 +466,12 @@ class Project:
                               'bit': integer(self.rows[c.index]['BIT']), 'divisor': str(self.channel_divisor(c)), 'unit': c.unit}
                              for c in self.profile.channels],
         }
+        if self.profile.kind != 'legacy':
+            report.update(manual_family=self.profile.manual_family, verification_basis='GenComm 2.93 / 13-04-2015; document-based, no physical controller test', manual_notes=self.profile.manual_notes,
+                          signal_semantics='LED indicators, not physical breaker feedback',
+                          alarm_fields={c.role:f'{c.column} / bit {c.params["BIT"]}' for c in self.profile.channels if c.role in ['warning','trip','shutdown']},
+                          breaker={c.role:c.column for c in self.profile.channels if c.role.startswith('led_')},transfer_generator=None,
+                          role_columns={c.role:c.column for c in self.profile.channels if c.role})
         stream = io.BytesIO()
         with zipfile.ZipFile(stream, 'w', zipfile.ZIP_DEFLATED) as archive:
             prefix = self.profile.model
