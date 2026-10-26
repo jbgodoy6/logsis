@@ -1,14 +1,14 @@
-# EnergyCube D-Max — Controlador de demanda · v0.2.1
+# EnergyCube D-Max — Controlador de demanda · v0.2.2
 
 Primeira versão para **validação em Windows**, com a mesma base Python no Linux ARM64 do Raspberry Pi 4. Interface web local, simulador, SQLite, distribuição de potência e adaptador OCPP 1.6J. Não depende dos dashboards antigos deste repositório.
 
-[Tela TCP/IP](docs/multimedidor-tcp.png) · [Tela RS485](docs/multimedidor-rs485.png) · [Validação v0.2.1](docs/validation-v02.md)
+[Tela TCP/IP](docs/multimedidor-tcp.png) · [Tela RS485](docs/multimedidor-rs485.png) · [Validação v0.2.2](docs/validation-v02.md)
 
 ![Visão geral](docs/painel-desktop.png)
 
 ## Iniciar no Windows
 
-1. Use **Python 3.12 ou 3.13 de 64 bits**, com o Python Launcher (`py`). Se uma dessas versões já estiver instalada, não instale outra. Confira com `py -0p`. O iniciador prefere 3.13 e usa 3.12 como alternativa; não seleciona 3.14 automaticamente.
+1. Use **Python 3.12, 3.13 ou 3.14 de 64 bits**, com o Python Launcher (`py`). Se uma dessas versões puder ser executada pela sua conta, não instale outra. Uma versão listada pode estar inacessível por permissão. Confira com `py -0p`. O iniciador testa a execução de 3.13, 3.12 e 3.14 nessa ordem, usando a primeira acessível.
 2. Extraia a pasta do projeto em um diretório gravável, por exemplo `C:\D-Max`. Não execute dentro do ZIP.
 3. Execute **`iniciar-windows.bat`**. A primeira execução precisa de internet para instalar as dependências. Depois de instaladas, o mesmo lançador funciona sem internet enquanto o arquivo de dependências não mudar.
 4. No próprio computador servidor, abra **http://127.0.0.1:8080**. Defina a senha raiz e uma senha separada para o administrador. Nenhuma senha é embutida no código ou no pacote.
@@ -32,7 +32,7 @@ python3 -m venv .venv
 .venv/bin/python run.py
 ```
 
-A execução foi verificada em Linux x86-64 com Python 3.12 e Python 3.13. Os 44 testes passaram em ambas as versões. Também foi verificada a disponibilidade de wheels das dependências fixadas para CPython 3.13/Windows x64. **Windows e Raspberry Pi físicos ainda precisam de validação.** As dependências com extensão nativa são instaladas para a plataforma de destino. Copie o projeto e migre o banco com backup consistente; não copie a pasta `.venv` entre sistemas.
+A execução foi verificada em Linux x86-64 com Python 3.12, 3.13 e 3.14. Os 44 testes passaram nas três versões. Também foi verificada a disponibilidade de wheels das dependências fixadas para CPython 3.13 e 3.14/Windows x64. **Windows e Raspberry Pi físicos ainda precisam de validação.** As dependências com extensão nativa são instaladas para a plataforma de destino. Copie o projeto e migre o banco com backup consistente; não copie a pasta `.venv` entre sistemas.
 
 ## Identidade EnergyCube
 
@@ -137,4 +137,4 @@ Os arquivos de `app/static/` são locais: não há fontes, bibliotecas ou script
 
 ## Falha 1603 ao instalar Python
 
-O iniciador desta versão aproveita Python 3.13 ou 3.12 já instalado. Para o diagnóstico da falha MSI observada e instruções de uso sem reinstalação, consulte [Python no Windows](docs/python-windows.md).
+O iniciador desta versão aproveita Python 3.12, 3.13 ou 3.14 já instalado e acessível. Para o diagnóstico da falha MSI observada e instruções de uso sem reinstalação, consulte [Python no Windows](docs/python-windows.md).
