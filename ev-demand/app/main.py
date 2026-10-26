@@ -171,7 +171,7 @@ def create_app(database=None, background=True):
         engine.flush()
         store.db.close()
 
-    app = FastAPI(title='EnergyCube D-Max · Controle de demanda', version='0.2.0', lifespan=lifespan,
+    app = FastAPI(title='EnergyCube D-Max · Controle de demanda', version='0.2.1', lifespan=lifespan,
                   docs_url=None, redoc_url=None, openapi_url=None)
     app.state.store, app.state.engine = store, engine
 
