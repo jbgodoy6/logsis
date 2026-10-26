@@ -254,7 +254,7 @@ class Studio(tk.Tk):
         tk.Label(inner, textvariable=self.detail_title, bg=BG, fg=CYAN, font=(self.family, 21, 'bold'), anchor='w').pack(fill='x', pady=(1, 5))
         tk.Label(inner, textvariable=self.detail_info, bg=BG, fg=MUTED, font=(self.family, 9), justify='left', wraplength=265, anchor='w').pack(fill='x', pady=(0, 16))
         self.editor = {}
-        for key, caption in [('DM', 'Descrição normal'), ('DH', 'Texto acima de TH'), ('DL', 'Texto abaixo de TL'), ('TL', 'Limite inferior · contagem bruta'), ('TH', 'Limite superior · contagem bruta')]:
+        for key, caption in [('DM', 'Nome / descrição no Grafana'), ('DH', 'Texto acima de TH'), ('DL', 'Texto abaixo de TL'), ('TL', 'Limite inferior · contagem bruta'), ('TH', 'Limite superior · contagem bruta')]:
             self.label(inner, caption, 9, MUTED).pack(anchor='w', pady=(7, 4))
             self.editor[key] = tk.StringVar(); ttk.Entry(inner, textvariable=self.editor[key]).pack(fill='x', padx=(0, 4))
         advanced = ttk.Frame(inner); advanced.pack(fill='x', pady=(12, 0))
@@ -350,8 +350,8 @@ class Studio(tk.Tk):
         form = self.card(layout); form.grid(row=0, column=0, sticky='nsew', padx=(0, 14))
         self.label(form, 'Pacote da planta', 14, INK, PANEL, True).pack(anchor='w', padx=20, pady=(18, 6))
         self.label(form, 'BIN e dashboard exportados juntos.', 10, MUTED, PANEL).pack(anchor='w', padx=20, pady=(0, 13))
-        self.plant_var = self.tracked('Minha planta'); self.table_var = self.tracked(); self.datasource_var = self.tracked('zKW_ld27k'); self.uid_var = self.tracked(); self.energy_var = self.tracked('10')
-        for label, variable in [('Nome da planta', self.plant_var), ('Tabela SQL · Id_Logsis', self.table_var), ('UID do datasource PostgreSQL', self.datasource_var), ('UID do dashboard · opcional', self.uid_var), ('Divisor de energia · bruto → kWh', self.energy_var)]:
+        self.plant_var = self.tracked('Minha planta'); self.table_var = self.tracked(); self.datasource_var = self.tracked('zKW_ld27k'); self.uid_var = self.tracked(); self.energy_var = self.tracked('10'); self.maintenance_var = self.tracked('50')
+        for label, variable in [('Nome da planta', self.plant_var), ('Tabela SQL · Id_Logsis', self.table_var), ('UID do datasource PostgreSQL', self.datasource_var), ('UID do dashboard · opcional', self.uid_var), ('Divisor de energia · bruto → kWh', self.energy_var), ('Avisar manutenção a partir de · horas', self.maintenance_var)]:
             self.label(form, label, 9, MUTED, PANEL).pack(anchor='w', padx=20, pady=(7, 4))
             ttk.Entry(form, textvariable=variable).pack(fill='x', padx=20)
         self.label(form, 'Tabela: id_planta ou public.id_planta.\nUID vazio: gera um identificador por modelo e tabela.\nPara atualizar um dashboard, informe seu UID atual.', 8, MUTED, PANEL, justify='left').pack(anchor='w', padx=20, pady=(9, 9))
@@ -375,6 +375,7 @@ class Studio(tk.Tk):
         self.slave_var.set(p.slave)
         for key, variable in self.nominal_vars.items(): variable.set(p.nominal[key])
         self.energy_var.set(p.energy_divisor)
+        self.maintenance_var.set(p.maintenance_alert_hours)
         self.serial_baud.set(p.general.get('MDB_BAUD', '19200'))
         self.overview_model.set(p.profile.model)
         self.overview_subtitle.set('Rede, transferência e gerador' if p.profile.model == 'DSE7420' else 'Gerador, acoplamento e barramento comum')
@@ -396,6 +397,9 @@ class Studio(tk.Tk):
             if self.slave_var.get().strip() != self.project.slave:
                 self.project.change_slave(self.slave_var.get())
             self.project.general.update(general)
+            alert = number(self.maintenance_var.get(), 'Aviso de manutenção')
+            if alert < 0: raise ValueError('O aviso de manutenção não pode ser negativo.')
+            self.project.maintenance_alert_hours = str(alert)
             self.project.energy_divisor = str(number(self.energy_var.get(), 'Divisor de energia'))
             if number(self.project.energy_divisor) <= 0: raise ValueError('O divisor de energia deve ser positivo.')
             return True
@@ -416,7 +420,7 @@ class Studio(tk.Tk):
             if group != 'Todos os grupos' and channel.group != group: continue
             issues = self.project.row_issues(channel)
             scale = '÷ ' + str(self.project.channel_divisor(channel)) if channel.divisor != 1 else channel.unit
-            self.tree.insert('', 'end', iid=str(channel.index), values=(f'MDB{channel.number:02}', channel.name, channel.group, row['ADDR'], row['FNC'], scale, 'Revisar' if issues else 'OK'), tags=(('odd',) if channel.index % 2 else ()) + (('error',) if issues else ()))
+            self.tree.insert('', 'end', iid=str(channel.index), values=(f'MDB{channel.number:02}', self.project.channel_name(channel), channel.group, row['ADDR'], row['FNC'], scale, 'Revisar' if issues else 'OK'), tags=(('odd',) if channel.index % 2 else ()) + (('error',) if issues else ()))
         if self.tree.exists(selected): self.tree.selection_set(selected)
 
     def load_editor(self):

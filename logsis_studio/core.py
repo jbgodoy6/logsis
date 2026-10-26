@@ -74,7 +74,7 @@ class Channel:
 
     @property
     def signed(self):
-        return self.number in [2, 3] or 19 <= self.number <= 28
+        return self.number in [2, 3] or 19 <= self.number <= 28 or (self.group == 'Manutenção' and self.number >= 53)
 
 
 @dataclass(frozen=True)
@@ -192,6 +192,7 @@ class Project:
         self.slave = '10'
         self.nominal = {'voltage': '380', 'frequency': '60', 'battery': '24', 'rpm': '1800'}
         self.energy_divisor = '10'
+        self.maintenance_alert_hours = '50'
         self.source = None
 
     @classmethod
@@ -316,6 +317,10 @@ class Project:
         for row in self.rows[:self.profile.count]:
             row['ID'] = value
 
+    def channel_name(self, channel):
+        edited = self.rows[channel.index]['DM'].strip()
+        return edited if edited and edited != channel.params['DM'] else channel.name
+
     def channel_divisor(self, channel):
         return number(self.energy_divisor) if channel.number == 37 else Decimal(channel.divisor)
 
@@ -338,9 +343,28 @@ class Project:
         uid = uid.strip() or f'logsis-{self.profile.model.lower()}-' + hashlib.sha256(table.encode()).hexdigest()[:10]
         if not re.fullmatch(r'[A-Za-z0-9_-]{1,40}', uid):
             raise ValueError('UID do dashboard: use até 40 letras, números, _ ou -.')
+        alert_hours = number(self.maintenance_alert_hours, 'Aviso de manutenção')
+        if alert_hours < 0:
+            raise ValueError('O aviso de manutenção não pode ser negativo.')
         dashboard = json.loads((RESOURCES / self.profile.dashboard).read_text(encoding='utf-8'))
         dashboard.update(id=None, uid=uid, title=f'LOGSIS / {plant.strip()} — {self.profile.model}', version=1)
+        labels = {}
+        for channel in self.profile.channels:
+            variable_name = None
+            if 44 <= channel.number <= 51:
+                variable_name = 'Nome_Entrada_' + chr(65 + channel.number - 44)
+            elif channel.group == 'Manutenção' and channel.number >= 53:
+                first = 54 if self.profile.model == 'DSE7420' else 53
+                variable_name = 'Nome_Manutencao_' + str(channel.number - first + 1)
+            if variable_name:
+                labels[variable_name] = self.channel_name(channel)
         for variable in dashboard['templating']['list']:
+            if variable['name'] in labels:
+                variable['query'] = labels[variable['name']]
+                variable.pop('current', None)
+            elif variable['name'] == 'Manutencao_Alerta_h':
+                variable['query'] = str(alert_hours)
+                variable.pop('current', None)
             if variable['name'] == 'Id_Logsis':
                 variable['query'] = table
                 variable.pop('current', None)
@@ -373,6 +397,8 @@ class Project:
             'breaker': 'mdb52 / 0 aberto, 1 fechado',
             'transfer_generator': 'mdb53 / 0 aberto, 1 fechado' if self.profile.model == 'DSE7420' else None,
             'energy_divisor': str(number(self.energy_divisor)),
+            'maintenance_alert_hours': str(number(self.maintenance_alert_hours)),
+            'profile_version': self.profile.version,
             'channels_map': [{'mdb': c.number, 'bin_index': c.index, 'sql_column': c.column,
                               'address': integer(self.rows[c.index]['ADDR']), 'fnc': integer(self.rows[c.index]['FNC']),
                               'bit': integer(self.rows[c.index]['BIT']), 'divisor': str(self.channel_divisor(c)), 'unit': c.unit}

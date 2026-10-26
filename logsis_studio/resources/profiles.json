@@ -1,10 +1,10 @@
 {
   "DSE7420": {
     "model": "DSE7420",
-    "version": "1.1",
-    "count": 53,
+    "version": "2.0",
+    "count": 56,
     "dashboard": "dse7420.json",
-    "dashboard_version": "V41",
+    "dashboard_version": "V42",
     "channels": [
       {
         "number": 1,
@@ -1171,15 +1171,81 @@
           "TL": "0",
           "SM": "0"
         }
+      },
+      {
+        "number": 54,
+        "column": "mdb54",
+        "name": "Manutenção 1",
+        "group": "Manutenção",
+        "unit": "h",
+        "divisor": 3600,
+        "params": {
+          "DH": "MANUTENCAO 1 EM DIA",
+          "DM": "Manutencao 1",
+          "DL": "MANUTENCAO 1 VENCIDA",
+          "ID": "10",
+          "FNC": "30",
+          "ADDR": "1836",
+          "BIT": "-1",
+          "H": "100",
+          "VR": "-1",
+          "TH": "180000",
+          "TL": "0",
+          "SM": "0"
+        }
+      },
+      {
+        "number": 55,
+        "column": "mdb55",
+        "name": "Manutenção 2",
+        "group": "Manutenção",
+        "unit": "h",
+        "divisor": 3600,
+        "params": {
+          "DH": "MANUTENCAO 2 EM DIA",
+          "DM": "Manutencao 2",
+          "DL": "MANUTENCAO 2 VENCIDA",
+          "ID": "10",
+          "FNC": "30",
+          "ADDR": "1840",
+          "BIT": "-1",
+          "H": "100",
+          "VR": "-1",
+          "TH": "180000",
+          "TL": "0",
+          "SM": "0"
+        }
+      },
+      {
+        "number": 56,
+        "column": "mdb56",
+        "name": "Manutenção 3",
+        "group": "Manutenção",
+        "unit": "h",
+        "divisor": 3600,
+        "params": {
+          "DH": "MANUTENCAO 3 EM DIA",
+          "DM": "Manutencao 3",
+          "DL": "MANUTENCAO 3 VENCIDA",
+          "ID": "10",
+          "FNC": "30",
+          "ADDR": "1844",
+          "BIT": "-1",
+          "H": "100",
+          "VR": "-1",
+          "TH": "180000",
+          "TL": "0",
+          "SM": "0"
+        }
       }
     ]
   },
   "DSE8610": {
     "model": "DSE8610",
-    "version": "1.0",
-    "count": 52,
+    "version": "2.0",
+    "count": 55,
     "dashboard": "dse8610.json",
-    "dashboard_version": "V3",
+    "dashboard_version": "V4",
     "channels": [
       {
         "number": 1,
@@ -2321,6 +2387,72 @@
           "H": "100",
           "VR": "-1",
           "TH": "0",
+          "TL": "0",
+          "SM": "0"
+        }
+      },
+      {
+        "number": 53,
+        "column": "mdb53",
+        "name": "Manutenção 1",
+        "group": "Manutenção",
+        "unit": "h",
+        "divisor": 3600,
+        "params": {
+          "DH": "MANUTENCAO 1 EM DIA",
+          "DM": "Manutencao 1",
+          "DL": "MANUTENCAO 1 VENCIDA",
+          "ID": "10",
+          "FNC": "30",
+          "ADDR": "1836",
+          "BIT": "-1",
+          "H": "100",
+          "VR": "-1",
+          "TH": "180000",
+          "TL": "0",
+          "SM": "0"
+        }
+      },
+      {
+        "number": 54,
+        "column": "mdb54",
+        "name": "Manutenção 2",
+        "group": "Manutenção",
+        "unit": "h",
+        "divisor": 3600,
+        "params": {
+          "DH": "MANUTENCAO 2 EM DIA",
+          "DM": "Manutencao 2",
+          "DL": "MANUTENCAO 2 VENCIDA",
+          "ID": "10",
+          "FNC": "30",
+          "ADDR": "1840",
+          "BIT": "-1",
+          "H": "100",
+          "VR": "-1",
+          "TH": "180000",
+          "TL": "0",
+          "SM": "0"
+        }
+      },
+      {
+        "number": 55,
+        "column": "mdb55",
+        "name": "Manutenção 3",
+        "group": "Manutenção",
+        "unit": "h",
+        "divisor": 3600,
+        "params": {
+          "DH": "MANUTENCAO 3 EM DIA",
+          "DM": "Manutencao 3",
+          "DL": "MANUTENCAO 3 VENCIDA",
+          "ID": "10",
+          "FNC": "30",
+          "ADDR": "1844",
+          "BIT": "-1",
+          "H": "100",
+          "VR": "-1",
+          "TH": "180000",
           "TL": "0",
           "SM": "0"
         }

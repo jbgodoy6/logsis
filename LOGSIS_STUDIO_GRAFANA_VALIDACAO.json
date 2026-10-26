@@ -4,7 +4,7 @@
   "models": [
     {
       "model": "DSE7420",
-      "channels": 53,
+      "channels": 56,
       "decodedFromBinSlots": true,
       "grafanaFields": {
         "MDB01": 4.5,
@@ -20,14 +20,22 @@
         "MODO_LOCAL": "MANUAL",
         "GSM_LOCAL": -53,
         "WIFI_LOCAL": -67,
-        "MDB53": 0
+        "MDB53": 0,
+        "MDB54": 200.0,
+        "MDB55": 25.0,
+        "MDB56": 0.0,
+        "MANUTENCAO_1_ESTADO": "ok",
+        "MANUTENCAO_2_ESTADO": "near",
+        "MANUTENCAO_3_ESTADO": "due",
+        "MANUTENCAO_RESUMO": "Manutenção 3 / VENCIDA",
+        "MANUTENCAO_ESTADO": "due"
       },
       "periodHours": 3.5,
       "periodKwh": 18.0
     },
     {
       "model": "DSE8610",
-      "channels": 52,
+      "channels": 55,
       "decodedFromBinSlots": true,
       "grafanaFields": {
         "MDB01": 4.5,
@@ -44,7 +52,15 @@
         "GSM_LOCAL": -53,
         "WIFI_LOCAL": -67,
         "TENSAO_BUS": 1,
-        "GERADOR_ALARME": "GERADOR / SHUTDOWN"
+        "GERADOR_ALARME": "GERADOR / SHUTDOWN",
+        "MDB53": 200.0,
+        "MDB54": 25.0,
+        "MDB55": 0.0,
+        "MANUTENCAO_1_ESTADO": "ok",
+        "MANUTENCAO_2_ESTADO": "near",
+        "MANUTENCAO_3_ESTADO": "due",
+        "MANUTENCAO_RESUMO": "Manutenção 3 / VENCIDA",
+        "MANUTENCAO_ESTADO": "due"
       },
       "periodHours": 3.5,
       "periodKwh": 18.0

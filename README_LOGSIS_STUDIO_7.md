@@ -1,10 +1,10 @@
 # LogSis Studio 7 — DSE7420 / DSE8610
 
-Editor e gerador de configuração LogSis com **perfis fixos alinhados aos dashboards DSE7420 V41 e DSE8610 V3**. Interface escura, navegação lateral, busca de canais, conferência de compatibilidade e exportação conjunta do BIN e do Grafana.
+Editor e gerador de configuração LogSis com **perfis fixos alinhados aos dashboards DSE7420 V42 e DSE8610 V4**. Interface escura, navegação lateral, busca de canais, conferência de compatibilidade e exportação conjunta do BIN e do Grafana.
 
-[Baixar programa completo](LOGSIS_STUDIO_7_0_1.zip) · [Interface](LOGSIS_STUDIO_7_INICIO.png) · [Mapa de canais](LOGSIS_STUDIO_7_MAPA.png) · [Exportação](LOGSIS_STUDIO_7_EXPORTACAO.png)
+[Baixar programa completo](LOGSIS_STUDIO_7_1.zip) · [Interface](LOGSIS_STUDIO_7_INICIO.png) · [Mapa de canais](LOGSIS_STUDIO_7_MAPA.png) · [Exportação](LOGSIS_STUDIO_7_EXPORTACAO.png)
 
-Na versão **7.0.1**, os endereços das duas chaves do DSE7420 foram corrigidos. Para atualizar um BIN anterior, abra-o, reaplique o perfil DSE7420 e gere um novo BIN. A ordem das MDBs e as consultas do Grafana permanecem as mesmas.
+Na versão **7.1**, os três contadores de manutenção foram acrescentados ao final de cada perfil, preservando todas as posições existentes e a correção das chaves do DSE7420 da 7.0.1. Para atualizar um BIN anterior, abra-o, reaplique o perfil do modelo e gere novamente o BIN e o JSON. Os novos contadores precisam ser coletados pelo equipamento e armazenados nas respectivas colunas SQL; o Studio não altera seu banco.
 
 ## Abrir o programa
 
@@ -42,7 +42,7 @@ A tabela aceita nomes como `id_269086509881540` ou `public.id_planta`. O UID ini
 
 **MDB01 no Grafana = coluna `mdb1` = índice 0 do BIN (`MDBA_ADDR0`, etc.).** O número mostrado no Studio segue a numeração do Grafana; o índice zero do BIN aparece nos detalhes e no CSV.
 
-| Faixa Grafana | DSE7420 — 53 canais | DSE8610 — 52 canais |
+| Faixa Grafana | DSE7420 — 56 canais | DSE8610 — 55 canais |
 |---|---|---|
 | MDB01–07 | Motor | Motor |
 | MDB08–28 | Grandezas do gerador | Grandezas do gerador |
@@ -54,7 +54,10 @@ A tabela aceita nomes como `id_269086509881540` ou `public.id_planta`. O UID ini
 | MDB41/42/43 | Warning / Trip / Shutdown | Warning / Trip / Shutdown |
 | MDB44–51 | Entradas A–H | Entradas A–H |
 | MDB52 | K1, rede na carga | Disjuntor de acoplamento ao BUS |
-| MDB53 | K2, gerador na carga | Reservado/desativado |
+| MDB53 | K2, gerador na carga | Manutenção 1 / 1836 |
+| MDB54 | Manutenção 1 / 1836 | Manutenção 2 / 1840 |
+| MDB55 | Manutenção 2 / 1840 | Manutenção 3 / 1844 |
+| MDB56 | Manutenção 3 / 1844 | Reservado/desativado |
 
 O DSE8610 continua **sem concessionária e com apenas um gerador desenhado**. Seu BUS é medido independentemente do estado do disjuntor. Os slots restantes até 100 são desativados no perfil completo.
 
@@ -72,6 +75,22 @@ Os limites nominais iniciais são 380 V L–L, 60 Hz, bateria 24 V e 1800 rpm. S
 
 Os recursos do Grafana preservam Brasília, traços nos valores indisponíveis, cores de alarme, curvas com pontos, posições filtradas e as regras aprovadas de horas/kWh do período. O BIN define os registros e bits; as conversões de engenharia continuam no dashboard.
 
+## Manutenções e nomes personalizados
+
+Manutenções 1, 2 e 3: registros **1836, 1840 e 1844**, função LogSis 30 (FC03, dois registradores), /3600 para horas. Os valores zero ou negativos indicam vencimento. Valores indisponíveis mostram traço, sem substituir por uma leitura anterior válida. MDB39 continua sendo o contador geral até manutenção e não foi substituído.
+
+No desenho, manutenção próxima deixa o gerador amarelo; vencida, laranja. Um texto separado mostra o nome da manutenção. Os alarmes Warning, Trip e Shutdown têm prioridade sobre a cor de manutenção; a indicação textual de manutenção permanece. Dados ausentes não são tratados como manutenção em dia.
+
+O limite inicial é **50 h**, ajustável no formulário de exportação do Studio ou na variável `Manutencao_Alerta_h` do Grafana. O valor vale para os três contadores; não reprograma os intervalos no controlador. Na comparação, 0 é vencida; acima de 0 e até o limite, próxima; acima do limite, em dia.
+
+Em **Dashboard settings → Variables**, altere `Nome_Manutencao_1`, `Nome_Manutencao_2`, `Nome_Manutencao_3` e `Nome_Entrada_A` até `Nome_Entrada_H`. Por exemplo: “Troca de óleo” ou “Porta da sala”. Os nomes de manutenção aparecem nos cartões e no aviso junto ao gerador; os nomes das entradas aparecem nos instrumentos. As variáveis de nome não mudam endereços nem polaridade.
+
+No Studio, editar **Nome / descrição no Grafana (DM)** nos respectivos canais preenche essas variáveis ao exportar. Esse texto também é gravado no DM do BIN. Reaplicar o perfil redefine textos e limites, conforme a confirmação do programa; ajuste os nomes após essa etapa.
+
+Origem dos três registros: `LOGSIS_DSE7420_MAPEAMENTO_TECNICO.csv` recebido no pacote original, página GenComm 7, offsets 44/48/52. O perfil DSE8610 reutiliza esses registros comuns GenComm; o BIN DSE8610 recebido não continha os três canais e não constitui confirmação independente deles no firmware. A escala em segundos segue a memória técnica enviada. A implementação foi validada com dados sintéticos, sem leitura física do DSE8610.
+
+**Entradas analógicas usadas como digitais:** os arquivos recebidos documentam apenas os estados A–H. Os endereços dos estados analógicos digitais ainda não foram fornecidos; não foram atribuídos registros por aproximação nem confundidas as leituras dos sensores com estados de contato.
+
 ## Teste Modbus
 
 A tela **Teste Modbus** executa somente leituras, sem comandos de partida, parada ou fechamento de disjuntores. Informe a conexão e selecione o canal.
@@ -86,10 +105,12 @@ Os endereços e bits seguem os mapas usados no projeto. Variantes/firmwares, esc
 
 ## Validação da versão
 
-26 testes automatizados: 18 de núcleo/transporte e oito fluxos reais da interface Tk. Cobrem geração, reabertura, preservação de parâmetros/encoding/CRLF/BOM, divergências, slots reservados, limites, exportação, UID por planta, gravação atômica, TCP em simulador local e RTU com respostas simuladas.
+30 testes automatizados: 21 de núcleo/transporte e nove fluxos reais da interface Tk. Cobrem geração, reabertura, preservação de parâmetros/encoding/CRLF/BOM, divergências, slots reservados, limites, exportação, UID por planta, gravação atômica, TCP em simulador local e RTU com respostas simuladas.
 
 O teste de integração **BIN → valores pelos slots → SQL do JSON exportado** passou nos dois modelos, inclusive com valores diferentes para rede e BUS, bits de Warning/Shutdown e resultado de período **3,50 h / 18,00 kWh**. [Resultado](LOGSIS_STUDIO_GRAFANA_VALIDACAO.json).
 
 A interface foi conferida em 1460×920 e 1120×740, com leitura local sem travar a janela. [Resumo da validação](LOGSIS_STUDIO_VALIDACAO.json). Testes executados em Linux com Tk, simuladores e PostgreSQL isolado; sem acesso ao controlador ou banco de produção.
 
 Para desenvolvimento: `python -m unittest discover -s tests -p 'test_studio*.py' -v`. Os testes de interface exigem DISPLAY; a integração opcional usa o laboratório Docker: `python tools/validate_studio_grafana.py`.
+
+As regras de manutenção foram verificadas no PostgreSQL para os dois modelos: normal, limite, próxima, zero, negativo, negativo em complemento de dois, sentinelas, falta de dados, ausência de coluna e prioridade de shutdown. [Resultado](LOGSIS_MANUTENCAO_VALIDACAO.json).

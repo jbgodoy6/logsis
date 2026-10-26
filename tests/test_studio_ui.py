@@ -30,18 +30,34 @@ class InterfaceTests(unittest.TestCase):
 
     def test_models_and_hidden_channels_do_not_change_serialization(self):
         app = self.app
-        self.assertEqual(len(app.tree.get_children()), 53)
+        self.assertEqual(len(app.tree.get_children()), 56)
         app.search.set('mdb53'); app.update()
         self.assertEqual(len(app.tree.get_children()), 1)
         self.assertEqual(app.project.validate(), [])
-        self.assertEqual(len([r for r in app.project.rows if r['ADDR'] != '-1']), 53)
+        self.assertEqual(len([r for r in app.project.rows if r['ADDR'] != '-1']), 56)
         app.table_var.set('id_primeira'); app.uid_var.set('uid-primeira')
         app.switch_model('DSE8610'); app.search.set(''); app.update()
-        self.assertEqual(len(app.tree.get_children()), 52)
+        self.assertEqual(len(app.tree.get_children()), 55)
         self.assertEqual(app.table_var.get(), '')
         self.assertEqual(app.uid_var.get(), '')
-        self.assertEqual(app.project.rows[52]['ADDR'], '-1')
+        self.assertEqual(app.project.rows[55]['ADDR'], '-1')
         self.assertEqual(self.errors, [])
+
+    def test_custom_input_name_and_maintenance_threshold_reach_export(self):
+        app=self.app
+        app.show_page(1)
+        app.tree.selection_set('43');app.tree.event_generate('<<TreeviewSelect>>');app.update()
+        app.editor['DM'].set('Porta da sala')
+        app.maintenance_var.set('12.5')
+        self.assertTrue(app.flush())
+        self.assertEqual(app.tree.item('43','values')[1],'Porta da sala')
+        d=app.project.dashboard('id_demo','Demo','ds')
+        variables={v['name']:v['query'] for v in d['templating']['list']}
+        self.assertEqual(variables['Nome_Entrada_A'],'Porta da sala')
+        self.assertEqual(variables['Manutencao_Alerta_h'],'12.5')
+        self.assertIn('NOME_ENTRADA_A',d['panels'][0]['targets'][0]['rawSql'])
+        app.maintenance_var.set('-1')
+        self.assertFalse(app.flush())
 
     def test_edit_and_row_selection_keep_changes_and_selection(self):
         app = self.app
@@ -72,7 +88,7 @@ class InterfaceTests(unittest.TestCase):
         self.assertEqual(app.project.rows[2]['ID'], '11')
         self.assertTrue(app.project.validate())
         app.slave_var.set('12'); self.assertTrue(app.flush())
-        self.assertTrue(all(r['ID'] == '12' for r in app.project.rows[:53]))
+        self.assertTrue(all(r['ID'] == '12' for r in app.project.rows[:56]))
         self.assertEqual(app.project.validate(), [])
         self.assertEqual(self.errors, [])
 

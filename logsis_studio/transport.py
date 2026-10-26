@@ -141,7 +141,7 @@ def decode(channel: Channel, row, registers, low_first=False, energy_divisor='10
     state = ''
     if channel.number == 40:
         state = MODES.get(unsigned, 'MODO INVÁLIDO') if engineering is not None else 'SEM DADOS'
-    elif channel.number >= 41:
+    elif channel.number >= 41 and channel.group != 'Manutenção':
         if engineering is None or value not in [0, 1]:
             state, engineering = 'ESTADO INVÁLIDO', None
         elif channel.number >= 52:

@@ -1,20 +1,20 @@
 {
-  "version": "7.0.1",
+  "version": "7.1.0",
   "result": "passed",
   "models": {
     "DSE7420": {
-      "channels": 53,
-      "grafana": "V41"
+      "channels": 56,
+      "grafana": "V42"
     },
     "DSE8610": {
-      "channels": 52,
-      "grafana": "V3"
+      "channels": 55,
+      "grafana": "V4"
     }
   },
   "automatedTests": {
-    "coreAndTransport": 19,
-    "tkWorkflows": 8,
-    "total": 27
+    "coreAndTransport": 21,
+    "tkWorkflows": 9,
+    "total": 30
   },
   "guiSizes": [
     [
@@ -36,9 +36,15 @@
     "TCP fragmented replies and RTU CRC/exceptions",
     "Local Modbus read updates Tk through queue",
     "Existing DSE7420 V41 and DSE8610 V3 queries preserved",
-    "DSE7420 MDB52=48653 and MDB53=48654; legacy addresses blocked until explicit profile reapplication; DSE8610 MDB52=48659 preserved"
+    "DSE7420 MDB52=48653 and MDB53=48654; legacy addresses blocked until explicit profile reapplication; DSE8610 MDB52=48659 preserved",
+    "Maintenance countdowns appended without moving existing MDBs",
+    "Custom input and maintenance names from Grafana variables",
+    "Yellow near and orange overdue generator; active controller alarms keep priority"
   ],
   "scope": "Linux/Tk, local Modbus simulators and isolated PostgreSQL; no physical equipment test or production access",
   "distributionSmoke": "ZIP extracted to a separate folder; Tk startup and both model exports passed",
-  "releaseFiles": 18
+  "releaseFiles": 20,
+  "maintenanceIntegration": "LOGSIS_MANUTENCAO_VALIDACAO.json",
+  "maintenanceUI": "LOGSIS_MANUTENCAO_UI_VALIDACAO.json",
+  "pending": "Analog inputs used as digital: processed-state register map not present in supplied files"
 }

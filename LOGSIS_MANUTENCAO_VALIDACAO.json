@@ -1,0 +1,42 @@
+{
+  "result": "passed",
+  "scope": "Isolated PostgreSQL fixtures; no physical controller validation",
+  "models": [
+    {
+      "model": "DSE7420",
+      "cases": [
+        "normal",
+        "limit",
+        "near",
+        "zero",
+        "negative",
+        "unsigned_negative",
+        "sentinel",
+        "sentinel_high",
+        "sentinel_all",
+        "absent",
+        "shutdown",
+        "missing_sql_column"
+      ],
+      "passed": true
+    },
+    {
+      "model": "DSE8610",
+      "cases": [
+        "normal",
+        "limit",
+        "near",
+        "zero",
+        "negative",
+        "unsigned_negative",
+        "sentinel",
+        "sentinel_high",
+        "sentinel_all",
+        "absent",
+        "shutdown",
+        "missing_sql_column"
+      ],
+      "passed": true
+    }
+  ]
+}

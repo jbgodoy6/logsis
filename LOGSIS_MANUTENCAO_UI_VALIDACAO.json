@@ -1,0 +1,29 @@
+{
+  "result": "passed",
+  "models": [
+    {
+      "model": "dse7420",
+      "viewports": [
+        390,
+        1440
+      ],
+      "cases": [
+        "VENCIDA",
+        "PROXIMA"
+      ],
+      "customNames": true
+    },
+    {
+      "model": "dse8610",
+      "viewports": [
+        390,
+        1440
+      ],
+      "cases": [
+        "VENCIDA",
+        "PROXIMA"
+      ],
+      "customNames": true
+    }
+  ]
+}

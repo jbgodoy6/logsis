@@ -13,9 +13,9 @@ registers={1024:450,1025:82,1026:85,1027:75,1028:278,1029:274,1030:1800,1031:600
  1091:600,1092:2302,1094:2303,1096:2304,1098:3987,1100:3988,1102:3989,
  1798:372600,1800:2180,1808:29,1794:360000,772:2,774:1024|4096,
  43521:1,43523:0,43525:1,43527:0,43529:0,43531:1,43533:0,43535:0,
- 48653:1,48654:0,48659:1}
+ 48653:1,48654:0,48659:1,1836:720000,1840:90000,1844:0}
 report={'result':'pending','scope':'BIN-to-SQL integration in isolated PostgreSQL; no production access','models':[]}
-for model,count in [('DSE7420',53),('DSE8610',52)]:
+for model,count in [('DSE7420',56),('DSE8610',55)]:
  project=Project.new(model)
  with zipfile.ZipFile(io.BytesIO(project.bundle_bytes('check_studio','Planta de teste'))) as archive:
   params=BinDocument.from_bytes(archive.read(model+'.bin')).params
@@ -30,9 +30,11 @@ for model,count in [('DSE7420',53),('DSE8610',52)]:
   sample=list(values);sample[35]=hours;sample[36]=kwh
   parts.append("INSERT INTO check_studio VALUES ('"+time+"',-53,-67,"+','.join(str(v) for v in sample)+');')
  def resolve(sql):
-  for variable in dashboard['templating']['list']:sql=sql.replace('${'+variable['name']+':sqlstring}',"'"+variable['query']+"'")
+  for variable in dashboard['templating']['list']:sql=sql.replace('${'+variable['name']+':sqlstring}',"'"+variable['query'].replace("'","''")+"'")
   return sql.replace('$Id_Logsis','check_studio').replace('$__timeFilter("time")','"time" BETWEEN \'2026-10-23T12:00Z\' AND \'2026-10-23T13:00Z\'').replace('$__timeFrom()',"'2026-10-23T12:00Z'::timestamptz").replace('$__timeTo()',"'2026-10-23T13:00Z'::timestamptz")
  keys=['MDB01','MDB09','MDB30','MDB36','MDB37','MDB40','MDB41','MDB42','MDB43','MDB52','MODO_LOCAL','GSM_LOCAL','WIFI_LOCAL']+(['MDB53'] if model=='DSE7420' else ['TENSAO_BUS','GERADOR_ALARME'])
+ first=54 if model=='DSE7420' else 53
+ keys += [f'MDB{n}' for n in range(first,first+3)]+['MANUTENCAO_1_ESTADO','MANUTENCAO_2_ESTADO','MANUTENCAO_3_ESTADO','MANUTENCAO_RESUMO','MANUTENCAO_ESTADO','GERADOR_STATUS_SVG']
  main=dashboard['panels'][0]['targets'][0]['rawSql']
  parts.append('SELECT row_to_json(q) FROM (SELECT '+','.join('"'+k+'"' for k in keys)+' FROM ('+resolve(main)+') data) q;')
  for id in [14,15]:
@@ -45,6 +47,11 @@ for model,count in [('DSE7420',53),('DSE8610',52)]:
  assert all(main[key]==value for key,value in expected.items()),(model,main,expected)
  if model=='DSE7420':assert main['MDB53']==0
  else:assert main['TENSAO_BUS']==1 and main['GERADOR_ALARME']=='GERADOR / SHUTDOWN'
+ assert [main[f'MDB{n}'] for n in range(first,first+3)]==[200,25,0]
+ assert [main[f'MANUTENCAO_{n}_ESTADO'] for n in range(1,4)]==['ok','near','due']
+ assert main['MANUTENCAO_RESUMO']=='Manutenção 3 / VENCIDA'
+ # Active shutdown retains its red picture, despite maintenance due.
+ assert '%23' in main.pop('GERADOR_STATUS_SVG')
  assert hours['HORAS_PERIODO']==3.5 and energy['KWH_PERIODO']==18
  report['models'].append({'model':model,'channels':count,'decodedFromBinSlots':True,'grafanaFields':main,'periodHours':hours['HORAS_PERIODO'],'periodKwh':energy['KWH_PERIODO']})
 report['result']='passed'

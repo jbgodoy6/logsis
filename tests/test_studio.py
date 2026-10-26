@@ -20,7 +20,7 @@ from logsis_studio.transport import ModbusError, crc16, decode, parse_pdu, read_
 class ProfileTests(unittest.TestCase):
     def test_exact_mapping_and_zero_based_bin(self):
         common = {1: (1024, 3, -1), 8: (1031, 3, -1), 9: (1032, 30, -1), 22: (1536, 30, -1), 28: (1557, 3, -1), 36: (1798, 30, -1), 37: (1800, 30, -1), 40: (772, 3, -1), 41: (774, 3, 10), 42: (774, 3, 11), 43: (774, 3, 12), 44: (43521, 3, -1), 51: (43535, 3, -1)}
-        for model, count in [('DSE7420', 53), ('DSE8610', 52)]:
+        for model, count in [('DSE7420', 56), ('DSE8610', 55)]:
             with self.subTest(model=model):
                 p = Project.new(model)
                 self.assertEqual(p.validate(), [])
@@ -54,6 +54,36 @@ class ProfileTests(unittest.TestCase):
             self.assertEqual((params['MDBA_ADDR51'], params['MDBA_ADDR52']), ('48653', '48654'))
             report = json.loads(archive.read('COMPATIBILIDADE.json'))
             self.assertEqual([c['address'] for c in report['channels_map'][51:53]], [48653, 48654])
+
+    def test_maintenance_extension_does_not_move_existing_channels(self):
+        for model, first in [('DSE7420',54),('DSE8610',53)]:
+            p=Project.new(model)
+            for n,address in [(36,1798),(37,1800),(39,1794),(40,772),(41,774),(42,774),(43,774),(44,43521),(51,43535)]:
+                self.assertEqual(p.rows[n-1]['ADDR'],str(address))
+            self.assertEqual(p.rows[51]['ADDR'],'48653' if model=='DSE7420' else '48659')
+            if model=='DSE7420':self.assertEqual(p.rows[52]['ADDR'],'48654')
+            for i,address in enumerate([1836,1840,1844]):
+                c=p.profile.channels[first+i-1]
+                self.assertEqual((c.params['ADDR'],c.params['FNC'],c.divisor), (str(address),'30',3600))
+                self.assertEqual(decode(c,p.rows[c.index],(0,36000)).engineering,Decimal('10'))
+                self.assertEqual(decode(c,p.rows[c.index],(0,0)).engineering,Decimal('0'))
+                self.assertEqual(decode(c,p.rows[c.index],(65535,61936)).engineering,Decimal('-1'))
+                self.assertIsNone(decode(c,p.rows[c.index],(32767,65535)).engineering)
+                self.assertEqual(decode(c,p.rows[c.index],(0,36000)).state,'')
+
+    def test_custom_names_and_maintenance_threshold_export(self):
+        for model,first in [('DSE7420',54),('DSE8610',53)]:
+            p=Project.new(model)
+            p.set_channel_metadata(43,{'DM':'Porta da sala'})
+            p.set_channel_metadata(first-1,{'DM':"Troca de óleo d'água"})
+            p.maintenance_alert_hours='25'
+            dashboard=p.dashboard('id_demo','Demo','ds')
+            variables={v['name']:v['query'] for v in dashboard['templating']['list']}
+            self.assertEqual(variables['Nome_Entrada_A'],'Porta da sala')
+            self.assertEqual(variables['Nome_Manutencao_1'],"Troca de óleo d'água")
+            self.assertEqual(variables['Manutencao_Alerta_h'],'25')
+            p.maintenance_alert_hours='-1'
+            with self.assertRaises(ValueError):p.bundle_bytes('id_demo','Demo')
 
     def test_profiles_match_independent_audited_bin(self):
         audit = json.loads((Path(__file__).resolve().parents[1] / 'DSE8610_ANALISE/DSE8610_AUDITORIA.json').read_text())
@@ -92,8 +122,8 @@ class ProfileTests(unittest.TestCase):
             self.assertTrue(p.validate())
             with self.assertRaises(ValueError): p.bundle_bytes('id_demo', 'Demo')
         p = Project.new('DSE8610')
-        p.rows[52].update(ID='10', ADDR='48660', FNC='3')
-        self.assertTrue(any(i.channel == 53 for i in p.validate()))
+        p.rows[55].update(ID='10', ADDR='48660', FNC='3')
+        self.assertTrue(any(i.channel == 56 for i in p.validate()))
 
     def test_duplicate_and_out_of_range_keys_normalized_explicitly(self):
         p = Project.new()
