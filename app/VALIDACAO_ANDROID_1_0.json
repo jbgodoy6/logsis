@@ -1,0 +1,61 @@
+{
+  "version": "1.0.0",
+  "platform": "Android",
+  "applicationId": "br.com.sistel.logsis",
+  "minSdk": 26,
+  "targetSdk": 35,
+  "build": {
+    "assembleRelease": "passed",
+    "lintErrors": 0,
+    "lintWarnings": [
+      "UnusedAttribute",
+      "SetJavaScriptEnabled",
+      "MonochromeLauncherIcon",
+      "SetTextI18n",
+      "SetTextI18n"
+    ]
+  },
+  "nativeTests": {
+    "runner": "Robolectric 4.14.1, simulated Android API 28 and 35; not physical devices",
+    "passed": 7,
+    "failed": 0,
+    "cases": [
+      "mainFrameNetworkErrorHasWorkingRetry",
+      "externalHttpsIsSentToBrowserAndUnsafeSchemesAreBlocked",
+      "backFromFirstPageReturnsToWelcome",
+      "currentAndroidAlsoOpensTheBrandedHome",
+      "brandedHomeOpensConfiguredSite",
+      "clearingAccessRecreatesRendererAndDiscardsOldHistory",
+      "webConfigurationDoesNotExposeLocalFilesOrMixedContent"
+    ]
+  },
+  "navigationChecks": {
+    "passed": 19,
+    "scope": "HTTPS domains, subdomains, ports, lookalike hosts, credentials in URLs and unsafe schemes"
+  },
+  "apk": {
+    "signatureVerified": true,
+    "schemes": [
+      "v2",
+      "v3"
+    ],
+    "certificate": "Evaluation certificate, not the owner production key",
+    "certificateSha256": "eeaf949d407dd05f828a4ec04571e59ec14bbe992daaa21a042fda43815ec08b",
+    "permissions": [
+      "android.permission.INTERNET"
+    ]
+  },
+  "liveSystem": {
+    "url": "https://logsis.com.br/",
+    "status": "not_verified",
+    "reason": "Infrastructure proxy denied CONNECT to logsis.com.br and www.logsis.com.br with HTTP 403; no credentials provided or used",
+    "physicalDeviceTest": "pending",
+    "realLogin": "pending"
+  },
+  "reviewedLintWarnings": {
+    "UnusedAttribute": "Newer back-navigation attribute is ignored on older Android; legacy back handling is implemented.",
+    "SetJavaScriptEnabled": "Required by the existing web application; no native JS bridge, local file access or mixed content.",
+    "MonochromeLauncherIcon": "Colored adaptive launcher supplied; themed monochrome icon not part of this base.",
+    "SetTextI18n": "Portuguese base interface with version strings; multilingual localization not implemented."
+  }
+}
