@@ -1,0 +1,57 @@
+{
+  "result": "passed",
+  "source": "DSE_GENCOMM_MAPA_CONFERIDO.json",
+  "scope": "Isolated PostgreSQL; processed Q/R/S states only",
+  "models": [
+    {
+      "model": "DSE7420",
+      "channels": [
+        57,
+        58,
+        59
+      ],
+      "addresses": [
+        43553,
+        43555,
+        43557
+      ],
+      "cases": [
+        "active",
+        "inactive",
+        "sentinel",
+        "invalid",
+        "null",
+        "missing_column",
+        "custom_name_apostrophe",
+        "filter_excludes_past_and_future",
+        "latest_invalid_does_not_revive_old_valid"
+      ],
+      "passed": true
+    },
+    {
+      "model": "DSE8610",
+      "channels": [
+        56,
+        57,
+        58
+      ],
+      "addresses": [
+        43553,
+        43555,
+        43557
+      ],
+      "cases": [
+        "active",
+        "inactive",
+        "sentinel",
+        "invalid",
+        "null",
+        "missing_column",
+        "custom_name_apostrophe",
+        "filter_excludes_past_and_future",
+        "latest_invalid_does_not_revive_old_valid"
+      ],
+      "passed": true
+    }
+  ]
+}

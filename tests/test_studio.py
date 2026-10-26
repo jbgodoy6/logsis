@@ -20,7 +20,7 @@ from logsis_studio.transport import ModbusError, crc16, decode, parse_pdu, read_
 class ProfileTests(unittest.TestCase):
     def test_exact_mapping_and_zero_based_bin(self):
         common = {1: (1024, 3, -1), 8: (1031, 3, -1), 9: (1032, 30, -1), 22: (1536, 30, -1), 28: (1557, 3, -1), 36: (1798, 30, -1), 37: (1800, 30, -1), 40: (772, 3, -1), 41: (774, 3, 10), 42: (774, 3, 11), 43: (774, 3, 12), 44: (43521, 3, -1), 51: (43535, 3, -1)}
-        for model, count in [('DSE7420', 56), ('DSE8610', 55)]:
+        for model, count in [('DSE7420', 59), ('DSE8610', 58)]:
             with self.subTest(model=model):
                 p = Project.new(model)
                 self.assertEqual(p.validate(), [])
@@ -85,6 +85,24 @@ class ProfileTests(unittest.TestCase):
             p.maintenance_alert_hours='-1'
             with self.assertRaises(ValueError):p.bundle_bytes('id_demo','Demo')
 
+    def test_flexible_digital_inputs_follow_document_processed_offsets(self):
+        for model,first in [('DSE7420',57),('DSE8610',56)]:
+            p=Project.new(model)
+            for i,(letter,offset) in enumerate(zip('QRS',[33,35,37])):
+                c=p.profile.channels[first+i-1]
+                self.assertEqual(c.input_letter,letter)
+                self.assertEqual((int(c.params['ADDR']),c.params['FNC'],c.params['BIT']),(170*256+offset,'3','-1'))
+                self.assertEqual(decode(c,p.rows[c.index],(1,)).state,'ON')
+                self.assertEqual(decode(c,p.rows[c.index],(0,)).state,'OFF')
+                for raw in [2,65535,32767]:self.assertIsNone(decode(c,p.rows[c.index],(raw,)).engineering)
+            p.set_channel_metadata(first-1,{'DM':"Porta d'água"})
+            dashboard=p.dashboard('id_demo','Demo','ds')
+            variables={v['name']:v['query'] for v in dashboard['templating']['list']}
+            self.assertEqual(variables['Nome_Entrada_Q'],"Porta d'água")
+            self.assertTrue(any(panel['id']==27 for panel in dashboard['panels']))
+            generator=next(e for e in dashboard['panels'][0]['options']['root']['elements'] if e['name']=='Gerador vetorial')
+            self.assertEqual(generator['background']['image']['field'],'GERADOR_ALARME_SVG')
+
     def test_profiles_match_independent_audited_bin(self):
         audit = json.loads((Path(__file__).resolve().parents[1] / 'DSE8610_ANALISE/DSE8610_AUDITORIA.json').read_text())
         rows = [r for r in audit['records'] if r['status'] == 'configurado']
@@ -122,8 +140,8 @@ class ProfileTests(unittest.TestCase):
             self.assertTrue(p.validate())
             with self.assertRaises(ValueError): p.bundle_bytes('id_demo', 'Demo')
         p = Project.new('DSE8610')
-        p.rows[55].update(ID='10', ADDR='48660', FNC='3')
-        self.assertTrue(any(i.channel == 56 for i in p.validate()))
+        p.rows[58].update(ID='10', ADDR='48660', FNC='3')
+        self.assertTrue(any(i.channel == 59 for i in p.validate()))
 
     def test_duplicate_and_out_of_range_keys_normalized_explicitly(self):
         p = Project.new()

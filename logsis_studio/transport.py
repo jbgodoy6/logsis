@@ -144,6 +144,8 @@ def decode(channel: Channel, row, registers, low_first=False, energy_divisor='10
     elif channel.number >= 41 and channel.group != 'Manutenção':
         if engineering is None or value not in [0, 1]:
             state, engineering = 'ESTADO INVÁLIDO', None
+        elif channel.input_letter:
+            state = 'ON' if value else 'OFF'
         elif channel.number >= 52:
             state = 'FECHADO' if value else 'ABERTO'
         elif channel.number <= 43:

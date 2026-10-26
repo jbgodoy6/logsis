@@ -1,0 +1,103 @@
+{
+  "source": {
+    "file": "Modbus - Deep Sea.pdf",
+    "document": "GenComm standard for use with generating set control equipment",
+    "version": "2.93",
+    "revision": "2015-04-13",
+    "sha256": "db29595cbd59f39695f68e07e58cfd20b9daa22f14483448e2ccee6fea29c2ee"
+  },
+  "family": "8xxx / 74xx",
+  "addressing": "page * 256 + register offset, zero-based GenComm address",
+  "references": [
+    {
+      "pdf_page": 133,
+      "section": "10.47 / page 170",
+      "note": 6,
+      "fact": "Flexible sender inputs appear as both analogues and as digital inputs Q-S."
+    },
+    {
+      "pdf_page": 137,
+      "section": "8xxx / 74xx register allocation continued",
+      "offsets": [
+        33,
+        35,
+        37
+      ],
+      "fact": "Q, R and S processed digital statuses, 16-bit unsigned, values 0/1."
+    },
+    {
+      "pdf_page": 49,
+      "section": "10.9 / page 7",
+      "offsets": [
+        44,
+        48,
+        52
+      ],
+      "fact": "Maintenance 1/2/3 countdowns are signed 32-bit seconds."
+    }
+  ],
+  "flexible_inputs": [
+    {
+      "input": "Q",
+      "page": 170,
+      "raw_offset": 32,
+      "processed_offset": 33,
+      "address": 43553,
+      "function": 3,
+      "bits": 16,
+      "values": {
+        "0": "inactive",
+        "1": "active"
+      },
+      "DSE7420_mdb": 57,
+      "DSE8610_mdb": 56
+    },
+    {
+      "input": "R",
+      "page": 170,
+      "raw_offset": 34,
+      "processed_offset": 35,
+      "address": 43555,
+      "function": 3,
+      "bits": 16,
+      "values": {
+        "0": "inactive",
+        "1": "active"
+      },
+      "DSE7420_mdb": 58,
+      "DSE8610_mdb": 57
+    },
+    {
+      "input": "S",
+      "page": 170,
+      "raw_offset": 36,
+      "processed_offset": 37,
+      "address": 43557,
+      "function": 3,
+      "bits": 16,
+      "values": {
+        "0": "inactive",
+        "1": "active"
+      },
+      "DSE7420_mdb": 59,
+      "DSE8610_mdb": 58
+    }
+  ],
+  "maintenance": {
+    "page": 7,
+    "offsets": [
+      44,
+      48,
+      52
+    ],
+    "addresses": [
+      1836,
+      1840,
+      1844
+    ],
+    "bits": "32S",
+    "unit": "seconds",
+    "display_divisor": 3600
+  },
+  "scope": "Document-verified mapping for these families; physical availability and digital configuration depend on controller hardware/firmware."
+}

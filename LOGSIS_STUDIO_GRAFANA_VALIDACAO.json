@@ -4,7 +4,7 @@
   "models": [
     {
       "model": "DSE7420",
-      "channels": 56,
+      "channels": 59,
       "decodedFromBinSlots": true,
       "grafanaFields": {
         "MDB01": 4.5,
@@ -28,14 +28,17 @@
         "MANUTENCAO_2_ESTADO": "near",
         "MANUTENCAO_3_ESTADO": "due",
         "MANUTENCAO_RESUMO": "Manutenção 3 / VENCIDA",
-        "MANUTENCAO_ESTADO": "due"
+        "MANUTENCAO_ESTADO": "due",
+        "MDB57": 1,
+        "MDB58": 0,
+        "MDB59": null
       },
       "periodHours": 3.5,
       "periodKwh": 18.0
     },
     {
       "model": "DSE8610",
-      "channels": 55,
+      "channels": 58,
       "decodedFromBinSlots": true,
       "grafanaFields": {
         "MDB01": 4.5,
@@ -60,7 +63,10 @@
         "MANUTENCAO_2_ESTADO": "near",
         "MANUTENCAO_3_ESTADO": "due",
         "MANUTENCAO_RESUMO": "Manutenção 3 / VENCIDA",
-        "MANUTENCAO_ESTADO": "due"
+        "MANUTENCAO_ESTADO": "due",
+        "MDB56": 1,
+        "MDB57": 0,
+        "MDB58": null
       },
       "periodHours": 3.5,
       "periodKwh": 18.0

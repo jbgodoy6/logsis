@@ -13,9 +13,9 @@ registers={1024:450,1025:82,1026:85,1027:75,1028:278,1029:274,1030:1800,1031:600
  1091:600,1092:2302,1094:2303,1096:2304,1098:3987,1100:3988,1102:3989,
  1798:372600,1800:2180,1808:29,1794:360000,772:2,774:1024|4096,
  43521:1,43523:0,43525:1,43527:0,43529:0,43531:1,43533:0,43535:0,
- 48653:1,48654:0,48659:1,1836:720000,1840:90000,1844:0}
+ 48653:1,48654:0,48659:1,1836:720000,1840:90000,1844:0,43553:1,43555:0,43557:65535}
 report={'result':'pending','scope':'BIN-to-SQL integration in isolated PostgreSQL; no production access','models':[]}
-for model,count in [('DSE7420',56),('DSE8610',55)]:
+for model,count in [('DSE7420',59),('DSE8610',58)]:
  project=Project.new(model)
  with zipfile.ZipFile(io.BytesIO(project.bundle_bytes('check_studio','Planta de teste'))) as archive:
   params=BinDocument.from_bytes(archive.read(model+'.bin')).params
@@ -35,6 +35,7 @@ for model,count in [('DSE7420',56),('DSE8610',55)]:
  keys=['MDB01','MDB09','MDB30','MDB36','MDB37','MDB40','MDB41','MDB42','MDB43','MDB52','MODO_LOCAL','GSM_LOCAL','WIFI_LOCAL']+(['MDB53'] if model=='DSE7420' else ['TENSAO_BUS','GERADOR_ALARME'])
  first=54 if model=='DSE7420' else 53
  keys += [f'MDB{n}' for n in range(first,first+3)]+['MANUTENCAO_1_ESTADO','MANUTENCAO_2_ESTADO','MANUTENCAO_3_ESTADO','MANUTENCAO_RESUMO','MANUTENCAO_ESTADO','GERADOR_STATUS_SVG']
+ keys += [f'MDB{n}' for n in range(first+3,first+6)]
  main=dashboard['panels'][0]['targets'][0]['rawSql']
  parts.append('SELECT row_to_json(q) FROM (SELECT '+','.join('"'+k+'"' for k in keys)+' FROM ('+resolve(main)+') data) q;')
  for id in [14,15]:
@@ -50,6 +51,7 @@ for model,count in [('DSE7420',56),('DSE8610',55)]:
  assert [main[f'MDB{n}'] for n in range(first,first+3)]==[200,25,0]
  assert [main[f'MANUTENCAO_{n}_ESTADO'] for n in range(1,4)]==['ok','near','due']
  assert main['MANUTENCAO_RESUMO']=='Manutenção 3 / VENCIDA'
+ assert [main[f'MDB{n}'] for n in range(first+3,first+6)]==[1,0,None]
  # Active shutdown retains its red picture, despite maintenance due.
  assert '%23' in main.pop('GERADOR_STATUS_SVG')
  assert hours['HORAS_PERIODO']==3.5 and energy['KWH_PERIODO']==18

@@ -1,10 +1,10 @@
 # LogSis Studio 7 — DSE7420 / DSE8610
 
-Editor e gerador de configuração LogSis com **perfis fixos alinhados aos dashboards DSE7420 V42 e DSE8610 V4**. Interface escura, navegação lateral, busca de canais, conferência de compatibilidade e exportação conjunta do BIN e do Grafana.
+Editor e gerador de configuração LogSis com **perfis fixos alinhados aos dashboards DSE7420 V43 e DSE8610 V5**. Interface escura, navegação lateral, busca de canais, conferência de compatibilidade e exportação conjunta do BIN e do Grafana.
 
-[Baixar programa completo](LOGSIS_STUDIO_7_1.zip) · [Interface](LOGSIS_STUDIO_7_INICIO.png) · [Mapa de canais](LOGSIS_STUDIO_7_MAPA.png) · [Exportação](LOGSIS_STUDIO_7_EXPORTACAO.png)
+[Baixar programa completo](LOGSIS_STUDIO_7_2.zip) · [Interface](LOGSIS_STUDIO_7_INICIO.png) · [Mapa de canais](LOGSIS_STUDIO_7_MAPA.png) · [Exportação](LOGSIS_STUDIO_7_EXPORTACAO.png)
 
-Na versão **7.1**, os três contadores de manutenção foram acrescentados ao final de cada perfil, preservando todas as posições existentes e a correção das chaves do DSE7420 da 7.0.1. Para atualizar um BIN anterior, abra-o, reaplique o perfil do modelo e gere novamente o BIN e o JSON. Os novos contadores precisam ser coletados pelo equipamento e armazenados nas respectivas colunas SQL; o Studio não altera seu banco.
+Na versão **7.2**, foram acrescentados os estados processados Q/R/S das entradas flexíveis configuradas como digitais. A manutenção passa a ser somente uma indicação abaixo do gerador, sem pintar o desenho. Todas as posições anteriores foram preservadas, incluindo manutenções e a correção das chaves do DSE7420 da 7.0.1. Para atualizar um BIN anterior, abra-o, reaplique o perfil do modelo e gere novamente o BIN e o JSON. Os novos contadores precisam ser coletados pelo equipamento e armazenados nas respectivas colunas SQL; o Studio não altera seu banco.
 
 ## Abrir o programa
 
@@ -42,7 +42,7 @@ A tabela aceita nomes como `id_269086509881540` ou `public.id_planta`. O UID ini
 
 **MDB01 no Grafana = coluna `mdb1` = índice 0 do BIN (`MDBA_ADDR0`, etc.).** O número mostrado no Studio segue a numeração do Grafana; o índice zero do BIN aparece nos detalhes e no CSV.
 
-| Faixa Grafana | DSE7420 — 56 canais | DSE8610 — 55 canais |
+| Faixa Grafana | DSE7420 — 59 canais | DSE8610 — 58 canais |
 |---|---|---|
 | MDB01–07 | Motor | Motor |
 | MDB08–28 | Grandezas do gerador | Grandezas do gerador |
@@ -57,7 +57,10 @@ A tabela aceita nomes como `id_269086509881540` ou `public.id_planta`. O UID ini
 | MDB53 | K2, gerador na carga | Manutenção 1 / 1836 |
 | MDB54 | Manutenção 1 / 1836 | Manutenção 2 / 1840 |
 | MDB55 | Manutenção 2 / 1840 | Manutenção 3 / 1844 |
-| MDB56 | Manutenção 3 / 1844 | Reservado/desativado |
+| MDB56 | Manutenção 3 / 1844 | Flexível Q / 43553 |
+| MDB57 | Flexível Q / 43553 | Flexível R / 43555 |
+| MDB58 | Flexível R / 43555 | Flexível S / 43557 |
+| MDB59 | Flexível S / 43557 | Reservado/desativado |
 
 O DSE8610 continua **sem concessionária e com apenas um gerador desenhado**. Seu BUS é medido independentemente do estado do disjuntor. Os slots restantes até 100 são desativados no perfil completo.
 
@@ -79,17 +82,31 @@ Os recursos do Grafana preservam Brasília, traços nos valores indisponíveis, 
 
 Manutenções 1, 2 e 3: registros **1836, 1840 e 1844**, função LogSis 30 (FC03, dois registradores), /3600 para horas. Os valores zero ou negativos indicam vencimento. Valores indisponíveis mostram traço, sem substituir por uma leitura anterior válida. MDB39 continua sendo o contador geral até manutenção e não foi substituído.
 
-No desenho, manutenção próxima deixa o gerador amarelo; vencida, laranja. Um texto separado mostra o nome da manutenção. Os alarmes Warning, Trip e Shutdown têm prioridade sobre a cor de manutenção; a indicação textual de manutenção permanece. Dados ausentes não são tratados como manutenção em dia.
+A manutenção aparece **somente na indicação abaixo do gerador**: texto amarelo quando próxima e laranja quando vencida. A cor do desenho não muda por manutenção. Warning, Trip e Shutdown do controlador continuam determinando a cor da imagem. Dados ausentes não são tratados como manutenção em dia.
 
 O limite inicial é **50 h**, ajustável no formulário de exportação do Studio ou na variável `Manutencao_Alerta_h` do Grafana. O valor vale para os três contadores; não reprograma os intervalos no controlador. Na comparação, 0 é vencida; acima de 0 e até o limite, próxima; acima do limite, em dia.
 
-Em **Dashboard settings → Variables**, altere `Nome_Manutencao_1`, `Nome_Manutencao_2`, `Nome_Manutencao_3` e `Nome_Entrada_A` até `Nome_Entrada_H`. Por exemplo: “Troca de óleo” ou “Porta da sala”. Os nomes de manutenção aparecem nos cartões e no aviso junto ao gerador; os nomes das entradas aparecem nos instrumentos. As variáveis de nome não mudam endereços nem polaridade.
+Em **Dashboard settings → Variables**, altere `Nome_Manutencao_1`, `Nome_Manutencao_2`, `Nome_Manutencao_3` e `Nome_Entrada_A` até `Nome_Entrada_H`. Por exemplo: “Troca de óleo” ou “Porta da sala”. Os nomes de manutenção aparecem nos cartões e no aviso junto ao gerador; os nomes das entradas aparecem nos instrumentos. As flexíveis têm `Nome_Entrada_Q`, `Nome_Entrada_R` e `Nome_Entrada_S`, também editáveis no Studio pelo DM. As variáveis de nome não mudam endereços nem polaridade.
 
 No Studio, editar **Nome / descrição no Grafana (DM)** nos respectivos canais preenche essas variáveis ao exportar. Esse texto também é gravado no DM do BIN. Reaplicar o perfil redefine textos e limites, conforme a confirmação do programa; ajuste os nomes após essa etapa.
 
-Origem dos três registros: `LOGSIS_DSE7420_MAPEAMENTO_TECNICO.csv` recebido no pacote original, página GenComm 7, offsets 44/48/52. O perfil DSE8610 reutiliza esses registros comuns GenComm; o BIN DSE8610 recebido não continha os três canais e não constitui confirmação independente deles no firmware. A escala em segundos segue a memória técnica enviada. A implementação foi validada com dados sintéticos, sem leitura física do DSE8610.
+Origem conferida: **Modbus - Deep Sea.pdf**, GenComm versão 2.93 (13/04/2015). Na página 49, a família 8xxx/7xxx documenta os três tempos de manutenção na página GenComm 7, offsets 44/48/52: 1836/1840/1844, 32S, segundos. A implementação foi validada em software, sem leitura física dos controladores.
 
-**Entradas analógicas usadas como digitais:** os arquivos recebidos documentam apenas os estados A–H. Os endereços dos estados analógicos digitais ainda não foram fornecidos; não foram atribuídos registros por aproximação nem confundidas as leituras dos sensores com estados de contato.
+## Entradas analógicas usadas como digitais
+
+O PDF, página 133, seção 10.47, nota 6, identifica as entradas flexíveis como digitais **Q, R e S**. Na tabela da família 8xxx/74xx da página 137, seus estados processados são os offsets **33, 35 e 37** da página GenComm **170**. Portanto:
+
+| Entrada | Endereço | Função | DSE7420 | DSE8610 |
+|---|---|---|---|---|
+| Q | 43553 | 3 / FC03, 16 bits | MDB57 | MDB56 |
+| R | 43555 | 3 / FC03, 16 bits | MDB58 | MDB57 |
+| S | 43557 | 3 / FC03, 16 bits | MDB59 | MDB58 |
+
+São estados **processados**: 0 inativa, 1 ativa, considerando a inversão configurada no controlador. Não são uma indicação de contato aberto/fechado nem a leitura analógica do sensor. Use quando as entradas estiverem configuradas como digitais; a disponibilidade física depende do modelo/firmware. O Studio não reconfigura a função da entrada no DSE.
+
+O novo painel **08 / Entradas flexíveis · uso digital** mostra os três estados, com nomes pelas variáveis `Nome_Entrada_Q/R/S`. Leituras ausentes, sentinelas ou valores diferentes de 0/1 mostram traço. A consulta respeita o período selecionado e não substitui a amostra mais recente inválida por um estado anterior válido. As colunas novas podem estar ausentes durante a atualização sem quebrar os demais instrumentos.
+
+[Mapa conferido e identificação do PDF](DSE_GENCOMM_MAPA_CONFERIDO.json) · [Validação dos estados](LOGSIS_ENTRADAS_FLEXIVEIS_VALIDACAO.json).
 
 ## Teste Modbus
 
@@ -105,7 +122,7 @@ Os endereços e bits seguem os mapas usados no projeto. Variantes/firmwares, esc
 
 ## Validação da versão
 
-30 testes automatizados: 21 de núcleo/transporte e nove fluxos reais da interface Tk. Cobrem geração, reabertura, preservação de parâmetros/encoding/CRLF/BOM, divergências, slots reservados, limites, exportação, UID por planta, gravação atômica, TCP em simulador local e RTU com respostas simuladas.
+31 testes automatizados: 22 de núcleo/transporte e nove fluxos reais da interface Tk. Cobrem geração, reabertura, preservação de parâmetros/encoding/CRLF/BOM, divergências, slots reservados, limites, exportação, UID por planta, gravação atômica, TCP em simulador local e RTU com respostas simuladas.
 
 O teste de integração **BIN → valores pelos slots → SQL do JSON exportado** passou nos dois modelos, inclusive com valores diferentes para rede e BUS, bits de Warning/Shutdown e resultado de período **3,50 h / 18,00 kWh**. [Resultado](LOGSIS_STUDIO_GRAFANA_VALIDACAO.json).
 
@@ -113,4 +130,6 @@ A interface foi conferida em 1460×920 e 1120×740, com leitura local sem travar
 
 Para desenvolvimento: `python -m unittest discover -s tests -p 'test_studio*.py' -v`. Os testes de interface exigem DISPLAY; a integração opcional usa o laboratório Docker: `python tools/validate_studio_grafana.py`.
 
-As regras de manutenção foram verificadas no PostgreSQL para os dois modelos: normal, limite, próxima, zero, negativo, negativo em complemento de dois, sentinelas, falta de dados, ausência de coluna e prioridade de shutdown. [Resultado](LOGSIS_MANUTENCAO_VALIDACAO.json).
+As regras de manutenção foram verificadas no PostgreSQL para os dois modelos: normal, limite, próxima, zero, negativo, negativo em complemento de dois, sentinelas, falta de dados, ausência de coluna e independência entre manutenção e cor do gerador. [Resultado](LOGSIS_MANUTENCAO_VALIDACAO.json).
+
+A conferência no Grafana verifica manutenção próxima/vencida com o mesmo desenho, cores de Warning/Trip/Shutdown, nomes personalizados e entradas flexíveis em desktop e celular: [resultado](LOGSIS_MANUTENCAO_UI_VALIDACAO.json).

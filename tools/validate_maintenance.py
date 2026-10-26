@@ -13,7 +13,7 @@ def execute(sql):
     return [json.loads(line) for line in result.stdout.splitlines() if line.startswith('{')]
 
 report={'result':'pending','scope':'Isolated PostgreSQL fixtures; no physical controller validation','models':[]}
-for model,first,count in [('DSE7420',54,56),('DSE8610',53,55)]:
+for model,first,count in [('DSE7420',54,59),('DSE8610',53,58)]:
     project=Project.new(model)
     project.rows[first-1]['DM']="Troca de óleo d'água"
     project.maintenance_alert_hours='20'
@@ -45,7 +45,7 @@ for model,first,count in [('DSE7420',54,56),('DSE8610',53,55)]:
         if expected=='unknown':assert result[f'MDB{first}'] is None
         if expected in ['near','due']:
             assert "Troca de óleo d'água" in result['MANUTENCAO_RESUMO']
-            assert (result['GERADOR_STATUS_SVG']==result['GERADOR_ALARME_SVG'])==bool(shutdown)
+            assert result['GERADOR_STATUS_SVG']==result['GERADOR_ALARME_SVG']
         else:assert result['GERADOR_STATUS_SVG']==result['GERADOR_ALARME_SVG']
     assert results[-1]['MANUTENCAO_1_ESTADO']=='unknown'
     report['models'].append({'model':model,'cases':[s[0] for s in scenarios]+['missing_sql_column'],'passed':True})

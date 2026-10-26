@@ -1,10 +1,10 @@
 {
   "DSE7420": {
     "model": "DSE7420",
-    "version": "2.0",
-    "count": 56,
+    "version": "3.0",
+    "count": 59,
     "dashboard": "dse7420.json",
-    "dashboard_version": "V42",
+    "dashboard_version": "V43",
     "channels": [
       {
         "number": 1,
@@ -1237,15 +1237,81 @@
           "TL": "0",
           "SM": "0"
         }
+      },
+      {
+        "number": 57,
+        "column": "mdb57",
+        "name": "Flexível Q · digital",
+        "group": "Entradas flexíveis",
+        "unit": "estado",
+        "divisor": 1,
+        "params": {
+          "DH": "ENTRADA Q ATIVA",
+          "DM": "Flexivel Q",
+          "DL": "ENTRADA Q INATIVA",
+          "ID": "10",
+          "FNC": "3",
+          "ADDR": "43553",
+          "BIT": "-1",
+          "H": "1000",
+          "VR": "-1",
+          "TH": "0",
+          "TL": "0",
+          "SM": "0"
+        }
+      },
+      {
+        "number": 58,
+        "column": "mdb58",
+        "name": "Flexível R · digital",
+        "group": "Entradas flexíveis",
+        "unit": "estado",
+        "divisor": 1,
+        "params": {
+          "DH": "ENTRADA R ATIVA",
+          "DM": "Flexivel R",
+          "DL": "ENTRADA R INATIVA",
+          "ID": "10",
+          "FNC": "3",
+          "ADDR": "43555",
+          "BIT": "-1",
+          "H": "1000",
+          "VR": "-1",
+          "TH": "0",
+          "TL": "0",
+          "SM": "0"
+        }
+      },
+      {
+        "number": 59,
+        "column": "mdb59",
+        "name": "Flexível S · digital",
+        "group": "Entradas flexíveis",
+        "unit": "estado",
+        "divisor": 1,
+        "params": {
+          "DH": "ENTRADA S ATIVA",
+          "DM": "Flexivel S",
+          "DL": "ENTRADA S INATIVA",
+          "ID": "10",
+          "FNC": "3",
+          "ADDR": "43557",
+          "BIT": "-1",
+          "H": "1000",
+          "VR": "-1",
+          "TH": "0",
+          "TL": "0",
+          "SM": "0"
+        }
       }
     ]
   },
   "DSE8610": {
     "model": "DSE8610",
-    "version": "2.0",
-    "count": 55,
+    "version": "3.0",
+    "count": 58,
     "dashboard": "dse8610.json",
-    "dashboard_version": "V4",
+    "dashboard_version": "V5",
     "channels": [
       {
         "number": 1,
@@ -2453,6 +2519,72 @@
           "H": "100",
           "VR": "-1",
           "TH": "180000",
+          "TL": "0",
+          "SM": "0"
+        }
+      },
+      {
+        "number": 56,
+        "column": "mdb56",
+        "name": "Flexível Q · digital",
+        "group": "Entradas flexíveis",
+        "unit": "estado",
+        "divisor": 1,
+        "params": {
+          "DH": "ENTRADA Q ATIVA",
+          "DM": "Flexivel Q",
+          "DL": "ENTRADA Q INATIVA",
+          "ID": "10",
+          "FNC": "3",
+          "ADDR": "43553",
+          "BIT": "-1",
+          "H": "1000",
+          "VR": "-1",
+          "TH": "0",
+          "TL": "0",
+          "SM": "0"
+        }
+      },
+      {
+        "number": 57,
+        "column": "mdb57",
+        "name": "Flexível R · digital",
+        "group": "Entradas flexíveis",
+        "unit": "estado",
+        "divisor": 1,
+        "params": {
+          "DH": "ENTRADA R ATIVA",
+          "DM": "Flexivel R",
+          "DL": "ENTRADA R INATIVA",
+          "ID": "10",
+          "FNC": "3",
+          "ADDR": "43555",
+          "BIT": "-1",
+          "H": "1000",
+          "VR": "-1",
+          "TH": "0",
+          "TL": "0",
+          "SM": "0"
+        }
+      },
+      {
+        "number": 58,
+        "column": "mdb58",
+        "name": "Flexível S · digital",
+        "group": "Entradas flexíveis",
+        "unit": "estado",
+        "divisor": 1,
+        "params": {
+          "DH": "ENTRADA S ATIVA",
+          "DM": "Flexivel S",
+          "DL": "ENTRADA S INATIVA",
+          "ID": "10",
+          "FNC": "3",
+          "ADDR": "43557",
+          "BIT": "-1",
+          "H": "1000",
+          "VR": "-1",
+          "TH": "0",
           "TL": "0",
           "SM": "0"
         }

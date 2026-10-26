@@ -1,20 +1,20 @@
 {
-  "version": "7.1.0",
+  "version": "7.2.0",
   "result": "passed",
   "models": {
     "DSE7420": {
-      "channels": 56,
-      "grafana": "V42"
+      "channels": 59,
+      "grafana": "V43"
     },
     "DSE8610": {
-      "channels": 55,
-      "grafana": "V4"
+      "channels": 58,
+      "grafana": "V5"
     }
   },
   "automatedTests": {
-    "coreAndTransport": 21,
+    "coreAndTransport": 22,
     "tkWorkflows": 9,
-    "total": 30
+    "total": 31
   },
   "guiSizes": [
     [
@@ -39,12 +39,15 @@
     "DSE7420 MDB52=48653 and MDB53=48654; legacy addresses blocked until explicit profile reapplication; DSE8610 MDB52=48659 preserved",
     "Maintenance countdowns appended without moving existing MDBs",
     "Custom input and maintenance names from Grafana variables",
-    "Yellow near and orange overdue generator; active controller alarms keep priority"
+    "Maintenance text alone indicates proximity/overdue; generator image exclusively uses controller alarm SVG",
+    "Flexible Q/R/S appended at processed-status addresses 43553/43555/43557",
+    "Flexible input names editable through Studio DM and Grafana variables; invalid states remain unavailable"
   ],
   "scope": "Linux/Tk, local Modbus simulators and isolated PostgreSQL; no physical equipment test or production access",
   "distributionSmoke": "ZIP extracted to a separate folder; Tk startup and both model exports passed",
-  "releaseFiles": 20,
+  "releaseFiles": 22,
   "maintenanceIntegration": "LOGSIS_MANUTENCAO_VALIDACAO.json",
   "maintenanceUI": "LOGSIS_MANUTENCAO_UI_VALIDACAO.json",
-  "pending": "Analog inputs used as digital: processed-state register map not present in supplied files"
+  "sourceMap": "DSE_GENCOMM_MAPA_CONFERIDO.json",
+  "flexibleInputsIntegration": "LOGSIS_ENTRADAS_FLEXIVEIS_VALIDACAO.json"
 }

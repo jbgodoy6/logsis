@@ -7,9 +7,19 @@
         390,
         1440
       ],
-      "cases": [
+      "maintenanceCases": [
         "VENCIDA",
         "PROXIMA"
+      ],
+      "controllerAlarms": [
+        "WARNING",
+        "TRIP",
+        "SHUTDOWN"
+      ],
+      "flexibleInputs": [
+        "Q active",
+        "R inactive",
+        "S unavailable"
       ],
       "customNames": true
     },
@@ -19,9 +29,19 @@
         390,
         1440
       ],
-      "cases": [
+      "maintenanceCases": [
         "VENCIDA",
         "PROXIMA"
+      ],
+      "controllerAlarms": [
+        "WARNING",
+        "TRIP",
+        "SHUTDOWN"
+      ],
+      "flexibleInputs": [
+        "Q active",
+        "R inactive",
+        "S unavailable"
       ],
       "customNames": true
     }

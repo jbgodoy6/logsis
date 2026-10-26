@@ -73,6 +73,14 @@ class Channel:
         return self.number - 1
 
     @property
+    def input_letter(self):
+        if self.group == 'Entradas' and 44 <= self.number <= 51:
+            return chr(65 + self.number - 44)
+        if self.group == 'Entradas flexíveis':
+            return {'43553': 'Q', '43555': 'R', '43557': 'S'}.get(self.params['ADDR'])
+        return None
+
+    @property
     def signed(self):
         return self.number in [2, 3] or 19 <= self.number <= 28 or (self.group == 'Manutenção' and self.number >= 53)
 
@@ -351,8 +359,8 @@ class Project:
         labels = {}
         for channel in self.profile.channels:
             variable_name = None
-            if 44 <= channel.number <= 51:
-                variable_name = 'Nome_Entrada_' + chr(65 + channel.number - 44)
+            if channel.input_letter:
+                variable_name = 'Nome_Entrada_' + channel.input_letter
             elif channel.group == 'Manutenção' and channel.number >= 53:
                 first = 54 if self.profile.model == 'DSE7420' else 53
                 variable_name = 'Nome_Manutencao_' + str(channel.number - first + 1)
