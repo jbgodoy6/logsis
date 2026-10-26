@@ -1,0 +1,33 @@
+[Unit]
+Description=EnergyCube D-Max demand controller
+Wants=network-online.target
+After=network-online.target
+StartLimitIntervalSec=60
+StartLimitBurst=10
+
+[Service]
+Type=simple
+User=dmax
+Group=dmax
+SupplementaryGroups=dialout
+WorkingDirectory=/opt/d-max
+Environment=PYTHONUNBUFFERED=1
+Environment=PYTHONDONTWRITEBYTECODE=1
+Environment=EV_DB_PATH=/var/lib/d-max/controller.sqlite3
+EnvironmentFile=/etc/d-max/d-max.env
+ExecStart=/opt/d-max/.venv/bin/python /opt/d-max/run.py
+Restart=always
+RestartSec=5
+TimeoutStopSec=30
+UMask=0027
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/d-max
+PrivateTmp=true
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=d-max
+
+[Install]
+WantedBy=multi-user.target

@@ -1,8 +1,8 @@
-# EnergyCube D-Max — Controlador de demanda · v0.2.2
+# EnergyCube D-Max — Controlador de demanda · v0.2.3
 
 Primeira versão para **validação em Windows**, com a mesma base Python no Linux ARM64 do Raspberry Pi 4. Interface web local, simulador, SQLite, distribuição de potência e adaptador OCPP 1.6J. Não depende dos dashboards antigos deste repositório.
 
-[Tela TCP/IP](docs/multimedidor-tcp.png) · [Tela RS485](docs/multimedidor-rs485.png) · [Validação v0.2.2](docs/validation-v02.md)
+[Tela TCP/IP](docs/multimedidor-tcp.png) · [Tela RS485](docs/multimedidor-rs485.png) · [Validação v0.2.3](docs/validation-v02.md)
 
 ![Visão geral](docs/painel-desktop.png)
 
@@ -23,6 +23,10 @@ py -3.13 -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r requirements.lock
 .\.venv\Scripts\python.exe run.py
 ```
+
+## Raspberry Pi 4 e início automático
+
+A versão inclui instalador de serviço systemd: inicia no boot e reinicia o processo após falha. Consulte o [passo a passo do Raspberry Pi](docs/raspberry.md). O serviço usa código em `/opt/d-max`, banco em `/var/lib/d-max` e configuração em `/etc/d-max`. O instalador deve ser executado no equipamento; sua inclusão no ZIP não ativa serviço algum no Windows ou neste ambiente.
 
 ## Iniciar no Linux
 
