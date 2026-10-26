@@ -4,7 +4,7 @@ import csv,io,json,sys,zipfile
 ROOT=Path(__file__).resolve().parents[1];sys.path.insert(0,str(ROOT))
 from logsis_studio.core import Project,available_models
 folder=ROOT/'CONTROLADORES_MANUAL_M1';folder.mkdir(exist_ok=True)
-output=io.StringIO(newline='');writer=csv.writer(output,delimiter=';')
+output=io.StringIO(newline='');writer=csv.writer(output,delimiter=';',lineterminator='\n')
 writer.writerow(['Modelo','Nome','Família manual','MDB','Índice BIN','Coluna SQL','Medição','Função lógica','Endereço','FNC LogSis','Bit zero-based','Divisor','Unidade','Base'])
 with zipfile.ZipFile(ROOT/'LOGSIS_CONTROLADORES_MANUAL_M1.zip','w',zipfile.ZIP_DEFLATED) as archive:
  for model in available_models():

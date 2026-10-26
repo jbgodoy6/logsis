@@ -1,14 +1,14 @@
 {
   "LOGSIS_STUDIO_8_0.zip": {
-    "bytes": 216276,
-    "sha256": "4c4cd9157fb4595cdbe9f6e6d8b6818b3a4b199203bbe72bf8b0e7bcc63b6379"
+    "bytes": 216273,
+    "sha256": "7dad011e1c8448a84ac3dd83b3e455c88692ee8f6d112dbf48cd323cb7804140"
   },
   "LOGSIS_CONTROLADORES_MANUAL_M1.zip": {
-    "bytes": 530854,
-    "sha256": "07a3db443bdeee81770063fe505a414b8cda5a483eb1d8976c000ec50c8aa2e4"
+    "bytes": 530851,
+    "sha256": "fe59657f8dc77c653a7f8f3b1becf296c3187ab83de9f3246fe6288ff4e8e6de"
   },
   "LOGSIS_STUDIO_8_MAPA_MANUAL.csv": {
-    "bytes": 60954,
-    "sha256": "b4d3cb2697a91f47b2e382a38c019de50a4ba5e955d56a4e27ffc455971a2b93"
+    "bytes": 60549,
+    "sha256": "95c2bca7f01948e0d73b3285f7db2040ab678dc82d9d2c0e789ff8d03bd5a8f7"
   }
 }
