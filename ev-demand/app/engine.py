@@ -12,7 +12,8 @@ class Engine:
         self.store = store
         self.ports = {}
         self.connections = {}
-        self.meter = {'total_kw': 0.0, 'at': 0.0, 'error': ''}
+        self.meter = {'total_kw': 0.0, 'at': 0.0, 'error': '', 'readings': [], 'energy_kwh': None}
+        self.meter_io_lock = asyncio.Lock()
         self.other_kw = 400.0
         self.cloud = {'status': 'Não configurada', 'last_sync': None}
         self.trace = []
@@ -127,20 +128,22 @@ class Engine:
                 self.store.put('session', session)
         self.aggregate(p['key'], p['power_kw'], delta)
 
-    def aggregate(self, source, power, energy_delta=0.0):
-        b = self.bucket.setdefault(source, {'sum': 0.0, 'count': 0, 'min_kw': power, 'max_kw': power, 'energy_kwh': 0.0})
+    def aggregate(self, source, power, energy_delta=None):
+        b = self.bucket.setdefault(source, {'sum': 0.0, 'count': 0, 'min_kw': power, 'max_kw': power, 'energy_kwh': 0.0, 'energy_samples': 0})
         b['sum'] += power
         b['count'] += 1
         b['min_kw'] = min(b['min_kw'], power)
         b['max_kw'] = max(b['max_kw'], power)
-        b['energy_kwh'] += energy_delta
+        if energy_delta is not None:
+            b['energy_kwh'] += energy_delta
+            b['energy_samples'] += 1
 
     def flush(self):
         for source, b in self.bucket.items():
             self.store.record('minute', {'minute_utc': self.bucket_minute * 60, 'source': source,
                                         'avg_kw': b['sum'] / b['count'], 'min_kw': b['min_kw'],
                                         'max_kw': b['max_kw'], 'samples': b['count'],
-                                        'energy_kwh': b['energy_kwh']}, source)
+                                        'energy_kwh': b['energy_kwh'] if b['energy_samples'] else None}, source)
         self.bucket.clear()
         self.bucket_minute = int(time.time() // 60)
 

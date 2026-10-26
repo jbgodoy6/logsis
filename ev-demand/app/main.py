@@ -17,6 +17,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator, model_valida
 from .engine import Engine
 from .ocpp_server import Socket, Station
 from .services import cloud_loop, meter_loop
+from .meter import Meter, MEASUREMENTS, read_meter
 from .store import Store, password_hash, password_matches
 
 
@@ -99,23 +100,6 @@ class Circuit(Model):
     limit_kw: float = Field(gt=0)
 
 
-class Meter(Model):
-    host: str = Field(default='', max_length=253)
-    port: int = Field(default=502, ge=1, le=65535)
-    unit: int = Field(default=1, ge=1, le=247)
-    address: int = Field(default=0, ge=0, le=65534)
-    type: str = 'float32'
-    word_order: str = 'big'
-    scale: float = Field(default=1, gt=0)
-    poll_s: float = Field(default=1, ge=0.5, le=10)
-
-    @model_validator(mode='after')
-    def validate_meter(self):
-        if self.type not in ('float32', 'int32', 'uint32', 'int16', 'uint16') or self.word_order not in ('big', 'little'):
-            raise ValueError('Formato Modbus inválido')
-        return self
-
-
 class Settings(Model):
     site_name: str = Field(min_length=1, max_length=100)
     mode: str
@@ -187,7 +171,7 @@ def create_app(database=None, background=True):
         engine.flush()
         store.db.close()
 
-    app = FastAPI(title='LOGSIS EV · Controle de demanda', version='0.1.0', lifespan=lifespan,
+    app = FastAPI(title='EnergyCube D-Max · Controle de demanda', version='0.2.0', lifespan=lifespan,
                   docs_url=None, redoc_url=None, openapi_url=None)
     app.state.store, app.state.engine = store, engine
 
@@ -296,14 +280,36 @@ def create_app(database=None, background=True):
         ids = {c.id for c in data.circuits}
         if any(c['circuit'] not in ids for c in store.entities('charger')):
             raise HTTPException(409, 'Um circuito em uso não pode ser removido')
-        if data.mode == 'physical' and not data.meter.host:
-            raise HTTPException(422, 'Configure o medidor antes da operação física')
+        if data.mode == 'physical':
+            if (data.meter.transport == 'tcp' and not data.meter.host) or (data.meter.transport == 'rtu' and not data.meter.serial_port):
+                raise HTTPException(422, 'Configure a conexão do multimedidor antes da operação física')
+            if not any(r.enabled and r.measurement == 'power_total_kw' for r in data.meter.registers):
+                raise HTTPException(422, 'Configure a leitura da potência ativa total para o controle de demanda')
         store.save_settings(data.model_dump())
-        if data.mode != current['mode']:
-            engine.meter.update(at=0, total_kw=0)
+        if data.mode != current['mode'] or data.meter.model_dump() != current['meter']:
+            engine.meter.update(at=0, total_kw=0, readings=[], energy_kwh=None, error='')
         store.record('settings_changed', {'actor': u['name'], 'mode': data.mode, 'limit_kw': data.limit_kw,
                                           'margin_kw': data.margin_kw, 'schedules': [s.model_dump() for s in data.schedules]})
         return {'ok': True}
+
+    @app.get('/api/meter/ports')
+    async def serial_ports(u=Depends(administrator)):
+        from serial.tools import list_ports
+        ports = await asyncio.to_thread(list_ports.comports)
+        return {'ports': [{'device': p.device, 'description': p.description} for p in ports]}
+
+    @app.get('/api/meter/measurements')
+    async def measurements(u=Depends(administrator)):
+        return {'measurements': [{'key': k, 'label': v[0], 'unit': v[1]} for k, v in MEASUREMENTS.items()]}
+
+    @app.post('/api/meter/test')
+    async def test_meter(data: Meter, u=Depends(administrator)):
+        try:
+            async with engine.meter_io_lock:
+                readings = await read_meter(data.model_dump())
+            return {'ok': all(not r['error'] for r in readings), 'readings': readings}
+        except Exception as exc:
+            return {'ok': False, 'error': str(exc)[:240], 'readings': []}
 
     @app.post('/api/chargers')
     async def charger(data: Charger, u=Depends(administrator)):

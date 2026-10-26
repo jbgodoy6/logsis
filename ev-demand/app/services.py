@@ -6,32 +6,7 @@ import struct
 import time
 
 import httpx
-
-
-async def read_modbus_power(config):
-    """Read a documented 0-based holding register; no meter-specific address is assumed."""
-    count = 1 if config['type'] in ('uint16', 'int16') else 2
-    transaction = secrets.randbelow(65536)
-    request = struct.pack('>HHHBBHH', transaction, 0, 6, config['unit'], 3, config['address'], count)
-    reader, writer = await asyncio.wait_for(asyncio.open_connection(config['host'], config['port']), 3)
-    try:
-        writer.write(request)
-        await writer.drain()
-        header = await asyncio.wait_for(reader.readexactly(7), 3)
-        tid, protocol, length, unit = struct.unpack('>HHHB', header)
-        if tid != transaction or protocol != 0 or unit != config['unit'] or not 3 <= length <= 254:
-            raise ValueError('Resposta Modbus inválida')
-        payload = await asyncio.wait_for(reader.readexactly(length - 1), 3)
-        if payload[0] != 3 or payload[1] != count * 2 or len(payload) != count * 2 + 2:
-            raise ValueError('Exceção ou tamanho Modbus inválido')
-        raw = payload[2:]
-        if count == 2 and config['word_order'] == 'little':
-            raw = raw[2:] + raw[:2]
-        formats = {'float32': '>f', 'int32': '>i', 'uint32': '>I', 'int16': '>h', 'uint16': '>H'}
-        return struct.unpack(formats[config['type']], raw)[0] * config['scale']
-    finally:
-        writer.close()
-        await writer.wait_closed()
+from .meter import read_meter, read_modbus_power
 
 
 async def meter_loop(engine):
@@ -39,17 +14,31 @@ async def meter_loop(engine):
     while True:
         settings = engine.store.settings()
         meter = settings['meter']
-        if settings['mode'] == 'physical' and meter['host']:
+        configured = meter['host'] if meter['transport'] == 'tcp' else meter['serial_port']
+        if settings['mode'] == 'physical' and configured:
             try:
-                value = await read_modbus_power(meter)
-                if not math.isfinite(value):
-                    raise ValueError('Leitura não finita')
-                engine.meter.update(total_kw=max(0.0, value), at=time.time(), error='')
-                engine.aggregate('site', value)
+                async with engine.meter_io_lock:
+                    readings = await read_meter(meter)
+                if engine.store.settings()['meter'] != meter:
+                    continue
+                engine.meter['readings'] = readings
+                power = next((r for r in readings if r['measurement'] == 'power_total_kw'), None)
+                energy = next((r for r in readings if r['measurement'] == 'energy_import_kwh' and not r['error']), None)
+                if not power or power['error']:
+                    raise ValueError(power['error'] if power else 'Potência total não configurada')
+                delta = None
+                if energy:
+                    old = engine.meter.get('energy_kwh')
+                    if old is not None and energy['value'] < old:
+                        engine.store.record('site_meter_reset', {'previous_kwh': old, 'new_kwh': energy['value']})
+                    delta = max(0.0, energy['value'] - old) if old is not None else 0.0
+                    engine.meter['energy_kwh'] = energy['value']
+                engine.meter.update(total_kw=max(0.0, power['value']), at=power['at'], error='')
+                engine.aggregate('site', power['value'], delta)
             except asyncio.CancelledError:
                 raise
             except Exception as exc:
-                engine.meter['error'] = str(exc)[:160]
+                engine.meter.update(error=str(exc)[:160], at=0)
         await asyncio.sleep(max(0.5, meter['poll_s']))
 
 

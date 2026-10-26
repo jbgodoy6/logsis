@@ -6,6 +6,7 @@ import secrets
 import sqlite3
 import time
 import uuid
+from .meter import DEFAULT_METER, normalize_meter
 
 
 DEFAULT_SETTINGS = {
@@ -13,8 +14,7 @@ DEFAULT_SETTINGS = {
     'margin_kw': 50.0, 'timezone': 'America/Sao_Paulo', 'freshness_s': 15,
     'ramp_kw_s': 10.0, 'schedules': [], 'blocked_policy': 'zero',
     'circuits': [{'id': 'principal', 'name': 'Quadro principal', 'limit_kw': 1000.0}],
-    'meter': {'host': '', 'port': 502, 'unit': 1, 'address': 0, 'type': 'float32',
-              'word_order': 'big', 'scale': 1.0, 'poll_s': 1.0},
+    'meter': DEFAULT_METER,
     'cloud_url': '', 'retain_days': 7,
 }
 
@@ -60,7 +60,9 @@ class Store:
             self.put('system', {'id': 'identity', 'controller_id': uuid.uuid4().hex})
 
     def settings(self):
-        return json.loads(self.db.execute('SELECT payload FROM settings WHERE id=1').fetchone()[0])
+        data = json.loads(self.db.execute('SELECT payload FROM settings WHERE id=1').fetchone()[0])
+        data['meter'] = normalize_meter(data['meter'])
+        return data
 
     def save_settings(self, data):
         with self.db:

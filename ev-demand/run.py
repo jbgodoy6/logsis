@@ -4,7 +4,7 @@ import uvicorn
 from app.main import create_app
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='LOGSIS EV · Controlador de demanda')
+    parser = argparse.ArgumentParser(description='EnergyCube D-Max · Controlador de demanda')
     parser.add_argument('--host', default='127.0.0.1')
     parser.add_argument('--port', type=int, default=8080)
     parser.add_argument('--tls-cert')

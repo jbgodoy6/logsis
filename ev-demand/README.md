@@ -1,13 +1,15 @@
-# LOGSIS EV — Controlador de demanda · v0.1
+# EnergyCube D-Max — Controlador de demanda · v0.2
 
 Primeira versão para **validação em Windows**, com a mesma base Python no Linux ARM64 do Raspberry Pi 4. Interface web local, simulador, SQLite, distribuição de potência e adaptador OCPP 1.6J. Não depende dos dashboards antigos deste repositório.
+
+[Tela TCP/IP](docs/multimedidor-tcp.png) · [Tela RS485](docs/multimedidor-rs485.png) · [Validação v0.2](docs/validation-v02.md)
 
 ![Visão geral](docs/painel-desktop.png)
 
 ## Iniciar no Windows
 
 1. Instale **Python 3.12 de 64 bits**, com o Python Launcher (`py`).
-2. Extraia a pasta do projeto em um diretório gravável, por exemplo `C:\LOGSIS-EV`. Não execute dentro do ZIP.
+2. Extraia a pasta do projeto em um diretório gravável, por exemplo `C:\D-Max`. Não execute dentro do ZIP.
 3. Execute **`iniciar-windows.bat`**. A primeira execução precisa de internet para instalar as dependências. Depois de instaladas, o mesmo lançador funciona sem internet enquanto o arquivo de dependências não mudar.
 4. No próprio computador servidor, abra **http://127.0.0.1:8080**. Defina a senha raiz e uma senha separada para o administrador. Nenhuma senha é embutida no código ou no pacote.
 5. Entre com o usuário `admin` e clique em **Carregar demonstração**.
@@ -31,6 +33,10 @@ python3 -m venv .venv
 ```
 
 A execução foi verificada em Linux x86-64 com Python 3.12. **Windows e Raspberry Pi físicos ainda precisam de validação.** As dependências com extensão nativa são instaladas para a plataforma de destino. Copie o projeto e migre o banco com backup consistente; não copie a pasta `.venv` entre sistemas.
+
+## Identidade EnergyCube
+
+O produto se chama **D-Max**. O painel aplica azul elétrico, azul-marinho e amarelo, com um PNG adaptado da referência de logo recebida. A imagem preparada para a interface não substitui o arquivo vetorial oficial da marca.
 
 ## Fluxo de validação
 
@@ -77,9 +83,23 @@ Configure o carregador para `wss://IP-OU-NOME:8443/ocpp/IDENTIFICADOR`. Não exp
 
 **Antes de operação real:** faltam homologação por modelo/firmware, validação de perdas e mínimos, limites por corrente de fase, proteção elétrica independente e ensaios de perda de comunicação/energia. O controlador não evita instantaneamente um degrau de carga do cliente: medição e atuação têm latência. Configure também contingência no firmware dos carregadores quando o controlador desaparecer. Este software é um protótipo para validação, não uma proteção elétrica certificada.
 
-## Smart meter
+## Multimedidor — TCP/IP ou RS485 Modbus
 
-Implementada leitura **Modbus TCP, função 03 (holding registers)**: inteiro de 16/32 bits ou float32, ordem de palavras configurável e multiplicador para converter em kW. Cadastre o registrador da **potência ativa total importada**, medindo toda a entrada, incluindo carregadores. Conferir endereço baseado em zero, unidade, ordem e escala no manual do medidor. Não há mapa universal. Modbus RTU, função 04 e leitura de correntes por fase ficam para uma próxima etapa.
+A página **Multimedidor** configura manualmente o equipamento e seu mapa. Não há endereço ou perfil de fabricante presumido. As configurações antigas da v0.1 são migradas preservando IP, Unit ID, offset, tipo, escala e ordem de palavras da potência total.
+
+- **TCP/IP:** IP ou hostname, porta (padrão 502), Unit ID, timeout e intervalo.
+- **RS485/RTU:** porta serial (`COM3` no Windows ou `/dev/ttyUSB0` no Raspberry), baud rate, paridade N/E/O, 8 bits de dados e 1/2 stop bits. Use adaptador USB–RS485 com direção automática. Configure acesso à porta serial no Linux e confira A/B, polarização, terminação e isolamento conforme o fabricante. É uma conexão de leitura; não há comandos de escrita no medidor.
+- **Mapa por grandeza:** habilitação, offset, função 03/04, tipo int/uint de 16/32/64 bits ou float32/64, multiplicador e ordens de palavras e bytes independentes.
+- **Grandezas:** potência ativa total, energia ativa importada, correntes L1/L2/L3, tensões L1–N/L2–N/L3–N, frequência, fator de potência e potências por fase.
+- **Base:** escolha offsets base 0 ou base 1. Base 1 subtrai exatamente 1 no quadro Modbus. Referências de manual como 30001/40001 não são convertidas automaticamente; conferir o offset e a função do fabricante.
+- **Escala:** converte para a unidade final da tela. Por exemplo: W para kW → `0,001`; décimos de ampère para A → `0,1`. Escala zero é inválida; uma escala negativa pode corrigir a convenção da potência, se documentada.
+- **Testar leitura:** usa o formulário sem salvar, exibe valores, unidades, endereços e erros. O botão não altera o controle em operação. Salve para aplicar; a troca do mapa invalida a leitura anterior até uma nova amostra válida.
+
+A potência ativa total é obrigatória em operação física. O medidor deve incluir toda a entrada, incluindo os carregadores. Ausência ou erro nessa leitura impede novas liberações. Falha em uma grandeza auxiliar é mostrada no diagnóstico sem fabricar um valor.
+
+A energia da instalação passa a ser consolidada quando seu registrador estiver habilitado e válido. Sem esse dado, o campo de energia da amostra é `null`, não uma medição de zero. Resets do acumulador são sinalizados. A leitura das correntes por fase está disponível para visualização; a política de proteção por corrente de fase continua pendente.
+
+O transporte RTU foi validado com frames/CRC e com o driver pyserial sobre uma pseudoporta Linux. Isso não substitui homologação do adaptador e multimedidor reais.
 
 ## Banco local, nuvem e retenção
 
@@ -111,6 +131,6 @@ Criação de operadores adicionais, recuperação por console e rotação da pr�
 .venv/bin/python -m unittest discover -s tests -v
 ```
 
-Os testes usam credenciais fictícias e banco em memória. Não acessam carregadores ou medidores de produção. Há cenários de 60 carregadores, orçamento de 15 MW, prioridades, mínimos, compartilhamento, horários, autenticação, recuperação, retenção e troca de mensagens OCPP.
+Os testes usam credenciais fictícias e banco em memória. Não acessam carregadores ou medidores de produção. Há cenários de registradores manuais TCP/RTU, CRC, escalas, migração de configuração, 60 carregadores, orçamento de 15 MW, prioridades, mínimos, compartilhamento, horários, autenticação, recuperação, retenção e troca de mensagens OCPP.
 
 Os arquivos de `app/static/` são locais: não há fontes, bibliotecas ou scripts externos necessários ao painel. Capturas de desktop e celular estão em `docs/`.

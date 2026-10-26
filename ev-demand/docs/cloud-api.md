@@ -1,6 +1,6 @@
 # Contrato de sincronização — primeira versão
 
-O controlador envia HTTPS POST para a URL configurada, uma vez por minuto, com `Authorization: Bearer <EV_CLOUD_TOKEN>`. Verificação TLS permanece habilitada. Não há redirecionamento automático, nem envio direto ao Grafana.
+O EnergyCube D-Max envia HTTPS POST para a URL configurada, uma vez por minuto, com `Authorization: Bearer <EV_CLOUD_TOKEN>`. Verificação TLS permanece habilitada. Não há redirecionamento automático, nem envio direto ao Grafana.
 
 ```json
 {
@@ -32,7 +32,7 @@ O servidor deve autenticar a instalação, verificar que a credencial tem acesso
 
 Uma retransmissão idêntica deve retornar a mesma confirmação sem duplicar dados. Conteúdo diferente sob o mesmo identificador deve ser rejeitado. O controlador aceita confirmação parcial, remove da fila apenas os IDs reconhecidos desse lote e mantém os demais. HTTP 2xx sem confirmação válida não autoriza exclusão. Campos `ts` e `minute_utc` preservam o horário de origem, não o horário de recepção.
 
-`source=site` corresponde ao medidor de entrada; outros sources representam conectores. A energia total da instalação ainda não é coletada do medidor Modbus: para `site`, `energy_kwh=0` nesta versão e não deve ser usado como medição de energia da instalação. Energia de conectores vem do acumulador do carregador quando disponível; ausência de leitura não deve ser interpretada como zero físico.
+`source=site` corresponde ao multimedidor da entrada; outros sources representam conectores. A energia total da instalação é obtida pelo registrador `energy_import_kwh`, quando habilitado e válido. Na ausência de energia medida, `energy_kwh=null`; isso não deve ser tratado como zero físico. Na primeira leitura válida o acumulador recebe uma linha de base. Reinícios ou mudanças de mapa reiniciam essa linha de base, evitando atribuir energia desconhecida ao intervalo. Resets são registrados como eventos.
 
 Sessões e intervenções são transmitidas como eventos (`session_start`, `session_end`, `limit_changed`, etc.). O resumo final de sessão preserva kWh e pico medido. Eventos de sessão interrompida sinalizam falhas de continuidade.
 

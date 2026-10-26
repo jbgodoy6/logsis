@@ -97,6 +97,46 @@ class APITests(unittest.TestCase):
             self.assertEqual(ws.receive_json()[0:2], [3, 'meter'])
             self.assertEqual(self.app.state.engine.ports['station:1']['power_kw'], 30)
 
+    def test_rtu_settings_and_manual_map_are_persisted(self):
+        settings = self.c.get('/api/state').json()['settings']
+        settings['mode'] = 'physical'
+        settings['meter'].update(transport='rtu', serial_port='COM8', baudrate=19200, parity='E', stopbits=1)
+        settings['meter']['registers'][0].update(address=5100, function=4, type='int32', scale=.001)
+        self.assertEqual(self.c.put('/api/settings', json=settings).status_code, 200)
+        saved = self.c.get('/api/state').json()['settings']['meter']
+        self.assertEqual(saved['transport'], 'rtu')
+        self.assertEqual(saved['serial_port'], 'COM8')
+        self.assertEqual(saved['registers'][0]['address'], 5100)
+        self.assertEqual(saved['registers'][0]['function'], 4)
+
+    def test_physical_requires_total_power_register(self):
+        settings = self.c.get('/api/state').json()['settings']
+        settings['mode'] = 'physical';settings['meter']['host'] = '192.0.2.1'
+        for reg in settings['meter']['registers']: reg['enabled'] = False
+        self.assertEqual(self.c.put('/api/settings', json=settings).status_code, 422)
+
+    def test_meter_test_uses_unsaved_draft_and_preserves_settings(self):
+        from unittest.mock import AsyncMock, patch
+        before = self.c.get('/api/state').json()['settings']['meter']
+        draft = dict(before, host='192.0.2.44')
+        readings = [{'measurement': 'power_total_kw', 'label': 'Potência ativa total', 'unit': 'kW',
+                     'address': 0, 'function': 3, 'at': time.time(), 'value': 1200, 'error': None}]
+        with patch('app.main.read_meter', new=AsyncMock(return_value=readings)) as read:
+            response = self.c.post('/api/meter/test', json=draft)
+            self.assertTrue(response.json()['ok'])
+            self.assertEqual(response.json()['readings'][0]['value'], 1200)
+            self.assertEqual(read.call_args.args[0]['host'], '192.0.2.44')
+        self.assertEqual(self.c.get('/api/state').json()['settings']['meter'], before)
+
+    def test_energycube_brand_and_logo_are_local_assets(self):
+        html = self.c.get('/').text
+        self.assertIn('D-Max', html)
+        self.assertIn('EnergyCube', html)
+        self.assertNotIn('LOGSIS', html)
+        response = self.c.get('/static/energycube-logo.png')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.headers['content-type'], 'image/png')
+
 
 if __name__ == '__main__':
     unittest.main()
