@@ -1,0 +1,37 @@
+{
+  "version": "9.1.2",
+  "result": "passed",
+  "fix": [
+    "Local source cards show all three line-to-line voltages first, followed by phase-neutral, frequency, current L1, active power and PF.",
+    "Visible-width conductors connect the switches, measured BUS and load while preserving model topology.",
+    "Approved DSE7420 contact artwork and ABERTO/FECHADO/SEM DADOS labels throughout the standard layout."
+  ],
+  "unit_tests": {
+    "total": 60,
+    "executed_passed": 48,
+    "gui_skipped": 12
+  },
+  "visual": {
+    "profiles": 17,
+    "widths": [
+      1440,
+      390
+    ],
+    "result": "passed",
+    "query_errors": [],
+    "reproduction": "DSE8660 with missing phase-neutral readings and measured 13.59/13.46/13.44 kV line-to-line readings; assertions on local Canvas voltage and contact texts."
+  },
+  "scope": "Presentation and labels only; BIN profiles, address maps, scales and counter calculations preserved. Contacts on LED-based profiles follow controller indication, without independent physical feedback.",
+  "physical_controller_test": false,
+  "source_hashes": {
+    "core.py": "9009235aa825e57f8964b4960064ad9830d6b69f390faf6d681bcf28fdad4f1e",
+    "app.py": "ae1919547b5682eab4394ddcaa7c20b4b02400455c7a5891a6658e8827b1a873",
+    "__init__.py": "eb3189db24a487a77d643ed340118448edfacfd1f711bfb01303295bfab97d2c",
+    "standard_layout.py": "b8e0a5eea558bdb1de510388d179c6235c85ff21ade24c8e6c10af292b244472",
+    "codecs.py": "643a193bcfd487b5f86f4b82ae10c0bf10a868ea279e2ca065cca2af81a462dc",
+    "deif_dashboard.py": "9f78bd1ba4af3c255811d6ab5e936c7839955253d7a6c4f8acb89aa393a4fedc",
+    "transport.py": "7a976ac3e2790a96d26471e326b21a0f85f2dad4ab1999ec11fefbb6a6471402",
+    "manual_dashboard.py": "03d42444f61af98974915fdbc98caad243cf139e4e3c7431e68b73f336e6bbc3"
+  },
+  "extracted_package_smoke": "passed: 17 model dashboard exports from clean extracted source"
+}

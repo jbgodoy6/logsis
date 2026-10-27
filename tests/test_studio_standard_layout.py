@@ -11,6 +11,24 @@ from logsis_studio.core import Project,available_models,RESOURCES
 
 
 class StandardLayoutTests(unittest.TestCase):
+    def test_company_and_bus_cards_include_all_measured_phase_voltages(self):
+        p=Project.new('DSE8660');d=p.dashboard('id_demo','Planta','ds')
+        es=d['panels'][0]['options']['root']['elements']
+        for side,prefix in [(0,'mains'),(1,'bus')]:
+            rows=[e for e in es if e['name'].startswith(f'Fonte leitura {side} ')]
+            self.assertEqual(len(rows),10)
+            roles={c.role:f'MDB{c.number:02}' for c in p.profile.channels}
+            for row,suffix in enumerate(['v_l1l2','v_l2l3','v_l3l1','v_l1n','v_l2n','v_l3n','frequency','i_l1','kw','fp']):
+                self.assertEqual(rows[row]['config']['text']['field'],roles[prefix+'_'+suffix])
+                self.assertLessEqual(rows[row]['placement']['top']+rows[row]['placement']['height'],456)
+
+    def test_interconnection_conductors_have_visible_canvas_width(self):
+        p=Project.new('DSE8660');es=p.dashboard('id_demo','Planta','ds')['panels'][0]['options']['root']['elements']
+        for name in ['MB até BUS · descida','MB até BUS · ponte','MB até BUS · retorno','BUS antes do TB','TB até carga','Traço fluido 21','Traço fluido 25','Traço fluido 28']:
+            e=next(e for e in es if e['name']==name)
+            self.assertLess(e['placement']['left']+e['placement']['right'],100,name)
+            self.assertGreater(e['placement']['height'],0,name)
+
     def test_all_contact_drawings_reuse_exact_7420_vectors_not_led_circles(self):
         from logsis_studio.manual_dashboard import contact_assets
         from logsis_studio.deif_dashboard import switch
@@ -31,6 +49,13 @@ class StandardLayoutTests(unittest.TestCase):
                 name=e['background']['image']['field']
                 self.assertTrue(name.startswith('CONTACT_LED_') or name in ['B1_SVG','B2_SVG'],(model,name))
             sql=d['panels'][0]['targets'][0]['rawSql']
+            self.assertNotIn("THEN 'IND. ATIVA'",sql)
+            if p.profile.vendor!='DEIF':self.assertIn("THEN 'FECHADO'",sql)
+            for panel in d['panels']:
+                for e in panel.get('options',{}).get('root',{}).get('elements',[]):
+                    self.assertNotIn('LED',e.get('config',{}).get('text',{}).get('fixed',''),model)
+                    if e.get('background',{}).get('image'):
+                        self.assertLess(e['placement']['left']+e['placement']['right'],100,(model,e['name']))
             for c in p.profile.channels:
                 if c.role.startswith('led_'):
                     self.assertIn('CONTACT_'+c.role.upper()+'_SVG',sql)

@@ -1,6 +1,6 @@
 # LogSis Studio 9.1 — Sistel
 
-Correção 9.1.1: os contatos do unifilar usam os mesmos vetores aberto, fechado e desconhecido do DSE7420. Círculos de LED deixaram de ocupar o lugar do desenho das chaves. Nos modelos cujo mapa fornece apenas LED, o texto indica "IND. ATIVA/INATIVA", sem afirmar retorno físico independente do disjuntor.
+Correção 9.1.2: contatos aberto/fechado/desconhecido com os mesmos vetores do DSE7420 e textos ABERTO/FECHADO/SEM DADOS. Nos modelos com indicação por LED no mapa, a posição exibida segue essa indicação do controlador, sem retorno físico independente. As ligações verticais têm largura visível no Canvas. As leituras locais mostram primeiro as três tensões entre fases, seguidas de fase–neutro, frequência, corrente L1, potência e FP; não se calcula tensão fase–neutro ausente. No DSE8660 preserva-se o caminho rede → MB → BUS → TB → carga.
 
 Versão 9.1: dashboards organizados no padrão aprovado do DSE7420, incluindo os modelos de companhia/BUS e aplicações DEIF. O desenho mantém a topologia de cada controlador; mapas BIN e escalas permanecem iguais. O pacote desta versão contém código-fonte Python e recursos, sem iniciador BAT, executável EXE ou instalador. Para atualizar somente o Grafana, existe também uma entrega separada apenas com arquivos JSON.
 

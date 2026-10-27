@@ -97,7 +97,7 @@ def main_sql(profile):
    extra.append(f'CASE WHEN {ref(c)}=1 THEN {sq(led(True))} ELSE {sq(led(False))} END AS "{role.upper()}_SVG"')
    contact=contact_assets()
    extra.append(f'CASE {ref(c)} WHEN 0 THEN {sq(contact["open"])} WHEN 1 THEN {sq(contact["closed"])} ELSE {sq(contact["unknown"])} END AS "CONTACT_{role.upper()}_SVG"')
-   extra.append(f'''CASE {ref(c)} WHEN 0 THEN 'IND. INATIVA' WHEN 1 THEN 'IND. ATIVA' ELSE 'SEM DADOS' END AS "CONTACT_{role.upper()}_LABEL"''')
+   extra.append(f'''CASE {ref(c)} WHEN 0 THEN 'ABERTO' WHEN 1 THEN 'FECHADO' ELSE 'SEM DADOS' END AS "CONTACT_{role.upper()}_LABEL"''')
  if profile.kind=='engine_transfer':
   alarm='CASE '+''.join('WHEN '+ref(roles[role])+'=1 THEN '+sq(assets()[role])+' ' for role in ['shutdown','trip','warning'])+'ELSE '+sq(assets()['gen'])+' END'
   extra.append(alarm+' AS "GERADOR_ALARME_SVG"')
@@ -128,13 +128,13 @@ def properties(profile):
  for c in profile.channels:
   props={'unit':('suffix: '+c.unit) if c.unit else 'none','decimals':1 if c.divisor in [10,3600] else 2 if c.divisor>10 else 0,'noValue':'—','mappings':[{'type':'special','options':{'match':'null','result':{'text':'—','color':MUTED}}}]}
   if c.role.startswith(('input_','led_')) or c.role in BOOL_ROLES:
-   one,zero=('LED ATIVO','LED INATIVO') if c.role.startswith('led_') else ('ON','OFF') if c.role.startswith('input_') else ('ATIVO','INATIVO')
+   one,zero=(('COM TENSÃO','SEM TENSÃO') if c.role.endswith('_live') else ('FECHADO','ABERTO')) if c.role.startswith('led_') else ('ON','OFF') if c.role.startswith('input_') else ('ATIVO','INATIVO')
    props.update(unit='none',decimals=0)
    props['mappings'].insert(0,{'type':'value','options':{'0':{'text':zero,'color':MUTED},'1':{'text':one,'color':CYAN if c.role.startswith('input_') else GOLD}}})
   overrides.append({'matcher':{'id':'byName','options':field(c)},'properties':[{'id':k,'value':v} for k,v in props.items()]})
  for c in profile.channels:
   if c.role.startswith('led_'):
-   overrides.append({'matcher':{'id':'byName','options':c.role.upper()+'_ESTADO'},'properties':[{'id':'mappings','value':[{'type':'value','options':{'LED ATIVO':{'text':'LED ATIVO','color':CYAN},'LED INATIVO':{'text':'LED INATIVO','color':MUTED},'SEM DADOS':{'text':'SEM DADOS','color':MUTED}}}]}]})
+   overrides.append({'matcher':{'id':'byName','options':c.role.upper()+'_ESTADO'},'properties':[{'id':'mappings','value':[{'type':'value','options':{'LED ATIVO':{'text':'COM TENSÃO' if c.role.endswith('_live') else 'FECHADO','color':GOLD},'LED INATIVO':{'text':'SEM TENSÃO' if c.role.endswith('_live') else 'ABERTO','color':MUTED},'SEM DADOS':{'text':'SEM DADOS','color':MUTED}}}]}]})
  overrides.append({'matcher':{'id':'byName','options':'GERADOR_ALARME'},'properties':[{'id':'mappings','value':[{'type':'value','options':{'GRUPO GERADOR':{'text':'GRUPO GERADOR','color':GOLD},'ALARMES / SEM DADOS':{'text':'ALARMES / SEM DADOS','color':MUTED},'GERADOR / WARNING':{'text':'GERADOR / WARNING','color':'#f2cc0c'},'GERADOR / TRIP':{'text':'GERADOR / TRIP','color':'#ff9830'},'GERADOR / SHUTDOWN':{'text':'GERADOR / SHUTDOWN','color':RED}}}]}]})
  for alias in ['MODO_LOCAL','MODO_CURTO']:
   overrides.append({'matcher':{'id':'byName','options':alias},'properties':[{'id':'color','value':{'mode':'fixed','fixedColor':GOLD}}]})

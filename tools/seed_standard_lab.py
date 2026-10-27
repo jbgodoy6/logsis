@@ -24,6 +24,15 @@ for model in available_models():
     if previous:
      for role,value in [('hour_meter',360000),('energy_gen',2000),('energy_mains',5000),('energy_bus',10000)]:
       if role in rs:values[rs[role].index]=value
+  if model=='DSE8660':
+   # Reproduce the customer's 3-wire medium-voltage case: phase-neutral
+   # unimplemented while all three measured phase-phase values are valid.
+   for prefix in ['mains','bus']:
+    for suffix in ['v_l1n','v_l2n','v_l3n']:values[rs[prefix+'_'+suffix].index]=4294967295
+    for suffix,value in [('v_l1l2',13590 if prefix=='mains' else 0),('v_l2l3',13460 if prefix=='mains' else 0),('v_l3l1',13440 if prefix=='mains' else 0)]:
+     values[rs[prefix+'_'+suffix].index]=value*rs[prefix+'_'+suffix].divisor
+   for role,value in [('mains_i_l1',30),('mains_i_l2',40),('mains_i_l3',40),('mains_kw',72990),('mains_fp',87),('bus_frequency',0),('bus_i_l1',0),('bus_i_l2',0),('bus_i_l3',0),('bus_kw',0)]:
+    values[rs[role].index]=value
   sql+=f"INSERT INTO {table} VALUES ('{stamp}',-53,-58,"+','.join(map(str,values))+');'
  run=subprocess.run(['docker','exec','-i','logsis-postgres','psql','-U','postgres','-d','logsis','-q','-v','ON_ERROR_STOP=1'],input=sql,text=True,capture_output=True);assert not run.returncode,run.stderr
  d=p.dashboard(table,'Padrão '+p.profile.model,'zKW_ld27k','standard-'+model.lower().replace('_','-'))

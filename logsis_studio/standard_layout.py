@@ -54,8 +54,8 @@ def config(profile):
 
 
 def source_rows(rs,prefix,motor=False):
-    suffixes=['v_l1n','v_l2n','v_l3n','frequency','rpm','coolant','oil_pressure'] if motor else ['v_l1n','v_l2n','v_l3n','v_l1l2','v_l2l3','v_l3l1','frequency']
-    labels=['L1–N','L2–N','L3–N','Freq.','Rotação','T. água','P. óleo'] if motor else ['L1–N','L2–N','L3–N','L1–L2','L2–L3','L3–L1','Freq.']
+    suffixes=['v_l1n','v_l2n','v_l3n','frequency','rpm','coolant','oil_pressure'] if motor else ['v_l1l2','v_l2l3','v_l3l1','v_l1n','v_l2n','v_l3n','frequency','i_l1','kw','fp']
+    labels=['L1–N','L2–N','L3–N','Freq.','Rotação','T. água','P. óleo'] if motor else ['L1–L2','L2–L3','L3–L1','L1–N','L2–N','L3–N','Freq.','I L1','Potência','FP']
     return [(label,field(rs.get(s if s in ['rpm','coolant','oil_pressure'] else prefix+'_'+s))) for label,s in zip(labels,suffixes)]
 
 
@@ -114,15 +114,7 @@ def overview(profile,old):
             e['name']='Barramento vetorial' if right.startswith('bus') else 'Fonte S2 vetorial'
         if name=='Símbolo do barramento BUS' and profile.topology=='engine':
             img(e,uri=ui.svg('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 90"><rect x="20" y="20" width="140" height="50" rx="8" fill="#183244" stroke="#7494aa"/><path d="M40 45H140" stroke="#96aec4" stroke-width="5"/></svg>'))
-        if name.startswith('Fonte rótulo ') or name.startswith('Fonte leitura '):
-            # Source columns are encoded in their placements, not MDB numbers.
-            rows=left_rows if e['placement']['left']<50 else right_rows
-            start=258 if single else 297
-            row=round((e['placement']['top']-start)/22)
-            if 0<=row<7:
-                caption,value=rows[row]
-                if name.startswith('Fonte rótulo '):fixed_text(e,caption)
-                else:metric(e,value)
+        if name.startswith(('Fonte rótulo ','Fonte leitura ')):continue
         if name in ['Indicação de manutenção'] and (not engine or profile.application in ['ATS','MAINS']):continue
         if name in ['Tensão rede','Tensão GMG','Tensão gerador','Tensão BUS']:
             prefix=left if name in ['Tensão rede','Tensão gerador'] else right
@@ -170,6 +162,20 @@ def overview(profile,old):
             if tie and name in ['QTA responsivo','Contato MDB52','Contato MDB53','Título MDB52','Título MDB53','Posição MDB52','Posição MDB53','Estado MDB52','Estado MDB53','Intertravamento legenda','Traço fluido 15','Traço fluido 21','Traço fluido 24']:
                 continue
         kept.append(e)
+    # Rebuild the local cards from the actual model roles. Put measured
+    # line-to-line voltages first: installations without neutral must still
+    # expose all three available company/BUS voltages under their symbols.
+    for side,rows in enumerate([left_rows,right_rows]):
+        start=258 if single else 292
+        step=22 if len(rows)<=7 else 16
+        for row,(caption,value) in enumerate(rows):
+            x=5+side*50;y=start+row*step
+            label=ui.text(f'Fonte rótulo {side} {row}',x,13,y,step,caption,8 if len(rows)>7 else 9)
+            label['config']['align']='left'
+            reading=ui.text(f'Fonte leitura {side} {row}',x+13,27,y,step,size=10 if len(rows)>7 else 12,color=ui.INK,field_name=value)
+            if not value:fixed_text(reading,'—')
+            reading['config']['align']='right'
+            kept += [label,reading]
     if mains_bus:
         # Company -> MB -> measured common BUS -> TB -> load, never two
         # independent power sources feeding a fictitious transfer switch.
@@ -188,12 +194,20 @@ def overview(profile,old):
                  ui.text('Estado do acoplador',40,20,549,18,size=8,field_name='CONTACT_LED_TIE_LABEL'),
                  ui.image('BUS2 para carga',75,0,527,82,field_name=wire_name(False,'bus2')),
                  ui.image('BUS2 ponte carga',50,25,609,2,field_name=wire_name(False,'bus2',False))]
+    # Canvas image boxes with left + right == 100 have zero width. Give
+    # every vertical conductor a real drawable area, including new bridges.
+    for e in kept:
+        placement=e['placement']
+        if e.get('background',{}).get('image') and placement['left']+placement['right']>=100:
+            placement['right']=100-placement['left']-.6
     p['options']['root']['elements']=kept
     return p
 
 
 def caption(c):
     role=c.role
+    if role.startswith('led_'):
+        return {'led_mains':'Chave / rede','led_gen':'Chave / gerador','led_bus':'Chave / BUS','led_tie':'Acoplador','led_bus_live':'Tensão / BUS 1','led_bus2_live':'Tensão / BUS 2'}.get(role,c.name)
     for suffix,label in [('v_l1n','L1–N · V'),('v_l2n','L2–N · V'),('v_l3n','L3–N · V'),('v_l1l2','L1–L2 · V'),('v_l2l3','L2–L3 · V'),('v_l3l1','L3–L1 · V'),('i_l1','L1 · A'),('i_l2','L2 · A'),('i_l3','L3 · A'),('i_earth','Terra · A'),('frequency','Frequência'),('kw_l1','L1 · kW'),('kw_l2','L2 · kW'),('kw_l3','L3 · kW'),('kva_l1','L1 · kVA'),('kva_l2','L2 · kVA'),('kva_l3','L3 · kVA'),('kvar_l1','L1 · kvar'),('kvar_l2','L2 · kvar'),('kvar_l3','L3 · kvar'),('fp_l1','L1 · FP'),('fp_l2','L2 · FP'),('fp_l3','L3 · FP'),('kw','Ativa · kW'),('kva','Aparente · kVA'),('kvar','Reativa · kvar'),('fp','FP médio')]:
         if role.endswith('_'+suffix):return label
     return {'oil_pressure':'Pressão óleo','coolant':'Temp. água','oil_temperature':'Temp. óleo','battery':'Bateria','rpm':'Rotação','fuel':'Nível diesel','charge':'Alternador','charge_voltage':'Alternador','hour_meter':'Horímetro','starts':'Partidas','alarm_count':'Total de alarmes','alarm_unack':'Não reconhecidos','alarm_active_ack':'Ativos reconhecidos'}.get(role,c.name)

@@ -15,6 +15,14 @@ for(const model of models){
  await page.setViewportSize({width:1440,height:1100});
  await page.goto('http://127.0.0.1:3300/d/standard-'+model.toLowerCase().replaceAll('_','-')+'?from=1792756800000&to=1792760400000&kiosk');
  await page.getByText('23/10 09:30',{exact:true}).waitFor({timeout:45000});
+ if(model==='DSE8660'){
+  const first=page.locator('[data-testid="data-testid Panel header 01 / Unifilar da instalação"]').locator('..');
+  // The medium-voltage fixture intentionally has no phase-neutral reading.
+  // Inspect the first Canvas rather than accepting values from detail cards.
+  const texts=await page.locator('div[role=button][style*="position: absolute"]').allTextContents();
+  for(const expected of ['13.59 kV','13.46 kV','13.44 kV','FECHADO','ABERTO'])if(!texts.includes(expected))throw Error('Missing local reading/contact '+expected);
+  if(texts.some(t=>/LED ATIVO|LED INATIVO|IND\. ATIVA|IND\. INATIVA/.test(t)))throw Error('Old LED state labels');
+ }
  for(const width of [1440,390]){
   await page.setViewportSize({width,height:1100});await page.locator('.scrollbar-view').first().evaluate(e=>e.scrollTo(0,0));await page.waitForTimeout(650);
   let cut=await clipping(page);record.clipping.push(...cut.map(text=>({width,text})));if(cut.length)console.log('CLIP',model,width,JSON.stringify(cut));
