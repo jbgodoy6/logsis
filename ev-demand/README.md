@@ -1,5 +1,7 @@
 # EnergyCube D-Max — Controlador de demanda · v0.3.1
 
+**Distribuição Windows em análise:** o Defender bloqueou os ZIPs 0.3.0 e 0.3.1. Mantenha o bloqueio e não crie exclusões para instalá-los. [Evidências, hashes e investigação direcionada](docs/defender-investigation.md). As correções abaixo não confirmam resolução desse alerta.
+
 Primeira versão para **validação em Windows**, com a mesma base Python no Linux ARM64 do Raspberry Pi 4. Interface web local, simulador, SQLite, distribuição de potência e adaptador OCPP 1.6J. Não depende dos dashboards antigos deste repositório.
 
 [Tela TCP/IP](docs/multimedidor-tcp.png) · [Tela RS485](docs/multimedidor-rs485.png) · [Revisão de segurança v0.3.1](docs/security-review-v031.md)
