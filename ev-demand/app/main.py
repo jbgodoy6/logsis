@@ -21,6 +21,7 @@ from .meter import Meter, MEASUREMENTS, read_meter
 from .store import Store, password_hash, password_matches
 from .access import Access, TECHNICAL, MANAGERS
 from .directory import directory_loop, synchronize, validate_config
+from .security import AttemptLimiter, same_origin, valid_host
 
 
 class Model(BaseModel):
@@ -190,7 +191,17 @@ def create_app(database=None, background=True):
     store = Store(database)
     engine = Engine(store)
     access = Access(store)
-    attempts = {}
+    attempts = AttemptLimiter()
+    password_attempts = AttemptLimiter()
+    ocpp_attempts = AttemptLimiter()
+    verification_slots = asyncio.Semaphore(2)
+
+    async def verify_password(value, encoded):
+        if verification_slots.locked():
+            return None
+        # PBKDF2 must not block the loop running the demand controller.
+        async with verification_slots:
+            return await asyncio.to_thread(password_matches, value, encoded)
 
     @asynccontextmanager
     async def lifespan(app):
@@ -207,7 +218,7 @@ def create_app(database=None, background=True):
         engine.flush()
         store.db.close()
 
-    app = FastAPI(title='EnergyCube D-Max · Controle de demanda', version='0.3.0', lifespan=lifespan,
+    app = FastAPI(title='EnergyCube D-Max · Controle de demanda', version='0.3.1', lifespan=lifespan,
                   docs_url=None, redoc_url=None, openapi_url=None)
     app.state.store, app.state.engine, app.state.access = store, engine, access
 
@@ -242,9 +253,12 @@ def create_app(database=None, background=True):
 
     @app.middleware('http')
     async def protect_origin(request, call_next):
+        host = request.headers.get('host', '')
+        if not valid_host(host):
+            return Response('Host inválido', status_code=400)
         if request.method not in ('GET', 'HEAD', 'OPTIONS'):
             origin = request.headers.get('origin')
-            if (origin and urlsplit(origin).netloc != request.headers.get('host')) or request.headers.get('sec-fetch-site') == 'cross-site':
+            if (origin and not same_origin(origin, host, request.scope['scheme'])) or request.headers.get('sec-fetch-site') == 'cross-site':
                 return Response('Origem não permitida', status_code=403)
         response = await call_next(request)
         response.headers['X-Content-Type-Options'] = 'nosniff'
@@ -274,10 +288,8 @@ def create_app(database=None, background=True):
     @app.post('/api/login')
     async def login(data: Login, response: Response, request: Request):
         address = request.client.host if request.client else 'unknown'
-        recent = [t for t in attempts.get(address, []) if time.time() - t < 300]
-        if len(recent) >= 8:
+        if not attempts.allow(address):
             raise HTTPException(429, 'Muitas tentativas. Aguarde cinco minutos.')
-        attempts[address] = recent + [time.time()]
         name = data.username.strip().lower()
         row = access.by_name(name)
         if access.config()['enabled'] and (not row or row['role'] == 'technician'):
@@ -286,11 +298,24 @@ def create_app(database=None, background=True):
             except TimeoutError:
                 pass
             row = access.by_name(name)
-        if not access.usable(row) or not password_matches(data.password, row['password']):
+        if not access.usable(row):
             raise HTTPException(401, 'Usuário, senha, situação ou validade inválidos')
-        if row['activation_hash'] and not password_matches(data.activation_code, row['activation_hash']):
-            raise HTTPException(401, 'Informe o código de ativação recebido do responsável')
-        attempts.pop(address, None)
+        verified = await verify_password(data.password, row['password'])
+        if verified is None:
+            raise HTTPException(429, 'Autenticação ocupada. Tente novamente em instantes.')
+        if not verified:
+            raise HTTPException(401, 'Usuário, senha, situação ou validade inválidos')
+        if row['activation_hash']:
+            activated = await verify_password(data.activation_code, row['activation_hash'])
+            if activated is None:
+                raise HTTPException(429, 'Autenticação ocupada. Tente novamente em instantes.')
+            if not activated:
+                raise HTTPException(401, 'Informe o código de ativação recebido do responsável')
+        # An account can be revoked while PBKDF2 runs in the worker thread.
+        latest = access.by_id(row['id'])
+        if not access.usable(latest) or any(latest[k] != row[k] for k in ('epoch','password','activation_hash')):
+            raise HTTPException(401, 'Acesso alterado durante a autenticação. Faça login novamente.')
+        row = latest
         token = secrets.token_urlsafe(32)
         with store.db:
             store.db.execute('INSERT INTO logins(token,username,expires,epoch) VALUES (?,?,?,?)',
@@ -329,6 +354,8 @@ def create_app(database=None, background=True):
 
     @app.post('/api/change-password')
     async def change_password(data: PasswordChange, response: Response, u=Depends(authenticated)):
+        if not password_attempts.allow(u['id']):
+            raise HTTPException(429, 'Muitas tentativas. Aguarde cinco minutos.')
         try:
             access.change_password(u, data.current_password, data.new_password)
         except (ValueError, PermissionError) as exc:
@@ -548,7 +575,7 @@ def create_app(database=None, background=True):
     @app.websocket('/ws/live')
     async def live(ws: WebSocket):
         origin = ws.headers.get('origin')
-        if (origin and urlsplit(origin).netloc != ws.headers.get('host')) or not get_user(ws.cookies.get('ev_session')) or get_user(ws.cookies.get('ev_session'))['must_change']:
+        if not valid_host(ws.headers.get('host', '')) or (origin and not same_origin(origin, ws.headers.get('host', ''), 'https' if ws.scope['scheme'] == 'wss' else 'http')) or not get_user(ws.cookies.get('ev_session')) or get_user(ws.cookies.get('ev_session'))['must_change']:
             await ws.close(code=1008)
             return
         await ws.accept()
@@ -566,12 +593,17 @@ def create_app(database=None, background=True):
         if not c or c['transport'] != 'ocpp' or store.settings()['mode'] != 'physical':
             await ws.close(code=1008)
             return
+        if not ocpp_attempts.allow(identifier):
+            await ws.close(code=1008)
+            return
         auth = ws.headers.get('authorization', '')
         try:
+            if len(auth) > 1024 or auth.split(' ', 1)[0].lower() != 'basic':
+                raise ValueError('Autenticação inválida')
             username, password = base64.b64decode(auth.split(' ', 1)[1], validate=True).decode().split(':', 1)
         except (ValueError, IndexError, UnicodeDecodeError):
             username = password = ''
-        if username != identifier or not password_matches(password, c.get('password_hash')):
+        if username != identifier or await verify_password(password, c.get('password_hash')) is not True:
             await ws.close(code=1008)
             return
         if identifier in engine.connections or 'ocpp1.6' not in ws.scope.get('subprotocols', []):

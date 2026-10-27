@@ -1,6 +1,7 @@
 import hashlib
 import json
 import os
+import re
 from pathlib import Path
 import secrets
 import sqlite3
@@ -26,6 +27,11 @@ def password_hash(password: str) -> str:
 
 
 def password_matches(password: str, encoded: str) -> bool:
+    # Never accept attacker-selected algorithms or unbounded PBKDF2 iterations.
+    if not isinstance(password, str) or len(password) > 200 or not isinstance(encoded, str):
+        return False
+    if not re.fullmatch(r'pbkdf2_sha256\$600000\$[0-9a-f]{32}\$[0-9a-f]{64}', encoded):
+        return False
     try:
         _, iterations, salt, expected = encoded.split('$')
         actual = hashlib.pbkdf2_hmac('sha256', password.encode(), bytes.fromhex(salt), int(iterations)).hex()

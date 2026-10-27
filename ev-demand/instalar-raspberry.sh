@@ -60,7 +60,7 @@ if [[ ! -x "$app_dir/.venv/bin/python" ]]; then
     "$python_bin" -m venv "$app_dir/.venv"
 fi
 "$app_dir/.venv/bin/python" -c 'import sys; assert sys.version_info[:2] in ((3,12),(3,13),(3,14)), "Versão do ambiente existente não suportada"'
-"$app_dir/.venv/bin/python" -m pip install --requirement "$app_dir/requirements.lock"
+"$app_dir/.venv/bin/python" -m pip install --require-hashes --requirement "$app_dir/requirements.lock"
 if [[ ! -f "$config_dir/d-max.env" ]]; then
     install -o root -g dmax -m 0640 "$source_dir/deploy/d-max.env.example" "$config_dir/d-max.env"
 fi

@@ -18,7 +18,7 @@ goto :failure
 if errorlevel 1 goto :unsupported
 fc /b requirements.lock .venv\installed.lock >nul 2>&1
 if errorlevel 1 (
-  .venv\Scripts\python.exe -m pip install -r requirements.lock
+  .venv\Scripts\python.exe -m pip install --require-hashes -r requirements.lock
   if errorlevel 1 goto :failure
   copy /y requirements.lock .venv\installed.lock >nul
 )

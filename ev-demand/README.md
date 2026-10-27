@@ -1,8 +1,10 @@
-# EnergyCube D-Max — Controlador de demanda · v0.3.0
+# EnergyCube D-Max — Controlador de demanda · v0.3.1
 
 Primeira versão para **validação em Windows**, com a mesma base Python no Linux ARM64 do Raspberry Pi 4. Interface web local, simulador, SQLite, distribuição de potência e adaptador OCPP 1.6J. Não depende dos dashboards antigos deste repositório.
 
-[Tela TCP/IP](docs/multimedidor-tcp.png) · [Tela RS485](docs/multimedidor-rs485.png) · [Validação v0.3.0](docs/validation-v02.md)
+[Tela TCP/IP](docs/multimedidor-tcp.png) · [Tela RS485](docs/multimedidor-rs485.png) · [Revisão de segurança v0.3.1](docs/security-review-v031.md)
+
+A versão 0.3.1 substitui a 0.3.0 para novas validações, após atualização de dependências vulneráveis e correções de autenticação. A causa do alerta de vírus relatado no Windows permanece não determinada; esta revisão não é uma certificação antivírus.
 
 ![Visão geral](docs/painel-desktop.png)
 
@@ -21,8 +23,8 @@ O terminal deve permanecer aberto. `Ctrl+C` encerra o programa. Não é um insta
 Início manual pelo PowerShell:
 
 ```powershell
-py -3.13 -m venv .venv
-.\.venv\Scripts\python.exe -m pip install -r requirements.lock
+py -3.14 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install --require-hashes -r requirements.lock
 .\.venv\Scripts\python.exe run.py
 ```
 
@@ -132,6 +134,8 @@ Perfis iniciais: `admin` e `root`. As senhas são definidas pelo instalador e ar
 A versão inclui cadastro de operadores, administradores e técnicos conforme a hierarquia, bloqueio/exclusão com auditoria, alteração de senha e recuperação do administrador. As senhas existentes são preservadas na migração; uma cópia SQLite é criada antes de migrar um banco antigo com usuários. Recuperação por console ainda não está implementada. Guarde a credencial raiz com cuidado.
 
 ## Testes
+
+Revisão 0.3.1: **73 testes aprovados em Python 3.12 e 3.14, em Linux**, incluindo autenticação concorrente e revogação durante o login. O lock foi instalado com verificação de hashes nos dois ambientes. Não equivale à homologação nativa no Windows/Raspberry nem a uma varredura do Microsoft Defender.
 
 ```powershell
 .\.venv\Scripts\python.exe -m unittest discover -s tests -v
