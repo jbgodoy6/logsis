@@ -19,6 +19,8 @@ from .ocpp_server import Socket, Station
 from .services import cloud_loop, meter_loop
 from .meter import Meter, MEASUREMENTS, read_meter
 from .store import Store, password_hash, password_matches
+from .access import Access, TECHNICAL, MANAGERS
+from .directory import directory_loop, synchronize, validate_config
 
 
 class Model(BaseModel):
@@ -28,6 +30,7 @@ class Model(BaseModel):
 class Login(Model):
     username: str = Field(min_length=1, max_length=40)
     password: str = Field(min_length=1, max_length=200)
+    activation_code: str = Field(default='', max_length=200)
 
 
 class Setup(Model):
@@ -104,6 +107,7 @@ class Settings(Model):
     site_name: str = Field(min_length=1, max_length=100)
     mode: str
     limit_kw: float = Field(gt=0)
+    technical_limit_kw: float = Field(default=1000, gt=0)
     margin_kw: float = Field(ge=0)
     timezone: str
     freshness_s: float = Field(ge=2, le=120)
@@ -119,6 +123,8 @@ class Settings(Model):
     def validate_settings(self):
         if self.mode not in ('simulation', 'physical') or self.blocked_policy not in ('zero', 'minimum'):
             raise ValueError('Modo ou política inválidos')
+        if self.limit_kw > self.technical_limit_kw:
+            raise ValueError('Demanda operacional superior ao teto técnico')
         if self.margin_kw >= self.limit_kw:
             raise ValueError('Margem deve ser menor que o limite')
         try:
@@ -151,9 +157,39 @@ class Learning(Model):
     seconds: int = Field(default=30, ge=10, le=300)
 
 
+class NewUser(Model):
+    name: str = Field(min_length=3, max_length=40)
+    full_name: str = Field(min_length=1, max_length=100)
+    role: str
+    expires_at: str | float | None = None
+    can_emergency: bool = False
+
+
+class EditUser(Model):
+    full_name: str = Field(min_length=1, max_length=100)
+    role: str
+    active: bool = True
+    deleted: bool = False
+    expires_at: str | float | None = None
+    can_emergency: bool = False
+
+
+class PasswordChange(Model):
+    current_password: str = Field(min_length=1, max_length=200)
+    new_password: str = Field(min_length=8, max_length=200)
+
+
+class DirectoryConfig(Model):
+    url: str = Field(default='', max_length=1000)
+    interval_s: int = Field(default=300, ge=30, le=86400)
+    enabled: bool = False
+    device_token: str | None = Field(default=None, min_length=32, max_length=512)
+
+
 def create_app(database=None, background=True):
     store = Store(database)
     engine = Engine(store)
+    access = Access(store)
     attempts = {}
 
     @asynccontextmanager
@@ -161,7 +197,7 @@ def create_app(database=None, background=True):
         tasks = []
         if background:
             tasks = [asyncio.create_task(engine.run()), asyncio.create_task(meter_loop(engine)),
-                     asyncio.create_task(cloud_loop(engine))]
+                     asyncio.create_task(cloud_loop(engine)), asyncio.create_task(directory_loop(access))]
         yield
         for task in tasks:
             task.cancel()
@@ -171,27 +207,37 @@ def create_app(database=None, background=True):
         engine.flush()
         store.db.close()
 
-    app = FastAPI(title='EnergyCube D-Max · Controle de demanda', version='0.2.3', lifespan=lifespan,
+    app = FastAPI(title='EnergyCube D-Max · Controle de demanda', version='0.3.0', lifespan=lifespan,
                   docs_url=None, redoc_url=None, openapi_url=None)
-    app.state.store, app.state.engine = store, engine
+    app.state.store, app.state.engine, app.state.access = store, engine, access
 
     def get_user(token):
-        if not token:
-            return None
-        digest = hashlib.sha256(token.encode()).hexdigest()
-        row = store.db.execute('SELECT u.name,u.role FROM logins l JOIN users u ON u.name=l.username WHERE l.token=? AND l.expires>?',
-                               (digest, time.time())).fetchone()
-        return dict(row) if row else None
+        return access.session(token)
 
-    async def user(request: Request):
+    async def authenticated(request: Request):
         u = get_user(request.cookies.get('ev_session'))
         if not u:
             raise HTTPException(401, 'Faça login para continuar')
         return u
 
+    async def user(u=Depends(authenticated)):
+        if u['must_change']:
+            raise HTTPException(403, 'Troque a senha inicial antes de usar o sistema')
+        return u
+
     async def administrator(u=Depends(user)):
-        if u['role'] not in ('root', 'admin'):
+        if u['role'] not in MANAGERS:
             raise HTTPException(403, 'Acesso administrativo necessário')
+        return u
+
+    async def technician(u=Depends(user)):
+        if u['role'] not in TECHNICAL:
+            raise HTTPException(403, 'Configuração restrita ao técnico/instalador e ao raiz')
+        return u
+
+    async def root(u=Depends(user)):
+        if u['role'] != 'root':
+            raise HTTPException(403, 'Função exclusiva do raiz')
         return u
 
     @app.middleware('http')
@@ -220,8 +266,8 @@ def create_app(database=None, background=True):
         if request.client and request.client.host not in ('127.0.0.1', '::1', 'testclient'):
             raise HTTPException(403, 'Primeira configuração deve ser feita no próprio servidor')
         with store.db:
-            store.db.execute('INSERT INTO users VALUES (?,?,?)', ('root', password_hash(data.root_password), 'root'))
-            store.db.execute('INSERT INTO users VALUES (?,?,?)', ('admin', password_hash(data.admin_password), 'admin'))
+            store.db.execute('INSERT INTO users(name,password,role,id,full_name) VALUES (?,?,?,?,?)', ('root', password_hash(data.root_password), 'root', secrets.token_hex(16), 'Raiz'))
+            store.db.execute('INSERT INTO users(name,password,role,id,full_name) VALUES (?,?,?,?,?)', ('admin', password_hash(data.admin_password), 'admin', secrets.token_hex(16), 'Administrador'))
         store.record('setup', {'note': 'Credenciais iniciais configuradas; valores não registrados'})
         return {'ok': True}
 
@@ -232,19 +278,29 @@ def create_app(database=None, background=True):
         if len(recent) >= 8:
             raise HTTPException(429, 'Muitas tentativas. Aguarde cinco minutos.')
         attempts[address] = recent + [time.time()]
-        row = store.db.execute('SELECT * FROM users WHERE name=?', (data.username,)).fetchone()
-        if not row or not password_matches(data.password, row['password']):
-            raise HTTPException(401, 'Usuário ou senha incorretos')
+        name = data.username.strip().lower()
+        row = access.by_name(name)
+        if access.config()['enabled'] and (not row or row['role'] == 'technician'):
+            try:
+                await asyncio.wait_for(synchronize(access), timeout=5)
+            except TimeoutError:
+                pass
+            row = access.by_name(name)
+        if not access.usable(row) or not password_matches(data.password, row['password']):
+            raise HTTPException(401, 'Usuário, senha, situação ou validade inválidos')
+        if row['activation_hash'] and not password_matches(data.activation_code, row['activation_hash']):
+            raise HTTPException(401, 'Informe o código de ativação recebido do responsável')
         attempts.pop(address, None)
         token = secrets.token_urlsafe(32)
         with store.db:
-            store.db.execute('INSERT INTO logins VALUES (?,?,?)', (hashlib.sha256(token.encode()).hexdigest(), row['name'], time.time() + 28800))
+            store.db.execute('INSERT INTO logins(token,username,expires,epoch) VALUES (?,?,?,?)',
+                (hashlib.sha256(token.encode()).hexdigest(), row['name'], time.time() + 28800, row['epoch']))
         response.set_cookie('ev_session', token, httponly=True, secure=request.url.scheme == 'https', samesite='strict', max_age=28800)
-        store.record('login', {'user': row['name']})
-        return {'name': row['name'], 'role': row['role']}
+        store.record('login', {'user': row['name'], 'role': row['role']})
+        return access.public(row)
 
     @app.post('/api/logout')
-    async def logout(request: Request, response: Response, u=Depends(user)):
+    async def logout(request: Request, response: Response, u=Depends(authenticated)):
         with store.db:
             store.db.execute('DELETE FROM logins WHERE token=?', (hashlib.sha256(request.cookies['ev_session'].encode()).hexdigest(),))
         response.delete_cookie('ev_session')
@@ -261,12 +317,71 @@ def create_app(database=None, background=True):
         return {'ok': True}
 
     @app.get('/api/me')
-    async def me(u=Depends(user)):
+    async def me(u=Depends(authenticated)):
         return u
 
     @app.get('/api/state')
     async def state(u=Depends(user)):
         return engine.snapshot()
+
+    def access_error(exc):
+        return HTTPException(403 if isinstance(exc, PermissionError) else 422, str(exc))
+
+    @app.post('/api/change-password')
+    async def change_password(data: PasswordChange, response: Response, u=Depends(authenticated)):
+        try:
+            access.change_password(u, data.current_password, data.new_password)
+        except (ValueError, PermissionError) as exc:
+            raise access_error(exc)
+        response.delete_cookie('ev_session')
+        return {'ok': True, 'login_required': True}
+
+    @app.get('/api/users')
+    async def users(u=Depends(administrator)):
+        return {'users': access.list_for(u)}
+
+    @app.post('/api/users')
+    async def add_user(data: NewUser, u=Depends(administrator)):
+        try:
+            return access.create(u, **data.model_dump())
+        except (ValueError, PermissionError) as exc:
+            raise access_error(exc)
+
+    @app.put('/api/users/{identifier}')
+    async def edit_user(identifier: str, data: EditUser, u=Depends(administrator)):
+        try:
+            return access.update(u, identifier, data.model_dump())
+        except (ValueError, PermissionError) as exc:
+            raise access_error(exc)
+
+    @app.post('/api/users/{identifier}/reset')
+    async def reset_user(identifier: str, u=Depends(administrator)):
+        try:
+            return access.reset_activation(u, identifier)
+        except (ValueError, PermissionError) as exc:
+            raise access_error(exc)
+
+    @app.get('/api/directory')
+    async def directory_settings(u=Depends(root)):
+        return {'config': access.config(), 'status': access.status,
+                'pending': len(access.pending()), 'token_present': bool(access.device_token()),
+                'controller_id': store.entities('system')[0]['controller_id']}
+
+    @app.put('/api/directory')
+    async def save_directory(data: DirectoryConfig, u=Depends(root)):
+        try:
+            access.configure(validate_config(data.model_dump(exclude={'device_token'})))
+            if data.device_token:
+                access.set_device_token(data.device_token)
+        except ValueError as exc:
+            raise HTTPException(422, str(exc))
+        store.record('directory_configured', {'actor': u['name'], 'interval_s': data.interval_s, 'enabled': data.enabled})
+        return {'ok': True}
+
+    @app.post('/api/directory/sync')
+    async def directory_now(u=Depends(root)):
+        ok = await synchronize(access)
+        return {'ok': ok, 'status': access.status}
 
     @app.get('/api/history')
     async def history(u=Depends(user)):
@@ -275,6 +390,11 @@ def create_app(database=None, background=True):
     @app.put('/api/settings')
     async def settings(data: Settings, u=Depends(administrator)):
         current = store.settings()
+        if u['role'] == 'admin':
+            allowed = {'site_name', 'limit_kw', 'schedules', 'blocked_policy'}
+            submitted = data.model_dump()
+            if any(submitted.get(k) != value for k, value in current.items() if k not in allowed):
+                raise HTTPException(403, 'Administrador não altera multimedidor, teto técnico, circuitos ou parâmetros técnicos')
         if data.mode != current['mode'] and any(p['connected'] for p in engine.ports.values()):
             raise HTTPException(409, 'Desconecte as sessões antes de trocar o modo')
         ids = {c.id for c in data.circuits}
@@ -293,17 +413,17 @@ def create_app(database=None, background=True):
         return {'ok': True}
 
     @app.get('/api/meter/ports')
-    async def serial_ports(u=Depends(administrator)):
+    async def serial_ports(u=Depends(technician)):
         from serial.tools import list_ports
         ports = await asyncio.to_thread(list_ports.comports)
         return {'ports': [{'device': p.device, 'description': p.description} for p in ports]}
 
     @app.get('/api/meter/measurements')
-    async def measurements(u=Depends(administrator)):
+    async def measurements(u=Depends(technician)):
         return {'measurements': [{'key': k, 'label': v[0], 'unit': v[1]} for k, v in MEASUREMENTS.items()]}
 
     @app.post('/api/meter/test')
-    async def test_meter(data: Meter, u=Depends(administrator)):
+    async def test_meter(data: Meter, u=Depends(technician)):
         try:
             async with engine.meter_io_lock:
                 readings = await read_meter(data.model_dump())
@@ -312,7 +432,7 @@ def create_app(database=None, background=True):
             return {'ok': False, 'error': str(exc)[:240], 'readings': []}
 
     @app.post('/api/chargers')
-    async def charger(data: Charger, u=Depends(administrator)):
+    async def charger(data: Charger, u=Depends(technician)):
         old = engine.config(data.id)
         chargers = store.entities('charger')
         if not old and len(chargers) >= 60:
@@ -346,6 +466,10 @@ def create_app(database=None, background=True):
 
     @app.post('/api/ports/{key}/action')
     async def action(key: str, data: PortAction, u=Depends(user)):
+        if data.action in ('emergency', 'cancel_emergency') and u['role'] == 'operator' and not u['can_emergency']:
+            raise HTTPException(403, 'Operador sem permissão de emergência')
+        if data.action in ('connect', 'disconnect') and u['role'] not in MANAGERS:
+            raise HTTPException(403, 'Simulação restrita à administração')
         if key not in engine.ports:
             raise HTTPException(404, 'Conector desconhecido')
         p = engine.ports[key]
@@ -394,7 +518,7 @@ def create_app(database=None, background=True):
         return {'ok': True}
 
     @app.post('/api/ports/{key}/learn')
-    async def learn(key: str, data: Learning, u=Depends(administrator)):
+    async def learn(key: str, data: Learning, u=Depends(technician)):
         p = engine.ports.get(key)
         if not p or not p['running'] or data.cap_kw > p['limit_kw']:
             raise HTTPException(409, 'É necessário estar em recarga; o teste só pode reduzir o limite atual')
@@ -424,12 +548,12 @@ def create_app(database=None, background=True):
     @app.websocket('/ws/live')
     async def live(ws: WebSocket):
         origin = ws.headers.get('origin')
-        if (origin and urlsplit(origin).netloc != ws.headers.get('host')) or not get_user(ws.cookies.get('ev_session')):
+        if (origin and urlsplit(origin).netloc != ws.headers.get('host')) or not get_user(ws.cookies.get('ev_session')) or get_user(ws.cookies.get('ev_session'))['must_change']:
             await ws.close(code=1008)
             return
         await ws.accept()
         try:
-            while get_user(ws.cookies.get('ev_session')):
+            while (current_user := get_user(ws.cookies.get('ev_session'))) and not current_user['must_change']:
                 await ws.send_json(engine.snapshot())
                 await asyncio.sleep(1)
             await ws.close(code=1008)

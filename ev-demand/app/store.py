@@ -40,6 +40,8 @@ class Store:
         if path != ':memory:':
             Path(path).parent.mkdir(parents=True, exist_ok=True)
         self.db = sqlite3.connect(path, check_same_thread=False)
+        if path != ':memory:' and os.name == 'posix':
+            os.chmod(path, 0o600)
         self.db.row_factory = sqlite3.Row
         self.db.executescript('''
             PRAGMA journal_mode=WAL; PRAGMA synchronous=FULL;
@@ -62,6 +64,7 @@ class Store:
     def settings(self):
         data = json.loads(self.db.execute('SELECT payload FROM settings WHERE id=1').fetchone()[0])
         data['meter'] = normalize_meter(data['meter'])
+        data.setdefault('technical_limit_kw', data['limit_kw'])
         return data
 
     def save_settings(self, data):

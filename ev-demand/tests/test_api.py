@@ -11,7 +11,7 @@ class APITests(unittest.TestCase):
         self.context = TestClient(self.app)
         self.c = self.context.__enter__()
         self.c.post('/api/setup', json={'root_password': 'fixture-root-123', 'admin_password': 'fixture-admin-123'})
-        self.c.post('/api/login', json={'username': 'admin', 'password': 'fixture-admin-123'})
+        self.c.post('/api/login', json={'username': 'root', 'password': 'fixture-root-123'})
 
     def tearDown(self):
         self.context.__exit__(None, None, None)
@@ -33,7 +33,7 @@ class APITests(unittest.TestCase):
         data = self.c.get('/api/state').json()
         self.assertEqual(len(data['chargers']), 3)
         self.assertEqual(max(c['max_kw'] for c in data['chargers']), 320)
-        settings = data['settings'];settings['limit_kw'] = 5000;settings['circuits'][0]['limit_kw'] = 5000
+        settings = data['settings'];settings['limit_kw'] = 5000;settings['technical_limit_kw'] = 5000;settings['circuits'][0]['limit_kw'] = 5000
         self.assertEqual(self.c.put('/api/settings', json=settings).status_code, 200)
         self.assertEqual(self.c.get('/api/state').json()['settings']['limit_kw'], 5000)
 
@@ -43,6 +43,7 @@ class APITests(unittest.TestCase):
         self.assertEqual(self.c.post('/api/vehicles', json=data | {'name': 'Carro B'}).status_code, 409)
 
     def test_root_can_recover_admin_and_revoke_sessions(self):
+        self.c.post('/api/login', json={'username': 'admin', 'password': 'fixture-admin-123'})
         self.assertEqual(self.c.post('/api/recover-admin', json={'username': 'admin', 'password': 'changed-password'}).status_code, 403)
         self.c.post('/api/login', json={'username': 'root', 'password': 'fixture-root-123'})
         self.assertEqual(self.c.post('/api/recover-admin', json={'username': 'admin', 'password': 'changed-password'}).status_code, 200)

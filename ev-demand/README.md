@@ -1,17 +1,19 @@
-# EnergyCube D-Max — Controlador de demanda · v0.2.3
+# EnergyCube D-Max — Controlador de demanda · v0.3.0
 
 Primeira versão para **validação em Windows**, com a mesma base Python no Linux ARM64 do Raspberry Pi 4. Interface web local, simulador, SQLite, distribuição de potência e adaptador OCPP 1.6J. Não depende dos dashboards antigos deste repositório.
 
-[Tela TCP/IP](docs/multimedidor-tcp.png) · [Tela RS485](docs/multimedidor-rs485.png) · [Validação v0.2.3](docs/validation-v02.md)
+[Tela TCP/IP](docs/multimedidor-tcp.png) · [Tela RS485](docs/multimedidor-rs485.png) · [Validação v0.3.0](docs/validation-v02.md)
 
 ![Visão geral](docs/painel-desktop.png)
+
+[Nova página de usuários](docs/usuarios.png) · [Técnicos e Google](docs/tecnicos-google.png) · [Validação v0.3](docs/validation-v03.md)
 
 ## Iniciar no Windows
 
 1. Use **Python 3.12, 3.13 ou 3.14 de 64 bits**, com o Python Launcher (`py`). Se uma dessas versões puder ser executada pela sua conta, não instale outra. Uma versão listada pode estar inacessível por permissão. Confira com `py -0p`. O iniciador testa a execução de 3.13, 3.12 e 3.14 nessa ordem, usando a primeira acessível.
 2. Extraia a pasta do projeto em um diretório gravável, por exemplo `C:\D-Max`. Não execute dentro do ZIP.
 3. Execute **`iniciar-windows.bat`**. A primeira execução precisa de internet para instalar as dependências. Depois de instaladas, o mesmo lançador funciona sem internet enquanto o arquivo de dependências não mudar.
-4. No próprio computador servidor, abra **http://127.0.0.1:8080**. Defina a senha raiz e uma senha separada para o administrador. Nenhuma senha é embutida no código ou no pacote.
+4. No próprio computador servidor, abra **http://127.0.0.1:8080**. Defina a senha raiz e uma senha separada para o administrador. As credenciais raiz e administrativa são definidas na instalação. Novas contas operacionais/técnicas usam a senha inicial 12345678, com ativação individual e troca obrigatória.
 5. Entre com o usuário `admin` e clique em **Carregar demonstração**.
 
 O terminal deve permanecer aberto. `Ctrl+C` encerra o programa. Não é um instalador de serviço do Windows nesta entrega.
@@ -119,11 +121,15 @@ O transporte RTU foi validado com frames/CRC e com o driver pyserial sobre uma p
 
 Faça backup com o serviço parado ou usando a API de backup do SQLite; copiar apenas o arquivo principal enquanto WAL estiver ativo pode perder dados recentes. Os eventos do último minuto são persistidos, mas o agregador de leituras em andamento está em memória: uma queda abrupta pode perder o resumo parcial desse minuto. A energia já recebida fica nos registros de sessão.
 
+## Google Planilhas e técnicos globais
+
+A opção principal usa somente Google Planilhas + Apps Script, hospedado pelo Google, sem VPS. A página **Técnicos globais** (raiz) configura a URL publicada, chave do equipamento e intervalo de consulta. Offline, vale exatamente a validade recebida da planilha, sem prazo extra. Consulte o [passo a passo de ativação no Google](docs/google-planilhas.md). A integração só estará ativa após publicar o script e configurar a URL e chave; o link de edição da planilha não é a API.
+
 ## Acesso e recuperação
 
 Perfis iniciais: `admin` e `root`. As senhas são definidas pelo instalador e armazenadas com PBKDF2-SHA256, salt individual e 600.000 iterações. A conta root recupera a senha de admin e revoga as sessões anteriores. Esse acesso pertence à aplicação, separado do usuário root do Linux. O login tem limitação de tentativas, cookie HttpOnly e SameSite, validação de origem e auditoria.
 
-Criação de operadores adicionais, recuperação por console e rotação da própria senha root serão incluídas em uma evolução. Guarde as credenciais com cuidado nesta versão.
+A versão inclui cadastro de operadores, administradores e técnicos conforme a hierarquia, bloqueio/exclusão com auditoria, alteração de senha e recuperação do administrador. As senhas existentes são preservadas na migração; uma cópia SQLite é criada antes de migrar um banco antigo com usuários. Recuperação por console ainda não está implementada. Guarde a credencial raiz com cuidado.
 
 ## Testes
 
@@ -142,3 +148,7 @@ Os arquivos de `app/static/` são locais: não há fontes, bibliotecas ou script
 ## Falha 1603 ao instalar Python
 
 O iniciador desta versão aproveita Python 3.12, 3.13 ou 3.14 já instalado e acessível. Para o diagnóstico da falha MSI observada e instruções de uso sem reinstalação, consulte [Python no Windows](docs/python-windows.md).
+
+## Atualização de uma instalação existente
+
+Encerre o D-Max antes de copiar dados. Faça backup consistente do banco antigo e preserve suas credenciais. No Windows, a pasta `data/` deve acompanhar a nova pasta do programa para manter os cadastros; não copie `.venv` entre versões de Python ou sistemas. No Raspberry, o banco permanece em `/var/lib/d-max`, separado do código. A primeira migração de usuários gera um arquivo privado `*.before-users-v03-*.sqlite3`; para voltar a uma versão antiga, restaure código e banco correspondentes. A cópia de migração não substitui uma política de backup.

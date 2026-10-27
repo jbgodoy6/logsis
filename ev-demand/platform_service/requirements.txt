@@ -1,0 +1,2 @@
+-r ../requirements.lock
+google-auth[requests]==2.40.3
