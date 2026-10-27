@@ -1,0 +1,28 @@
+{
+  "version": "9.1.1",
+  "engine": "ClamAV 1.5.4",
+  "database": 28164,
+  "database_date": "2026-10-25",
+  "infected_files": 0,
+  "files_scanned": 3,
+  "archives_inspected": true,
+  "artifacts": [
+    {
+      "file": "LOGSIS_STUDIO_9_1_1_FONTE.zip",
+      "bytes": 453599,
+      "sha256": "d63a8402ed721f547ab1e7e2aa71de7f5b2226a74971c41b220baf7482522526"
+    },
+    {
+      "file": "DASHBOARDS_PADRAO_9_1_1_JSON.zip",
+      "bytes": 1269196,
+      "sha256": "2fbc4372c365915118f7f389a0809e681740d979d4f7613b5d0c6fab2f1b2445"
+    },
+    {
+      "file": "DSE8660_PADRAO_DSE7420_9_1_1.json",
+      "bytes": 1845138,
+      "sha256": "35cf1149afe8d56cd4b56aec0e0a1a17ba64dda46d488d1858cf22a8fea97f7f"
+    }
+  ],
+  "scope": "Local scan using bundled signatures. No Microsoft Defender determination or guarantee that Windows will not warn.",
+  "scan_log_timezone": "UTC (container)"
+}

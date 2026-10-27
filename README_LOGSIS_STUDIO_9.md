@@ -1,5 +1,7 @@
 # LogSis Studio 9.1 — Sistel
 
+Correção 9.1.1: os contatos do unifilar usam os mesmos vetores aberto, fechado e desconhecido do DSE7420. Círculos de LED deixaram de ocupar o lugar do desenho das chaves. Nos modelos cujo mapa fornece apenas LED, o texto indica "IND. ATIVA/INATIVA", sem afirmar retorno físico independente do disjuntor.
+
 Versão 9.1: dashboards organizados no padrão aprovado do DSE7420, incluindo os modelos de companhia/BUS e aplicações DEIF. O desenho mantém a topologia de cada controlador; mapas BIN e escalas permanecem iguais. O pacote desta versão contém código-fonte Python e recursos, sem iniciador BAT, executável EXE ou instalador. Para atualizar somente o Grafana, existe também uma entrega separada apenas com arquivos JSON.
 
 Mantém a correção 9.0.1: leitura explícita em UTF-8 dos recursos DSE/DEIF, eliminando o erro `'charmap' codec can't decode byte 0x8d in position 18005` no Windows ao exportar. Extraia esta versão em uma pasta nova e mantenha os BINs já salvos.

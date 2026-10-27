@@ -29,6 +29,13 @@ def radio(wifi,color=CYAN):
 def reference():
  return json.loads((Path(__file__).parent/'resources/dse7420.json').read_text(encoding='utf-8'))
 @lru_cache(maxsize=1)
+def contact_assets():
+ # Use the approved drawings verbatim, rather than a circle or a new symbol.
+ sql=reference()['panels'][0]['targets'][0]['rawSql']
+ end=sql.index('END AS "MDB52_CONTATO_SVG"')
+ opened,closed,unknown=re.findall("'(data:image/svg[^']+)'",sql[:end])[-3:]
+ return {'open':opened,'closed':closed,'unknown':unknown}
+@lru_cache(maxsize=1)
 def assets():
  d=reference();sql=d['panels'][0]['targets'][0]['rawSql'];p=sql.index('END AS "GERADOR_ALARME_SVG"')
  neutral=re.findall("'(data:image/svg[^']+)'",sql[:p])[-1]
@@ -88,6 +95,9 @@ def main_sql(profile):
   if role.startswith('led_'):
    extra.append(f"CASE {ref(c)} WHEN 1 THEN 'LED ATIVO' WHEN 0 THEN 'LED INATIVO' ELSE 'SEM DADOS' END AS \"{role.upper()}_ESTADO\"")
    extra.append(f'CASE WHEN {ref(c)}=1 THEN {sq(led(True))} ELSE {sq(led(False))} END AS "{role.upper()}_SVG"')
+   contact=contact_assets()
+   extra.append(f'CASE {ref(c)} WHEN 0 THEN {sq(contact["open"])} WHEN 1 THEN {sq(contact["closed"])} ELSE {sq(contact["unknown"])} END AS "CONTACT_{role.upper()}_SVG"')
+   extra.append(f'''CASE {ref(c)} WHEN 0 THEN 'IND. INATIVA' WHEN 1 THEN 'IND. ATIVA' ELSE 'SEM DADOS' END AS "CONTACT_{role.upper()}_LABEL"''')
  if profile.kind=='engine_transfer':
   alarm='CASE '+''.join('WHEN '+ref(roles[role])+'=1 THEN '+sq(assets()[role])+' ' for role in ['shutdown','trip','warning'])+'ELSE '+sq(assets()['gen'])+' END'
   extra.append(alarm+' AS "GERADOR_ALARME_SVG"')

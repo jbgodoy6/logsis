@@ -147,10 +147,10 @@ def overview(profile,old):
                 else:img(e,uri=ui.wire(ui.MUTED,vertical))
             if previous_image in ['MDB52_CONTATO_SVG','MDB53_CONTATO_SVG']:
                 side=0 if previous_image=='MDB52_CONTATO_SVG' else 1
-                img(e,('B1_SVG' if side==0 else 'B2_SVG') if deif else 'LED_'+('BUS' if tie else 'MAINS' if side==0 else 'BUS' if mains_bus else 'GEN')+'_SVG')
+                img(e,('B1_SVG' if side==0 else 'B2_SVG') if deif else 'CONTACT_LED_'+('BUS' if tie else 'MAINS' if side==0 else 'BUS' if mains_bus else 'GEN')+'_SVG')
             if previous in ['K1_ESTADO','K2_ESTADO']:
                 side=0 if previous=='K1_ESTADO' else 1
-                metric(e,('B1_TEXT' if side==0 else 'B2_TEXT') if deif else 'LED_'+('MAINS' if side==0 else 'BUS' if mains_bus else 'GEN')+'_ESTADO')
+                metric(e,('B1_TEXT' if side==0 else 'B2_TEXT') if deif else 'CONTACT_LED_'+('MAINS' if side==0 else 'BUS' if mains_bus else 'GEN')+'_LABEL')
                 e['config']['size']=8
                 e['placement'].update(left=13 if side==0 else 63,right=63 if side==0 else 13,height=24)
             if name in ['Contato MDB52','Contato MDB53']:e['placement']['height']=84
@@ -184,8 +184,8 @@ def overview(profile,old):
                  ui.image('Acoplador até BUS2',57,18,526,2,field_name=wire_name(False,'bus2',False)),
                  ui.box('Caixa do acoplador',40,20,493,82,ui.SURFACE,'#294256'),
                  ui.text('Título do acoplador',40,20,497,15,'ACOPLADOR',8),
-                 ui.image('Indicador do acoplador',43,14,514,30,field_name='LED_TIE_SVG'),
-                 ui.text('Estado do acoplador',40,20,549,18,size=8,field_name='LED_TIE_ESTADO'),
+                 ui.image('Contato do acoplador',43,14,514,30,field_name='CONTACT_LED_TIE_SVG'),
+                 ui.text('Estado do acoplador',40,20,549,18,size=8,field_name='CONTACT_LED_TIE_LABEL'),
                  ui.image('BUS2 para carga',75,0,527,82,field_name=wire_name(False,'bus2')),
                  ui.image('BUS2 ponte carga',50,25,609,2,field_name=wire_name(False,'bus2',False))]
     p['options']['root']['elements']=kept

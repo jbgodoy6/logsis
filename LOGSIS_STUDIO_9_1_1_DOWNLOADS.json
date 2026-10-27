@@ -1,0 +1,20 @@
+{
+  "version": "9.1.1",
+  "artifacts": [
+    {
+      "file": "LOGSIS_STUDIO_9_1_1_FONTE.zip",
+      "bytes": 453599,
+      "sha256": "d63a8402ed721f547ab1e7e2aa71de7f5b2226a74971c41b220baf7482522526"
+    },
+    {
+      "file": "DASHBOARDS_PADRAO_9_1_1_JSON.zip",
+      "bytes": 1269196,
+      "sha256": "2fbc4372c365915118f7f389a0809e681740d979d4f7613b5d0c6fab2f1b2445"
+    },
+    {
+      "file": "DSE8660_PADRAO_DSE7420_9_1_1.json",
+      "bytes": 1845138,
+      "sha256": "35cf1149afe8d56cd4b56aec0e0a1a17ba64dda46d488d1858cf22a8fea97f7f"
+    }
+  ]
+}

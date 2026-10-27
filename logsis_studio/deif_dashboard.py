@@ -73,14 +73,8 @@ def value_expressions(profile):
 
 
 def switch(state,vertical=True):
-    color=RED if state==1 else MUTED
-    if vertical:
-        a,b=(50,12),(50,38);end=b if state==1 else (70,32);fixed='M50 0 V12 M50 38 V50'
-    else:
-        a,b=(26,25),(74,25);end=b if state==1 else (69,8);fixed='M0 25 H26 M74 25 H100'
-    blade=f'M{a[0]} {a[1]} L{end[0]} {end[1]}' if state in (0,1) else ''
-    unknown=f'<text x="50" y="30" text-anchor="middle" fill="{MUTED}" font-size="15">?</text>' if state not in (0,1) else ''
-    return svg(f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 50"><rect x="3" y="2" width="94" height="46" rx="8" fill="{SURFACE}" stroke="#2b4c68"/><path d="{fixed} {blade}" stroke="{color}" stroke-width="3" fill="none"/><circle cx="{a[0]}" cy="{a[1]}" r="3" fill="{INK}"/><circle cx="{b[0]}" cy="{b[1]}" r="3" fill="{INK}"/>{unknown}</svg>')
+    from .manual_dashboard import contact_assets
+    return contact_assets()['closed' if state==1 else 'open' if state==0 else 'unknown']
 
 
 def main_sql(profile):

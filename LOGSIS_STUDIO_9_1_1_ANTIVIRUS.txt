@@ -1,0 +1,20 @@
+LogSis Studio 9.1.1 — verificação ClamAV
+Base de assinaturas: 25/10/2026; atualização on-line indisponível neste ambiente.
+Zero arquivos infectados nesta análise. Isso não substitui o Microsoft Defender.
+Horários do log bruto abaixo em UTC (Brasília = UTC−3).
+
+/scan/LOGSIS_STUDIO_9_1_1_FONTE.zip: OK
+/scan/DASHBOARDS_PADRAO_9_1_1_JSON.zip: OK
+/scan/DSE8660_PADRAO_DSE7420_9_1_1.json: OK
+
+----------- SCAN SUMMARY -----------
+Known viruses: 3628192
+Engine version: 1.5.4
+Scanned directories: 0
+Scanned files: 3
+Infected files: 0
+Data scanned: 61.31 MiB
+Data read: 3.40 MiB (ratio 18.02:1)
+Time: 23.878 sec (0 m 23 s)
+Start Date: 2026:10:27 20:52:52
+End Date:   2026:10:27 20:53:16

@@ -1,0 +1,36 @@
+{
+  "version": "9.1.1",
+  "result": "passed",
+  "fix": "Approved DSE7420 contact SVGs reused verbatim; LED circles no longer used as the switch drawing.",
+  "scope": "Presentation only; existing BIN maps, scales and decoders preserved. LED-derived contacts retain indication labels rather than claiming independent physical feedback.",
+  "unit_tests": {
+    "total": 58,
+    "executed_passed": 46,
+    "gui_skipped": 12
+  },
+  "visual": {
+    "profiles": 17,
+    "widths": [
+      1440,
+      390
+    ],
+    "result": "passed",
+    "query_errors": []
+  },
+  "sql_profiles": {
+    "DSE": 7,
+    "DEIF": 8
+  },
+  "source_hashes": {
+    "core.py": "9009235aa825e57f8964b4960064ad9830d6b69f390faf6d681bcf28fdad4f1e",
+    "app.py": "ae1919547b5682eab4394ddcaa7c20b4b02400455c7a5891a6658e8827b1a873",
+    "__init__.py": "5ca29df2a4ad2d199437e76c8f4f289e932be681c5cf0f9fba2aea3a8912b66e",
+    "standard_layout.py": "471eb18e18d8efb46d260e7abc64279283ba7d1157936474b0db80fa87deafab",
+    "codecs.py": "643a193bcfd487b5f86f4b82ae10c0bf10a868ea279e2ca065cca2af81a462dc",
+    "deif_dashboard.py": "9f78bd1ba4af3c255811d6ab5e936c7839955253d7a6c4f8acb89aa393a4fedc",
+    "transport.py": "7a976ac3e2790a96d26471e326b21a0f85f2dad4ab1999ec11fefbb6a6471402",
+    "manual_dashboard.py": "d83851f5a6e29a970372d4d6dc5dc45816ccb0d7be87d50277d0a1bbddb257bc"
+  },
+  "extracted_package_smoke": "passed: 17 exports and exact DSE7420 contact vectors from extracted source",
+  "physical_controller_test": false
+}
