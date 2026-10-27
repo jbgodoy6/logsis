@@ -75,14 +75,16 @@ def voltage(roles,prefix):
 
 def main_sql(profile):
  roles={c.role:c for c in profile.channels}
+ coherent=profile.model=='DSE8660'
+ sample='ultima' if coherent else 'janela'
  raw=[];values=[];labels=[]
  for c in profile.channels:
-  last=f"(SELECT payload->>{sq(c.column)} FROM janela WHERE payload->>{sq(c.column)} IS NOT NULL ORDER BY \"time\" DESC LIMIT 1)"
+  last=f"(SELECT payload->>{sq(c.column)} FROM {sample} WHERE payload->>{sq(c.column)} IS NOT NULL ORDER BY \"time\" DESC LIMIT 1)"
   raw.append(numeric(last)+f' AS r{c.number}')
   values.append(scaled(c,f'r{c.number}')+' AS '+ref(c))
   if c.label_variable:labels.append(var(c.label_variable)+f' AS "NOME_{c.column.upper()}"')
  for alias,expr in [('gsm',"payload->>'gsm_rssi'"),('wifi','payload->>'+var('Campo_WiFi_RSSI'))]:
-  raw.append(numeric(f'(SELECT {expr} FROM janela WHERE {expr} IS NOT NULL ORDER BY "time" DESC LIMIT 1)')+' AS '+alias)
+  raw.append(numeric(f'(SELECT {expr} FROM {sample} WHERE {expr} IS NOT NULL ORDER BY "time" DESC LIMIT 1)')+' AS '+alias)
  local_time="CASE WHEN pg_typeof(\"time\")='timestamp without time zone'::regtype THEN (\"time\"::timestamp AT TIME ZONE 'UTC') AT TIME ZONE 'America/Sao_Paulo' ELSE \"time\"::timestamptz AT TIME ZONE 'America/Sao_Paulo' END"
  raw.append(f"(SELECT to_char(({local_time}),'DD/MM HH24:MI') FROM janela ORDER BY \"time\" DESC LIMIT 1) AS \"ULTIMA_LEITURA\"")
  values += ['"ULTIMA_LEITURA"',"CASE WHEN wifi BETWEEN -32759 AND -1 THEN wifi END AS \"WIFI_LOCAL\"",f"CASE WHEN {var('Formato_GSM')}='csq' AND gsm BETWEEN 0 AND 31 AND gsm=trunc(gsm) THEN -113+2*gsm WHEN {var('Formato_GSM')}='dbm' AND gsm BETWEEN -140 AND -1 THEN gsm END AS \"GSM_LOCAL\""]
@@ -114,11 +116,22 @@ def main_sql(profile):
   extra.append(maintenance+' AS "MANUTENCAO_RESUMO"')
  extra += [f'CASE WHEN "WIFI_LOCAL" IS NULL THEN {sq(radio(True,MUTED))} ELSE {sq(radio(True))} END AS "WIFI_LOCAL_ICONE"',
   'CASE '+''.join(f'WHEN "GSM_LOCAL">={threshold} THEN {sq(signal(level))} ' for threshold,level in [(-80,5),(-90,4),(-100,3),(-110,2),(-140,1)])+'ELSE '+sq(signal(0))+' END AS "GSM_LOCAL_ICONE"']
- first='WITH janela AS (SELECT "time",to_jsonb(t) AS payload FROM $Id_Logsis t WHERE $__timeFilter("time")), raw AS (SELECT '+','.join(raw)+'), dados AS (SELECT '+','.join(values)+' FROM raw), sinais AS (SELECT dados.*,'+','.join(extra)+' FROM dados) '
+ snapshot='ultima AS MATERIALIZED (SELECT * FROM janela ORDER BY "time" DESC LIMIT 1), ' if coherent else ''
+ first='WITH janela AS (SELECT "time",to_jsonb(t) AS payload FROM $Id_Logsis t WHERE $__timeFilter("time")), '+snapshot+'raw AS (SELECT '+','.join(raw)+'), dados AS (SELECT '+','.join(values)+' FROM raw), sinais AS (SELECT dados.*,'+','.join(extra)+' FROM dados) '
  wires=[]
  for prefix in ['gen','mains','bus','bus2']:
   if prefix+'_frequency' in roles:
    for kind,vertical in [('V',True),('H',False)]:wires.append(f'CASE WHEN "V_{prefix}"=1 THEN {sq(wire(RED,vertical))} ELSE {sq(wire(MUTED,vertical))} END AS "WIRE_{prefix}_{kind}"')
+ if coherent:
+  mains=ref(roles['led_mains']);bus=ref(roles['led_bus'])
+  fed_mains=f'({mains}=1 AND "V_mains"=1)';fed_bus=f'({bus}=1 AND "V_bus"=1)'
+  common=f'({fed_mains} OR {fed_bus})'
+  # Both lower terminals are the same electrical node. Either source can
+  # energize both output branches, including the output of the open breaker.
+  for alias,condition,vertical in [('WIRE_OUT_MAINS_V',common,True),('WIRE_OUT_BUS_V',common,True),('WIRE_OUT_H',common,False),('WIRE_OUT_V',common,True)]:
+   wires.append(f'CASE WHEN {condition} THEN {sq(wire(RED,vertical))} ELSE {sq(wire(MUTED,vertical))} END AS "{alias}"')
+  has_power=' OR '.join(f'abs({ref(roles["bus_"+kind])})>0' for kind in ['kw','kva','kvar'])
+  wires.append(f'''CASE WHEN {bus}=0 AND ({has_power}) THEN 'BUS: POTÊNCIA COM CHAVE ABERTA' WHEN {bus} IS NULL THEN 'CHAVE BUS / SEM DADOS' ELSE 'SAÍDAS INTERLIGADAS / CARGA' END AS "DIAGNOSTICO_8660"''')
  short_mode = '''CASE WHEN "MODO_LOCAL"='AUTO / RETORNO MANUAL' THEN 'AUTO / RET. MAN.' ELSE "MODO_LOCAL" END AS "MODO_CURTO"'''
  return first+'SELECT sinais.*,'+short_mode+','+','.join(wires)+' FROM sinais'
 
@@ -135,6 +148,8 @@ def properties(profile):
  for c in profile.channels:
   if c.role.startswith('led_'):
    overrides.append({'matcher':{'id':'byName','options':c.role.upper()+'_ESTADO'},'properties':[{'id':'mappings','value':[{'type':'value','options':{'LED ATIVO':{'text':'COM TENSÃO' if c.role.endswith('_live') else 'FECHADO','color':GOLD},'LED INATIVO':{'text':'SEM TENSÃO' if c.role.endswith('_live') else 'ABERTO','color':MUTED},'SEM DADOS':{'text':'SEM DADOS','color':MUTED}}}]}]})
+ if profile.model=='DSE8660':
+  overrides.append({'matcher':{'id':'byName','options':'DIAGNOSTICO_8660'},'properties':[{'id':'mappings','value':[{'type':'value','options':{'BUS: POTÊNCIA COM CHAVE ABERTA':{'text':'BUS: POTÊNCIA COM CHAVE ABERTA','color':'#ff9830'}}}]}]})
  overrides.append({'matcher':{'id':'byName','options':'GERADOR_ALARME'},'properties':[{'id':'mappings','value':[{'type':'value','options':{'GRUPO GERADOR':{'text':'GRUPO GERADOR','color':GOLD},'ALARMES / SEM DADOS':{'text':'ALARMES / SEM DADOS','color':MUTED},'GERADOR / WARNING':{'text':'GERADOR / WARNING','color':'#f2cc0c'},'GERADOR / TRIP':{'text':'GERADOR / TRIP','color':'#ff9830'},'GERADOR / SHUTDOWN':{'text':'GERADOR / SHUTDOWN','color':RED}}}]}]})
  for alias in ['MODO_LOCAL','MODO_CURTO']:
   overrides.append({'matcher':{'id':'byName','options':alias},'properties':[{'id':'color','value':{'mode':'fixed','fixedColor':GOLD}}]})

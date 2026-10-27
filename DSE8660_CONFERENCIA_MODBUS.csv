@@ -1,0 +1,59 @@
+﻿MDB;role;name;address_zero_based;page;offset;Modbus_function;register_count;LogSis_FNC;divisor;unit;signed;bit;manual_printed_pages
+MDB01;mains_frequency;Rede · frequência;1059;4;35;3;1;3;10;Hz;False;-1;33
+MDB02;mains_v_l1n;Rede · tensão L1–N;1060;4;36;3;2;30;10;V;False;-1;33
+MDB03;mains_v_l2n;Rede · tensão L2–N;1062;4;38;3;2;30;10;V;False;-1;33
+MDB04;mains_v_l3n;Rede · tensão L3–N;1064;4;40;3;2;30;10;V;False;-1;33
+MDB05;mains_v_l1l2;Rede · tensão L1–L2;1066;4;42;3;2;30;10;V;False;-1;33
+MDB06;mains_v_l2l3;Rede · tensão L2–L3;1068;4;44;3;2;30;10;V;False;-1;33
+MDB07;mains_v_l3l1;Rede · tensão L3–L1;1070;4;46;3;2;30;10;V;False;-1;33
+MDB08;mains_i_l1;Rede · corrente L1;1076;4;52;3;2;30;10;A;False;-1;33–34
+MDB09;mains_i_l2;Rede · corrente L2;1078;4;54;3;2;30;10;A;False;-1;33–34
+MDB10;mains_i_l3;Rede · corrente L3;1080;4;56;3;2;30;10;A;False;-1;33–34
+MDB11;mains_i_earth;Rede · corrente terra;1082;4;58;3;2;30;10;A;False;-1;33–34
+MDB12;mains_kw_l1;Rede · potência L1;1084;4;60;3;2;30;1000;kW;True;-1;33–34
+MDB13;mains_kw_l2;Rede · potência L2;1086;4;62;3;2;30;1000;kW;True;-1;33–34
+MDB14;mains_kw_l3;Rede · potência L3;1088;4;64;3;2;30;1000;kW;True;-1;33–34
+MDB15;mains_kw;Rede · total kW;1560;6;24;3;2;30;1000;kW;True;-1;45
+MDB16;mains_kva;Rede · total kVA;1568;6;32;3;2;30;1000;kVA;False;-1;45
+MDB17;mains_kvar;Rede · total kVAr;1576;6;40;3;2;30;1000;kVAr;True;-1;45
+MDB18;mains_fp_l1;Rede · FP L1;1578;6;42;3;1;3;100;;True;-1;45
+MDB19;mains_fp_l2;Rede · FP L2;1579;6;43;3;1;3;100;;True;-1;45
+MDB20;mains_fp_l3;Rede · FP L3;1580;6;44;3;1;3;100;;True;-1;45
+MDB21;mains_fp;Rede · FP médio;1581;6;45;3;1;3;100;;True;-1;45
+MDB22;bus_frequency;BUS · frequência;1091;4;67;3;1;3;10;Hz;False;-1;33
+MDB23;bus_v_l1n;BUS · tensão L1–N;1092;4;68;3;2;30;10;V;False;-1;33
+MDB24;bus_v_l2n;BUS · tensão L2–N;1094;4;70;3;2;30;10;V;False;-1;33
+MDB25;bus_v_l3n;BUS · tensão L3–N;1096;4;72;3;2;30;10;V;False;-1;33
+MDB26;bus_v_l1l2;BUS · tensão L1–L2;1098;4;74;3;2;30;10;V;False;-1;33
+MDB27;bus_v_l2l3;BUS · tensão L2–L3;1100;4;76;3;2;30;10;V;False;-1;33
+MDB28;bus_v_l3l1;BUS · tensão L3–L1;1102;4;78;3;2;30;10;V;False;-1;33
+MDB29;bus_i_l1;BUS · corrente L1;1104;4;80;3;2;30;10;A;False;-1;33–34
+MDB30;bus_i_l2;BUS · corrente L2;1106;4;82;3;2;30;10;A;False;-1;33–34
+MDB31;bus_i_l3;BUS · corrente L3;1108;4;84;3;2;30;10;A;False;-1;33–34
+MDB32;bus_i_earth;BUS · corrente terra;1110;4;86;3;2;30;10;A;False;-1;33–34
+MDB33;bus_kw_l1;BUS · potência L1;1112;4;88;3;2;30;1000;kW;True;-1;33–34
+MDB34;bus_kw_l2;BUS · potência L2;1114;4;90;3;2;30;1000;kW;True;-1;33–34
+MDB35;bus_kw_l3;BUS · potência L3;1116;4;92;3;2;30;1000;kW;True;-1;33–34
+MDB36;bus_kw;BUS · total kW;1584;6;48;3;2;30;1000;kW;True;-1;45
+MDB37;bus_kva;BUS · total kVA;1592;6;56;3;2;30;1000;kVA;False;-1;45
+MDB38;bus_kvar;BUS · total kVAr;1600;6;64;3;2;30;1000;kVAr;True;-1;45
+MDB39;bus_fp_l1;BUS · FP L1;1602;6;66;3;1;3;100;;True;-1;45
+MDB40;bus_fp_l2;BUS · FP L2;1603;6;67;3;1;3;100;;True;-1;45
+MDB41;bus_fp_l3;BUS · FP L3;1604;6;68;3;1;3;100;;True;-1;45
+MDB42;bus_fp;BUS · FP médio;1605;6;69;3;1;3;100;;True;-1;45
+MDB43;energy_mains;Energia positiva · rede;1810;7;18;3;2;30;10;kWh;False;-1;49
+MDB44;energy_bus;Energia positiva · BUS;1818;7;26;3;2;30;10;kWh;False;-1;49
+MDB45;mode;Modo de operação;772;3;4;3;1;3;1;;False;-1;30
+MDB46;warning;Warning;774;3;6;3;1;3;1;;False;10;30
+MDB47;trip;Trip elétrico;774;3;6;3;1;3;1;;False;11;30
+MDB48;shutdown;Shutdown;774;3;6;3;1;3;1;;False;12;30
+MDB49;input_A;Entrada A;43521;170;1;3;1;3;1;;False;-1;136
+MDB50;input_B;Entrada B;43523;170;3;3;1;3;1;;False;-1;136
+MDB51;input_C;Entrada C;43525;170;5;3;1;3;1;;False;-1;136
+MDB52;input_D;Entrada D;43527;170;7;3;1;3;1;;False;-1;136
+MDB53;input_E;Entrada E;43529;170;9;3;1;3;1;;False;-1;136
+MDB54;input_F;Entrada F;43531;170;11;3;1;3;1;;False;-1;136
+MDB55;input_G;Entrada G;43533;170;13;3;1;3;1;;False;-1;136
+MDB56;input_H;Entrada H;43535;170;15;3;1;3;1;;False;-1;136
+MDB57;led_mains;LED · disjuntor da rede;48659;190;19;3;1;3;1;;False;-1;173: model 8x60
+MDB58;led_bus;LED · disjuntor do BUS;48660;190;20;3;1;3;1;;False;-1;173: model 8x60

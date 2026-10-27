@@ -6,6 +6,7 @@ from validate_deif_integration import fixture
 source=ast.parse((root/'tools/validate_manual_profiles.py').read_text(encoding='utf-8'))
 node=next(n for n in source.body if isinstance(n,ast.Assign) and any(isinstance(t,ast.Name) and t.id=='registers' for t in n.targets));scope={};exec(compile(ast.Module(body=[node],type_ignores=[]),'fixture','exec'),scope);registers=scope['registers']
 for model in available_models():
+ if len(sys.argv)>1 and model not in sys.argv[1:]:continue
  p=Project.new(model);table='standard_'+model.lower();rs={c.role:c for c in p.profile.channels}
  schema=','.join(c.column+' numeric' for c in p.profile.channels)
  sql=f'CREATE TABLE IF NOT EXISTS {table}(time timestamptz,gsm_rssi numeric,"WiFi_rssi" numeric,{schema});TRUNCATE {table};'

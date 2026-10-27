@@ -78,12 +78,17 @@ def overview(profile,old):
              'ULTIMA_LEITURA':'LAST_TIME' if deif else 'ULTIMA_LEITURA','MANUTENCAO_RESUMO':'MAINTENANCE' if deif else 'MANUTENCAO_RESUMO',
              'GERADOR_ALARME':'ALARM_TEXT' if deif else 'GERADOR_ALARME','GERADOR_ALARME_SVG':'GENERATOR_SVG' if deif else 'GERADOR_ALARME_SVG'}
     mains_bus=profile.kind=='mains_bus' or profile.topology=='mains_bus'
+    common_outputs=profile.model=='DSE8660'
+    series_bus=mains_bus and not common_outputs
     tie=profile.kind=='bus_tie'
     engine=profile.kind=='engine_transfer' or profile.application in ['GEN','CGC412','CGC413','SGC420','ENG']
     left='gen' if single else 'bus' if tie else 's1' if profile.application=='ATS' else 'mains'
     right='bus' if single or mains_bus else 'bus2' if tie else 's2' if profile.application=='ATS' else 'gen'
     left_rows=source_rows(rs,left,single)
     right_rows=source_rows(rs,right,right=='gen')
+    if common_outputs:
+        left_rows=[row for row in left_rows if row[0] in ['L1–L2','L2–L3','L3–L1','Freq.','Potência']]
+        right_rows=[row for row in right_rows if row[0] in ['L1–L2','L2–L3','L3–L1','Freq.','Potência']]
     if profile.topology=='engine':
         right_rows=[(label,field(rs.get(role))) for label,role in [('Horímetro','hour_meter'),('Relativo','relative_hours'),('Partidas','starts'),('Serviço 1','maintenance_1'),('Serviço 2','maintenance_2'),('Bateria','battery'),('Alarmes','alarm_count')]]
     # EIC validity affects the same source readings as in the detailed panels.
@@ -127,13 +132,16 @@ def overview(profile,old):
             if name=='BUS nota':fixed_text(e,'BARRAMENTO MEDIDO')
             if profile.topology=='engine' and (name.startswith('Traço') or name.startswith('Disjuntor') or name in ['GCB estado','BUS nota','Tensão BUS','BUS nome','QGBT','QGBT nome']):continue
         else:
-            # Approved transfer geometry. In mains/BUS service the two signals
-            # are laid out in a series MB -> BUS -> TB path below.
+            # DSE8660: independent source branches join at their outputs,
+            # just like the approved 7420 transfer geometry.
             vbind={'TENSAO_REDE_PRESENTE_V_SVG':wire_name(deif,left),'TENSAO_GMG_PRESENTE_V_SVG':wire_name(deif,right)}
             if previous_image in vbind:img(e,vbind[previous_image])
             if previous_image and previous_image.startswith('TENSAO_SAIDA_PRESENTE'):
                 vertical='_V_' in previous_image
-                if mains_bus:img(e,uri=ui.wire(ui.MUTED,vertical))
+                if common_outputs:
+                    alias='WIRE_OUT_MAINS_V' if name=='Traço fluido 15' else 'WIRE_OUT_BUS_V' if name=='Traço fluido 21' else 'WIRE_OUT_V' if vertical else 'WIRE_OUT_H'
+                    img(e,alias)
+                elif mains_bus:img(e,uri=ui.wire(ui.MUTED,vertical))
                 elif deif:img(e,'WIRE_OUT_V' if vertical else 'WIRE_OUT')
                 elif tie:img(e,wire_name(False,'bus2',vertical))
                 else:img(e,uri=ui.wire(ui.MUTED,vertical))
@@ -151,12 +159,14 @@ def overview(profile,old):
                 side=0 if name=='Título MDB52' else 1
                 fixed_text(e,('MB / REDE' if side==0 else 'TB / BUS') if mains_bus else ('S1' if side==0 else 'S2') if profile.application=='ATS' else ('K1 / REDE' if side==0 else 'K2 / GMG'))
                 e['config']['size']=9
-            if name=='Intertravamento legenda':fixed_text(e,'BUS' if mains_bus or tie else 'QTA')
+            if name=='Intertravamento legenda':fixed_text(e,'CARGA' if common_outputs else 'BUS' if mains_bus or tie else 'QTA')
             if name=='Barramento responsivo':fixed_text(e,'BARRAMENTO / CARGA' if mains_bus or tie else 'SAÍDA / CARGA')
-            if name=='Tensão barramento':fixed_text(e,'TENSÃO MEDIDA NO BUS' if mains_bus or tie else 'LEITURAS DO PERÍODO')
+            if name=='Tensão barramento':fixed_text(e,'TENSÃO NA SAÍDA / INDICAÇÃO' if common_outputs else 'TENSÃO MEDIDA NO BUS' if mains_bus or tie else 'LEITURAS DO PERÍODO')
             if name=='Diagnóstico QTA':fixed_text(e,'INDICADORES DO CONTROLADOR' if not deif else 'ESTADO DE ALIMENTAÇÃO' if profile.application=='SGC420' else 'POSIÇÃO DOS DISJUNTORES')
+            if common_outputs and name=='Diagnóstico QTA':
+                metric(e,'DIAGNOSTICO_8660');e['config']['size']=8
             if name=='Traço fluido 23':continue
-            if mains_bus:
+            if series_bus:
                 if name in ['Traço fluido 15','Traço fluido 24']:continue
                 if name=='Traço fluido 21':img(e,uri=ui.wire(ui.MUTED,True))
             if tie and name in ['QTA responsivo','Contato MDB52','Contato MDB53','Título MDB52','Título MDB53','Posição MDB52','Posição MDB53','Estado MDB52','Estado MDB53','Intertravamento legenda','Traço fluido 15','Traço fluido 21','Traço fluido 24']:
@@ -166,8 +176,8 @@ def overview(profile,old):
     # line-to-line voltages first: installations without neutral must still
     # expose all three available company/BUS voltages under their symbols.
     for side,rows in enumerate([left_rows,right_rows]):
-        start=258 if single else 292
-        step=22 if len(rows)<=7 else 16
+        start=297 if common_outputs else 258 if single else 292
+        step=30 if common_outputs else 22 if len(rows)<=7 else 16
         for row,(caption,value) in enumerate(rows):
             x=5+side*50;y=start+row*step
             label=ui.text(f'Fonte rótulo {side} {row}',x,13,y,step,caption,8 if len(rows)>7 else 9)
@@ -176,7 +186,7 @@ def overview(profile,old):
             if not value:fixed_text(reading,'—')
             reading['config']['align']='right'
             kept += [label,reading]
-    if mains_bus:
+    if series_bus:
         # Company -> MB -> measured common BUS -> TB -> load, never two
         # independent power sources feeding a fictitious transfer switch.
         measured=wire_name(deif,'bus');horizontal=wire_name(deif,'bus',False)
@@ -200,6 +210,8 @@ def overview(profile,old):
         placement=e['placement']
         if e.get('background',{}).get('image') and placement['left']+placement['right']>=100:
             placement['right']=100-placement['left']-.6
+    if common_outputs:
+        p['description']='DSE8660: entradas independentes REDE e BUS; saídas dos dois disjuntores unidas à carga. Posições seguem indicação do controlador, sem retorno físico independente. Cores após os contatos indicam tensão inferida da fonte e indicação de fechamento. Potências são medições recebidas no mesmo registro final do período; não são zeradas pela posição da chave.'
     p['options']['root']['elements']=kept
     return p
 

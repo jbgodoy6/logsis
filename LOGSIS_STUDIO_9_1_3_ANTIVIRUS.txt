@@ -1,0 +1,19 @@
+LogSis Studio 9.1.3 — verificação ClamAV
+Assinaturas disponíveis de 25/10/2026. Log em UTC. Sem envio de arquivos a terceiros.
+Ausência de detecção não garante ausência de alertas no Windows.
+
+/scan/LOGSIS_STUDIO_9_1_3_FONTE.zip: OK
+/scan/DASHBOARDS_PADRAO_9_1_3_JSON.zip: OK
+/scan/DSE8660_PADRAO_DSE7420_9_1_3.json: OK
+
+----------- SCAN SUMMARY -----------
+Known viruses: 3628192
+Engine version: 1.5.4
+Scanned directories: 0
+Scanned files: 3
+Infected files: 0
+Data scanned: 61.55 MiB
+Data read: 3.41 MiB (ratio 18.02:1)
+Time: 30.528 sec (0 m 30 s)
+Start Date: 2026:10:27 21:33:27
+End Date:   2026:10:27 21:33:58

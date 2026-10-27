@@ -1,0 +1,15 @@
+{
+  "result": "passed",
+  "grafana": "11.2.2",
+  "models": [
+    {
+      "model": "DSE8660",
+      "widths": [
+        1440,
+        390
+      ],
+      "clipping": []
+    }
+  ],
+  "queryErrors": []
+}

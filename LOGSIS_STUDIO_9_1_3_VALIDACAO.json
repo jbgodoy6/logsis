@@ -1,0 +1,49 @@
+{
+  "version": "9.1.3",
+  "result": "passed",
+  "changes": [
+    "DSE8660 switch outputs connected to the same load bus, matching approved DSE7420 geometry.",
+    "Both common output branches use the same inferred energized state; each source input keeps its own measured voltage state.",
+    "DSE8660 local cards contain only three phase-phase voltages, frequency and active power.",
+    "DSE8660 instantaneous fields use one coherent final database row; missing values cannot carry forward stale power from an older row.",
+    "Received power is preserved; power with the BUS breaker indicated open is explicitly identified."
+  ],
+  "unit_tests": {
+    "total": 61,
+    "executed_passed": 49,
+    "gui_skipped": 12
+  },
+  "visual": {
+    "all_profiles": 17,
+    "widths": [
+      1440,
+      390
+    ],
+    "result": "passed",
+    "additional_latest_DSE8660_common_node_check": "passed; both output branches energized by mains with BUS breaker open"
+  },
+  "DSE_SQL_profiles": 7,
+  "DSE8660_snapshot_cases": 8,
+  "address_audit": {
+    "channels": 58,
+    "source": "supplied GenComm 2.93 (2015-04-13)",
+    "result": "passed against generic manual",
+    "addresses_changed": false,
+    "user_variant": "MkII",
+    "specific_MkII_firmware_and_CT_wiring_validation": "pending",
+    "online_official_manual_access": "HTTP 403 in this environment"
+  },
+  "physical_controller_test": false,
+  "production_database_test": false,
+  "source_hashes": {
+    "core.py": "9009235aa825e57f8964b4960064ad9830d6b69f390faf6d681bcf28fdad4f1e",
+    "app.py": "ae1919547b5682eab4394ddcaa7c20b4b02400455c7a5891a6658e8827b1a873",
+    "__init__.py": "aa25078b27d10d4c1ac664000d578aa4fc04c073814e183c2f25c618273b08b9",
+    "standard_layout.py": "7d939bd130c973a262a6a2a50e835c0691d2c23f2954f485925e6ad8629e393e",
+    "codecs.py": "643a193bcfd487b5f86f4b82ae10c0bf10a868ea279e2ca065cca2af81a462dc",
+    "deif_dashboard.py": "9f78bd1ba4af3c255811d6ab5e936c7839955253d7a6c4f8acb89aa393a4fedc",
+    "transport.py": "7a976ac3e2790a96d26471e326b21a0f85f2dad4ab1999ec11fefbb6a6471402",
+    "manual_dashboard.py": "33743b70e8276f9ad243e5d78faac8c18e6216032c3ad3e40e03b471da2b6442"
+  },
+  "extracted_package_smoke": "passed: 17 model exports from clean extracted source"
+}

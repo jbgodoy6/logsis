@@ -1,0 +1,78 @@
+{
+  "result": "passed",
+  "scope": "Synthetic PostgreSQL regression cases; no physical controller or production access.",
+  "cases": {
+    "open_bus_actual_power": {
+      "MDB36": 45.0,
+      "MDB37": 46.0,
+      "MDB38": 2.0,
+      "CONTACT_LED_MAINS_LABEL": "FECHADO",
+      "CONTACT_LED_BUS_LABEL": "ABERTO",
+      "DIAGNOSTICO_8660": "BUS: POTÊNCIA COM CHAVE ABERTA",
+      "ULTIMA_LEITURA": "23/10 09:30"
+    },
+    "missing_latest_power": {
+      "MDB36": null,
+      "MDB37": null,
+      "MDB38": null,
+      "CONTACT_LED_MAINS_LABEL": "FECHADO",
+      "CONTACT_LED_BUS_LABEL": "ABERTO",
+      "DIAGNOSTICO_8660": "SAÍDAS INTERLIGADAS / CARGA",
+      "ULTIMA_LEITURA": "23/10 09:30"
+    },
+    "unknown_bus_contact": {
+      "MDB36": 45.0,
+      "MDB37": 46.0,
+      "MDB38": 2.0,
+      "CONTACT_LED_MAINS_LABEL": "FECHADO",
+      "CONTACT_LED_BUS_LABEL": "SEM DADOS",
+      "DIAGNOSTICO_8660": "CHAVE BUS / SEM DADOS",
+      "ULTIMA_LEITURA": "23/10 09:30"
+    },
+    "both_open": {
+      "MDB36": 45.0,
+      "MDB37": 46.0,
+      "MDB38": 2.0,
+      "CONTACT_LED_MAINS_LABEL": "ABERTO",
+      "CONTACT_LED_BUS_LABEL": "ABERTO",
+      "DIAGNOSTICO_8660": "BUS: POTÊNCIA COM CHAVE ABERTA",
+      "ULTIMA_LEITURA": "23/10 09:30"
+    },
+    "bus_only_closed": {
+      "MDB36": 45.0,
+      "MDB37": 46.0,
+      "MDB38": 2.0,
+      "CONTACT_LED_MAINS_LABEL": "ABERTO",
+      "CONTACT_LED_BUS_LABEL": "FECHADO",
+      "DIAGNOSTICO_8660": "SAÍDAS INTERLIGADAS / CARGA",
+      "ULTIMA_LEITURA": "23/10 09:30"
+    },
+    "both_closed": {
+      "MDB36": 45.0,
+      "MDB37": 46.0,
+      "MDB38": 2.0,
+      "CONTACT_LED_MAINS_LABEL": "FECHADO",
+      "CONTACT_LED_BUS_LABEL": "FECHADO",
+      "DIAGNOSTICO_8660": "SAÍDAS INTERLIGADAS / CARGA",
+      "ULTIMA_LEITURA": "23/10 09:30"
+    },
+    "no_voltage": {
+      "MDB36": 45.0,
+      "MDB37": 46.0,
+      "MDB38": 2.0,
+      "CONTACT_LED_MAINS_LABEL": "FECHADO",
+      "CONTACT_LED_BUS_LABEL": "FECHADO",
+      "DIAGNOSTICO_8660": "SAÍDAS INTERLIGADAS / CARGA",
+      "ULTIMA_LEITURA": "23/10 09:30"
+    },
+    "empty_window": {
+      "MDB36": null,
+      "MDB37": null,
+      "MDB38": null,
+      "CONTACT_LED_MAINS_LABEL": "SEM DADOS",
+      "CONTACT_LED_BUS_LABEL": "SEM DADOS",
+      "DIAGNOSTICO_8660": "CHAVE BUS / SEM DADOS",
+      "ULTIMA_LEITURA": null
+    }
+  }
+}

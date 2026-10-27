@@ -16,18 +16,33 @@ class StandardLayoutTests(unittest.TestCase):
         es=d['panels'][0]['options']['root']['elements']
         for side,prefix in [(0,'mains'),(1,'bus')]:
             rows=[e for e in es if e['name'].startswith(f'Fonte leitura {side} ')]
-            self.assertEqual(len(rows),10)
+            self.assertEqual(len(rows),5)
+            labels=[e['config']['text']['fixed'] for e in es if e['name'].startswith(f'Fonte rótulo {side} ')]
+            self.assertEqual(labels,['L1–L2','L2–L3','L3–L1','Freq.','Potência'])
             roles={c.role:f'MDB{c.number:02}' for c in p.profile.channels}
-            for row,suffix in enumerate(['v_l1l2','v_l2l3','v_l3l1','v_l1n','v_l2n','v_l3n','frequency','i_l1','kw','fp']):
+            for row,suffix in enumerate(['v_l1l2','v_l2l3','v_l3l1','frequency','kw']):
                 self.assertEqual(rows[row]['config']['text']['field'],roles[prefix+'_'+suffix])
                 self.assertLessEqual(rows[row]['placement']['top']+rows[row]['placement']['height'],456)
 
     def test_interconnection_conductors_have_visible_canvas_width(self):
         p=Project.new('DSE8660');es=p.dashboard('id_demo','Planta','ds')['panels'][0]['options']['root']['elements']
-        for name in ['MB até BUS · descida','MB até BUS · ponte','MB até BUS · retorno','BUS antes do TB','TB até carga','Traço fluido 21','Traço fluido 25','Traço fluido 28']:
+        for name in ['Traço fluido 14','Traço fluido 15','Traço fluido 20','Traço fluido 21','Traço fluido 24','Traço fluido 25','Traço fluido 28']:
             e=next(e for e in es if e['name']==name)
             self.assertLess(e['placement']['left']+e['placement']['right'],100,name)
             self.assertGreater(e['placement']['height'],0,name)
+
+    def test_8660_switch_outputs_join_like_7420_without_series_bridge(self):
+        p=Project.new('DSE8660');es=p.dashboard('id_demo','Planta','ds')['panels'][0]['options']['root']['elements']
+        by_name={e['name']:e for e in es}
+        self.assertFalse(any(name.startswith(('MB até BUS','BUS antes do TB','TB até carga')) for name in by_name))
+        for name,alias in [('Traço fluido 15','WIRE_OUT_MAINS_V'),('Traço fluido 21','WIRE_OUT_BUS_V'),('Traço fluido 24','WIRE_OUT_H'),('Traço fluido 25','WIRE_OUT_V')]:
+            self.assertEqual(by_name[name]['background']['image']['field'],alias)
+        bar=by_name['Traço fluido 24']['placement']
+        self.assertEqual((bar['left'],bar['right'],bar['top']),(25,25,609))
+        for name in ['Traço fluido 15','Traço fluido 21']:
+            wire=by_name[name]['placement']
+            self.assertEqual(wire['top']+wire['height'],bar['top'])
+        self.assertEqual(by_name['Traço fluido 25']['placement']['top'],bar['top'])
 
     def test_all_contact_drawings_reuse_exact_7420_vectors_not_led_circles(self):
         from logsis_studio.manual_dashboard import contact_assets

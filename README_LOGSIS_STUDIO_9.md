@@ -1,6 +1,15 @@
 # LogSis Studio 9.1 — Sistel
 
-Correção 9.1.2: contatos aberto/fechado/desconhecido com os mesmos vetores do DSE7420 e textos ABERTO/FECHADO/SEM DADOS. Nos modelos com indicação por LED no mapa, a posição exibida segue essa indicação do controlador, sem retorno físico independente. As ligações verticais têm largura visível no Canvas. As leituras locais mostram primeiro as três tensões entre fases, seguidas de fase–neutro, frequência, corrente L1, potência e FP; não se calcula tensão fase–neutro ausente. No DSE8660 preserva-se o caminho rede → MB → BUS → TB → carga.
+Correção 9.1.3 — DSE8660:
+
+- Entradas REDE e BUS independentes; saídas dos dois disjuntores unidas ao mesmo barramento de carga, no padrão do DSE7420. Não há mais ligação da saída MB à entrada TB.
+- Quadros abaixo da torre e do BUS: apenas L1–L2, L2–L3, L3–L1, frequência e potência ativa. Correntes, FP e fase–neutro continuam disponíveis na instrumentação detalhada.
+- O unifilar e a instrumentação DSE8660 utilizam um único registro final do período. Um campo ausente nesse registro fica sem dados, sem recuperar uma potência antiga de outro instante. Contadores por período continuam usando sua consulta própria.
+- Medições de potência não são artificialmente zeradas pela indicação de chave aberta. Se houver potência recebida no mesmo registro com BUS indicado aberto, o painel mostra “BUS: POTÊNCIA COM CHAVE ABERTA”. É necessário conferir a posição dos TCs, o retorno/indicação e a configuração do controlador.
+- Cores após as chaves seguem tensão da fonte + indicação de contato fechado; a carga recebe a união dos dois ramos. É indicação inferida, sem medição independente de tensão na carga.
+- Os 58 canais foram confrontados com o GenComm 2.93 fornecido (13/04/2015); não foi encontrado deslocamento de endereço, escala ou quantidade de registros. Modelo informado pelo usuário: MkII. O documento genérico não comprova suporte de todos os campos em cada firmware MkII; não houve acesso ao controlador, banco real ou diagrama dos TCs. O acesso ao site da DSE nesta sessão retornou HTTP 403.
+
+Mantém a correção 9.1.2: os desenhos de contato são os vetores originais do DSE7420, com ABERTO/FECHADO/SEM DADOS, e os trechos verticais têm largura visível no Canvas. Nos perfis baseados em LED, as posições seguem indicação do controlador, sem retorno físico independente. Demais mapas BIN e endereços permanecem iguais.
 
 Versão 9.1: dashboards organizados no padrão aprovado do DSE7420, incluindo os modelos de companhia/BUS e aplicações DEIF. O desenho mantém a topologia de cada controlador; mapas BIN e escalas permanecem iguais. O pacote desta versão contém código-fonte Python e recursos, sem iniciador BAT, executável EXE ou instalador. Para atualizar somente o Grafana, existe também uma entrega separada apenas com arquivos JSON.
 

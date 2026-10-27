@@ -14,6 +14,9 @@ runtime=['LogSis_Studio.py','requirements-serial.txt']
 runtime+=['logsis_studio/'+n for n in ['__init__.py','app.py','core.py','transport.py','manual_dashboard.py','deif_dashboard.py','standard_layout.py','codecs.py']]
 runtime+=['logsis_studio/resources/'+n for n in ['profiles.json','template.bin','dse7420.json','dse8610.json','logsis_symbol.png','sgc420_alarms.json','agc150_alarms.json']]
 reports=[f'LOGSIS_STUDIO_{tag}_VALIDACAO.json','LOGSIS_STUDIO_9_1_VALIDACAO_UI.json']
+if __version__=='9.1.3':
+    reports+=['DSE8660_CONFERENCIA_MODBUS.json','DSE8660_VALIDACAO_SNAPSHOT.json','LOGSIS_STUDIO_9_1_3_DSE8660_UI.json']
+    runtime+=['DSE8660_CONFERENCIA_MODBUS.csv']
 for name in reports:
     assert json.loads((ROOT/name).read_text(encoding='utf-8'))['result']=='passed',name+' ainda não aprovado'
 output=ROOT/f'LOGSIS_STUDIO_{tag}_FONTE.zip'

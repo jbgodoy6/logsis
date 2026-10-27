@@ -1,6 +1,6 @@
 const {chromium}=require('playwright'),fs=require('fs'),path=require('path');
 const root=path.resolve(__dirname,'..');
-const models=Object.keys(JSON.parse(fs.readFileSync(root+'/logsis_studio/resources/profiles.json','utf8')));
+const models=Object.keys(JSON.parse(fs.readFileSync(root+'/logsis_studio/resources/profiles.json','utf8'))).filter(m=>!process.env.MODELS||process.env.MODELS.split(',').includes(m));
 async function clipping(page){return page.locator('div[role=button][style*="position: absolute"]').evaluateAll(es=>es.flatMap(e=>{
  const spans=[...e.querySelectorAll('span')].filter(s=>!s.childElementCount&&s.textContent.trim());if(!spans.length)return[];
  const r=e.getBoundingClientRect();if(!r.width||!r.height)return[];
@@ -16,12 +16,14 @@ for(const model of models){
  await page.goto('http://127.0.0.1:3300/d/standard-'+model.toLowerCase().replaceAll('_','-')+'?from=1792756800000&to=1792760400000&kiosk');
  await page.getByText('23/10 09:30',{exact:true}).waitFor({timeout:45000});
  if(model==='DSE8660'){
-  const first=page.locator('[data-testid="data-testid Panel header 01 / Unifilar da instalação"]').locator('..');
   // The medium-voltage fixture intentionally has no phase-neutral reading.
   // Inspect the first Canvas rather than accepting values from detail cards.
   const texts=await page.locator('div[role=button][style*="position: absolute"]').allTextContents();
   for(const expected of ['13.59 kV','13.46 kV','13.44 kV','FECHADO','ABERTO'])if(!texts.includes(expected))throw Error('Missing local reading/contact '+expected);
   if(texts.some(t=>/LED ATIVO|LED INATIVO|IND\. ATIVA|IND\. INATIVA/.test(t)))throw Error('Old LED state labels');
+  if(texts.some(t=>['L1–N','L2–N','L3–N'].includes(t)))throw Error('Phase-neutral in DSE8660 local cards');
+  const outputs=await page.locator('div[role=button][style*="position: absolute"]').evaluateAll(es=>es.filter(e=>e.style.top==='583px'&&e.style.backgroundImage).map(e=>e.style.backgroundImage));
+  if(outputs.length!==2||!outputs.every(s=>s.includes('f2495c')))throw Error('Both common output branches must be energized from the closed mains source');
  }
  for(const width of [1440,390]){
   await page.setViewportSize({width,height:1100});await page.locator('.scrollbar-view').first().evaluate(e=>e.scrollTo(0,0));await page.waitForTimeout(650);
@@ -35,5 +37,5 @@ for(const model of models){
  report.models.push(record);console.log(model,'checked');
 }
 report.result=report.models.every(m=>!m.clipping.length)&&!report.queryErrors.length?'passed':'failed';
-fs.writeFileSync(root+'/LOGSIS_STUDIO_9_1_VALIDACAO_UI.json',JSON.stringify(report,null,2)+'\n');if(report.result!=='passed')throw Error('Review UI report');
+fs.writeFileSync(root+'/'+(process.env.UI_REPORT||'LOGSIS_STUDIO_9_1_VALIDACAO_UI.json'),JSON.stringify(report,null,2)+'\n');if(report.result!=='passed')throw Error('Review UI report');
 }finally{await b.close()}})().catch(e=>{console.error(e);process.exit(1)});
