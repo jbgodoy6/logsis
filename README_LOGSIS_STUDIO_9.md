@@ -1,5 +1,13 @@
 # LogSis Studio 9.1 — Sistel
 
+Correção 9.1.4 — abertura do Studio:
+
+A inicialização agora trata erros desde a importação do aplicativo, incluindo pasta extraída parcialmente, Python incompatível e ausência de Tkinter. No Windows, a mensagem usa uma caixa nativa, que funciona mesmo quando o Tcl/Tk não consegue carregar. O traceback é salvo em UTF-8 em `%LOCALAPPDATA%/LogSisStudio/logs` (com alternativa na pasta temporária). Não há envio automático de informações nem instalação automática de dependências.
+
+Extraia TODOS os arquivos para uma pasta nova, fora do ZIP, e abra `LogSis_Studio.py`. É necessário Python 3.10 ou superior com Tcl/Tk. Se ainda não abrir, a caixa exibirá o motivo e o caminho do diagnóstico. Para executar pelo terminal na pasta extraída: `py -3 -X utf8 LogSis_Studio.py`. Se o comando `py` não for encontrado, o Python precisa estar instalado/configurado no Windows. O pacote permanece sem BAT, EXE ou instalador.
+
+A alteração trata a falha silenciosa e permite identificar o problema local; não estabelece a causa da falha observada no computador do usuário. A abertura real foi testada em Linux/Tk; o diálogo Windows foi verificado por simulação, sem acesso a uma máquina Windows. Mapas BIN e dashboards permanecem os da 9.1.3.
+
 Correção 9.1.3 — DSE8660:
 
 - Entradas REDE e BUS independentes; saídas dos dois disjuntores unidas ao mesmo barramento de carga, no padrão do DSE7420. Não há mais ligação da saída MB à entrada TB.

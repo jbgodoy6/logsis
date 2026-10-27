@@ -7,7 +7,6 @@ import struct
 import threading
 import tkinter as tk
 from tkinter import filedialog, font, messagebox, ttk
-import traceback
 
 from . import __version__
 from .core import Project, RESOURCES, atomic_write, integer, number, safe_text, safe_value, available_models, load_profile
@@ -660,15 +659,9 @@ class Studio(tk.Tk):
 
 
 def main():
-    try:
-        import sys
-        if sys.platform == 'win32':
-            import ctypes
-            try: ctypes.windll.shcore.SetProcessDpiAwareness(1)
-            except (AttributeError, OSError): pass
-        Studio().mainloop()
-    except Exception:
-        text = traceback.format_exc()
-        try: messagebox.showerror('LogSis Studio', 'Não foi possível iniciar o Studio.\n\n' + text)
-        except tk.TclError: print(text)
-        raise
+    import sys
+    if sys.platform == 'win32':
+        import ctypes
+        try: ctypes.windll.shcore.SetProcessDpiAwareness(1)
+        except (AttributeError, OSError): pass
+    Studio().mainloop()

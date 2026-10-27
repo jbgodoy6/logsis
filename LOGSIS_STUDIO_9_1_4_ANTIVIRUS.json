@@ -1,0 +1,18 @@
+{
+  "version": "9.1.4",
+  "engine": "ClamAV 1.5.4",
+  "database": 28164,
+  "database_date": "2026-10-25",
+  "files_scanned": 1,
+  "infected_files": 0,
+  "archives_inspected": true,
+  "artifacts": [
+    {
+      "file": "LOGSIS_STUDIO_9_1_4_FONTE.zip",
+      "bytes": 462051,
+      "sha256": "6ff565a2a83a0399827ea216d4f7fe5348a4440e97341416aef77449d1b21eac"
+    }
+  ],
+  "scope": "Local offline scan using bundled signatures; no Microsoft Defender determination or guarantee against Windows warnings.",
+  "scan_log_timezone": "UTC (container)"
+}

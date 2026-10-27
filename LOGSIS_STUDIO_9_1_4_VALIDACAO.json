@@ -1,0 +1,34 @@
+{
+  "version": "9.1.4",
+  "result": "passed",
+  "scope": "Startup error handling before importing the package or Tk, native Windows error reporting, local UTF-8 diagnostics. No dashboard or BIN map changes.",
+  "unit_tests": {
+    "total": 69,
+    "passed": 69,
+    "skipped": 0,
+    "display": "Xorg dummy :99"
+  },
+  "startup_checks": [
+    "real GUI startup and close",
+    "missing package/resources reports incomplete extraction",
+    "missing Tk is caught before app.main",
+    "GUI creation failure reaches launcher once",
+    "unsupported Python gets a readable message",
+    "native Windows MessageBox path simulated without requiring Tk",
+    "unwritable log location is nonfatal",
+    "normal launch creates no error log"
+  ],
+  "platform_limits": "Real GUI tested on Linux/Tk. Windows native notification branch mocked; no physical Windows machine or user error message available. Root cause on user computer is not established.",
+  "source_hashes": {
+    "LogSis_Studio.py": "fc8c6e16c5aa591d4b19beacb9a278fc865e975654ce9dc3bca98f4cff63a858",
+    "core.py": "9009235aa825e57f8964b4960064ad9830d6b69f390faf6d681bcf28fdad4f1e",
+    "app.py": "5e7a47cee438eaccdc52a0522275cea2a93fb15ffa99279303100f6791d798af",
+    "__init__.py": "bd2fa4a056a358eacac550407609986b1f709ea998bda6e8c880145941222875",
+    "standard_layout.py": "7d939bd130c973a262a6a2a50e835c0691d2c23f2954f485925e6ad8629e393e",
+    "codecs.py": "643a193bcfd487b5f86f4b82ae10c0bf10a868ea279e2ca065cca2af81a462dc",
+    "deif_dashboard.py": "9f78bd1ba4af3c255811d6ab5e936c7839955253d7a6c4f8acb89aa393a4fedc",
+    "transport.py": "7a976ac3e2790a96d26471e326b21a0f85f2dad4ab1999ec11fefbb6a6471402",
+    "manual_dashboard.py": "33743b70e8276f9ad243e5d78faac8c18e6216032c3ad3e40e03b471da2b6442"
+  },
+  "extracted_package_smoke": "passed: real GUI startup and 17 dashboard exports from clean extracted source"
+}
