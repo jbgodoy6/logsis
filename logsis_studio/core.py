@@ -397,11 +397,14 @@ class Project:
     def dashboard_template(self):
         if self.profile.vendor == 'DEIF':
             from .deif_dashboard import build_dashboard
-            return build_dashboard(self.profile)
+            from .standard_layout import apply
+            return apply(self.profile,build_dashboard(self.profile))
         if self.profile.kind != 'legacy':
             from .manual_dashboard import build_dashboard
-            return build_dashboard(self.profile)
-        return json.loads((RESOURCES / self.profile.dashboard).read_text(encoding='utf-8'))
+            from .standard_layout import apply
+            return apply(self.profile,build_dashboard(self.profile))
+        from .standard_layout import apply
+        return apply(self.profile,json.loads((RESOURCES / self.profile.dashboard).read_text(encoding='utf-8')))
 
     def csv_bytes(self):
         output = io.StringIO(newline='')

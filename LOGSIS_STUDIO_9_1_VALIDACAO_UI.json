@@ -1,0 +1,143 @@
+{
+  "result": "passed",
+  "grafana": "11.2.2",
+  "models": [
+    {
+      "model": "DSE7420",
+      "widths": [
+        1440,
+        390
+      ],
+      "clipping": []
+    },
+    {
+      "model": "DSE8610",
+      "widths": [
+        1440,
+        390
+      ],
+      "clipping": []
+    },
+    {
+      "model": "DSE4520",
+      "widths": [
+        1440,
+        390
+      ],
+      "clipping": []
+    },
+    {
+      "model": "DSE6120",
+      "widths": [
+        1440,
+        390
+      ],
+      "clipping": []
+    },
+    {
+      "model": "DSE6320",
+      "widths": [
+        1440,
+        390
+      ],
+      "clipping": []
+    },
+    {
+      "model": "DSE7320",
+      "widths": [
+        1440,
+        390
+      ],
+      "clipping": []
+    },
+    {
+      "model": "DSE8620",
+      "widths": [
+        1440,
+        390
+      ],
+      "clipping": []
+    },
+    {
+      "model": "DSE8660",
+      "widths": [
+        1440,
+        390
+      ],
+      "clipping": []
+    },
+    {
+      "model": "DSE8680",
+      "widths": [
+        1440,
+        390
+      ],
+      "clipping": []
+    },
+    {
+      "model": "AGC150_GEN",
+      "widths": [
+        1440,
+        390
+      ],
+      "clipping": []
+    },
+    {
+      "model": "AGC150_GEN_BUS",
+      "widths": [
+        1440,
+        390
+      ],
+      "clipping": []
+    },
+    {
+      "model": "AGC150_MAINS",
+      "widths": [
+        1440,
+        390
+      ],
+      "clipping": []
+    },
+    {
+      "model": "AGC150_ATS",
+      "widths": [
+        1440,
+        390
+      ],
+      "clipping": []
+    },
+    {
+      "model": "AGC150_ENG",
+      "widths": [
+        1440,
+        390
+      ],
+      "clipping": []
+    },
+    {
+      "model": "SGC420_MKII",
+      "widths": [
+        1440,
+        390
+      ],
+      "clipping": []
+    },
+    {
+      "model": "CGC412",
+      "widths": [
+        1440,
+        390
+      ],
+      "clipping": []
+    },
+    {
+      "model": "CGC413",
+      "widths": [
+        1440,
+        390
+      ],
+      "clipping": []
+    }
+  ],
+  "queryErrors": []
+}

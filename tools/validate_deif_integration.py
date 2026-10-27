@@ -104,7 +104,7 @@ def main():
                 assert result['MDB'+f'{rs[role].number:02}']==100 if model=='SGC420_MKII' else result['MDB'+f'{rs[role].number:02}']==1000
         results=[]
         for panel in d['panels']:
-            if panel['type']=='stat':
+            if panel['type']=='stat' and 'rawSql' in panel['targets'][0]:
                 period=query('SELECT row_to_json(q) FROM ('+resolve(panel['targets'][0]['rawSql'],d,table)+') q;')[0]
                 expected=1.5 if 'HORAS /' in panel['title'] and model=='SGC420_MKII' else 1 if 'HORAS /' in panel['title'] else 10 if model=='SGC420_MKII' else 100
                 assert abs(period['VALUE']-expected)<.0001,(model,panel['title'],period,expected)

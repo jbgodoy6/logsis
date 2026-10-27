@@ -10,6 +10,11 @@ ROOT=Path(__file__).resolve().parents[1];sys.path.insert(0,str(ROOT))
 from logsis_studio.core import Project,available_models
 from logsis_studio import __version__
 
+if __version__.startswith('9.1.'):
+    import runpy
+    runpy.run_path(str(ROOT/'tools/build_studio91_release.py'),run_name='__main__')
+    raise SystemExit(0)
+
 tag=__version__.replace('.','_')
 prefix='LogSis_Studio_'+__version__+'/'
 

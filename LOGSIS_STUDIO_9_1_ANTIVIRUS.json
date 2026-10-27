@@ -1,0 +1,32 @@
+{
+  "scanner": "ClamAV",
+  "engine": "1.5.4",
+  "signature_database": 28164,
+  "signature_date": "2026-10-25",
+  "known_signatures": 3628192,
+  "files_scanned": 3,
+  "infected_files": 0,
+  "archives_inspected": true,
+  "artifacts": [
+    {
+      "file": "LOGSIS_STUDIO_9_1_FONTE.zip",
+      "bytes": 454185,
+      "sha256": "a66e9dadfc19ac6745ab39920ef7876a6021534c46384fcbdd3ef6b8c9181308"
+    },
+    {
+      "file": "DASHBOARDS_PADRAO_9_1_JSON.zip",
+      "bytes": 1267353,
+      "sha256": "62151ef231421fc0bee38361faed53fc2d9be714971064eefac7ff30f069e997"
+    },
+    {
+      "file": "DSE8660_PADRAO_DSE7420_9_1.json",
+      "bytes": 1841490,
+      "sha256": "187abf801c67393fff982a19f43f014e94591911f954a491cb96ce22e7b2ab6e"
+    }
+  ],
+  "result": "No threats detected by this ClamAV scan",
+  "scope": "Local archive inspection; not a Microsoft Defender result or a guarantee of absence of threats.",
+  "database_update": "Attempted; unavailable through container network. Used official image bundled database dated 2026-10-25.",
+  "windows_warning": "Exact Defender/browser detection name was not supplied. Windows reputation/false-positive status not determined.",
+  "distribution": "Source archive excludes BAT, CMD, EXE, DLL, MSI, PS1, VBS and PYC. Separate Grafana archive contains only JSON/TXT."
+}

@@ -86,6 +86,8 @@ def switch(state,vertical=True):
 def main_sql(profile):
     rs=roles(profile)
     labels=[var(c.label_variable)+f' AS "NOME_{c.column.upper()}"' for c in profile.channels if c.label_variable]
+    if profile.application=='SGC420':
+        labels += [var('Nome_Entrada_'+letter)+' AS "NOME_ENTRADA_'+letter+'"' for letter in 'ABCDEFGHIJKLMNOP']
     # Read a coherent snapshot: never mix switch samples from different rows.
     raw_sql=f'''WITH sample AS (SELECT t."time",to_jsonb(t) AS payload FROM $Id_Logsis t
         WHERE $__timeFilter("time") ORDER BY "time" DESC LIMIT 1), decoded AS MATERIALIZED (

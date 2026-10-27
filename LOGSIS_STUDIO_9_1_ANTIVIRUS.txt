@@ -1,0 +1,30 @@
+ANÁLISE DOS ARQUIVOS LOGSIS STUDIO 9.1
+
+ClamAV 1.5.4; base 28164 de 25/10/2026.
+Atualização on-line das assinaturas indisponível neste ambiente.
+Os três arquivos finais e seus conteúdos ZIP foram examinados: 0 arquivos infectados.
+
+Isso não constitui resultado do Microsoft Defender nem garantia de ausência de ameaças.
+A causa exata do aviso do Windows depende do nome da detecção, que ainda não foi informado.
+Não desative o antivírus nem crie exclusões.
+
+/scan/LOGSIS_STUDIO_9_1_FONTE.zip: OK
+/scan/DASHBOARDS_PADRAO_9_1_JSON.zip: OK
+/scan/DSE8660_PADRAO_DSE7420_9_1.json: OK
+
+----------- SCAN SUMMARY -----------
+Known viruses: 3628192
+Engine version: 1.5.4
+Scanned directories: 0
+Scanned files: 3
+Infected files: 0
+Data scanned: 61.27 MiB
+Data read: 3.40 MiB (ratio 18.03:1)
+Time: 26.943 sec (0 m 26 s)
+Start Date: 2026:10:27 20:34:34
+End Date:   2026:10:27 20:35:01
+
+HASHES SHA-256
+LOGSIS_STUDIO_9_1_FONTE.zip  a66e9dadfc19ac6745ab39920ef7876a6021534c46384fcbdd3ef6b8c9181308
+DASHBOARDS_PADRAO_9_1_JSON.zip  62151ef231421fc0bee38361faed53fc2d9be714971064eefac7ff30f069e997
+DSE8660_PADRAO_DSE7420_9_1.json  187abf801c67393fff982a19f43f014e94591911f954a491cb96ce22e7b2ab6e

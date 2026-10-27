@@ -1,13 +1,15 @@
-# LogSis Studio 9.0.1 — Sistel
+# LogSis Studio 9.1 — Sistel
 
-Correção 9.0.1: leitura explícita em UTF-8 dos recursos DSE/DEIF, eliminando o erro `'charmap' codec can't decode byte 0x8d in position 18005` no Windows ao exportar. O iniciador também ativa o modo UTF-8 do Python. Extraia esta versão em uma pasta nova e mantenha os BINs já salvos; os mapas e endereços não foram alterados. O relatório 9.0.1 registra a regressão de codificação; os relatórios 9.0.0 incluídos preservam a validação anterior de SQL e interface.
+Versão 9.1: dashboards organizados no padrão aprovado do DSE7420, incluindo os modelos de companhia/BUS e aplicações DEIF. O desenho mantém a topologia de cada controlador; mapas BIN e escalas permanecem iguais. O pacote desta versão contém código-fonte Python e recursos, sem iniciador BAT, executável EXE ou instalador. Para atualizar somente o Grafana, existe também uma entrega separada apenas com arquivos JSON.
+
+Mantém a correção 9.0.1: leitura explícita em UTF-8 dos recursos DSE/DEIF, eliminando o erro `'charmap' codec can't decode byte 0x8d in position 18005` no Windows ao exportar. Extraia esta versão em uma pasta nova e mantenha os BINs já salvos.
 
 Aplicativo desktop para preparar a configuração BIN do equipamento LogSis e exportar o dashboard Grafana correspondente. Identidade LogSis com o símbolo aprovado e cores azul e amarelo Sistel. Não configura o controlador DEIF/DSE nem envia comandos de partida ou disjuntores.
 
 ## Iniciar
 
 1. Extraia a pasta inteira do ZIP, incluindo `logsis_studio/resources`.
-2. No Windows, instale Python 3.10 ou superior com Tcl/Tk e execute `INICIAR_LOGSIS_STUDIO.bat`. Alternativa: `py -3 -X utf8 LogSis_Studio.py`.
+2. No Windows, use Python 3.10 ou superior com Tcl/Tk. Abra `LogSis_Studio.py` com o Python, ou execute na pasta: `py -3 -X utf8 LogSis_Studio.py`.
 3. Escolha o controlador/aplicação no seletor superior. Informe o Slave ID e os parâmetros do LogSis em Equipamento & rede.
 4. Confira o mapa e ajuste nomes de entradas/manutenções e valores nominais. Endereços, funções e posições MDB são definidos pelo perfil.
 5. Em Validar & exportar, informe nome da planta, tabela `Id_Logsis` e UID do datasource PostgreSQL. Exporte o pacote e importe seu arquivo `GRAFANA.json`.
@@ -87,6 +89,8 @@ Manutenção aparece como texto, com nomes ajustáveis e aviso de proximidade. A
 Horas e energia por período usam contador válido antes do início, quando compatível, e amostra final dentro da seleção. Sem base anterior usa-se o primeiro valor dentro do período, marcado com `*`. Quedas/reinícios e amostras conflitantes geram diagnóstico em STATUS; resultados insuficientes aparecem como travessão. O horímetro SGC420 combina palavras ECU 60/61 e minutos 62: conferir a montagem com o equipamento real. Históricos mantêm pontos e linhas lineares interligadas.
 
 ## Validação
+
+Na entrega 9.1, o relatório de antivírus acompanha os downloads como arquivo separado, com o hash dos arquivos verificados, versão do ClamAV e data das assinaturas disponíveis. Ausência de detecção nessa análise não é uma garantia de que o Microsoft Defender ou o navegador não emitirá outro alerta. Se houver bloqueio, mantenha a proteção ativa e identifique o nome exato da detecção para análise. O programa não solicita exclusão no antivírus nem altera as proteções do Windows.
 
 Os relatórios distribuídos distinguem testes de software, consultas em PostgreSQL/Grafana local com dados sintéticos e pendências físicas. Foram verificados mapas, exportação, tipos e escalas, FLOAT32/CDAB, nulos, conflitos de modo, manutenção, cálculos por período e regressão DSE. Antes do uso operacional, conferir leituras, horários, polaridade dos contatos, relações TC/TP, unidades EIC e funções suportadas pelo firmware LogSis na instalação.
 

@@ -1,0 +1,119 @@
+{
+  "version": "9.1.0",
+  "result": "passed",
+  "scope": "Style standardized using DSE7420 reference. Electrical topology, BIN addresses, scales and period decoders preserved.",
+  "tests": {
+    "total": 57,
+    "executed_passed": 45,
+    "gui_skipped": 12
+  },
+  "sql_profiles": {
+    "DSE": 7,
+    "DEIF": 8,
+    "legacy": "Existing DSE7420/8610 SQL retained"
+  },
+  "models": [
+    {
+      "model": "DSE7420",
+      "channels": 59
+    },
+    {
+      "model": "DSE8610",
+      "channels": 58
+    },
+    {
+      "model": "DSE4520",
+      "channels": 57
+    },
+    {
+      "model": "DSE6120",
+      "channels": 58
+    },
+    {
+      "model": "DSE6320",
+      "channels": 57
+    },
+    {
+      "model": "DSE7320",
+      "channels": 57
+    },
+    {
+      "model": "DSE8620",
+      "channels": 74
+    },
+    {
+      "model": "DSE8660",
+      "channels": 58
+    },
+    {
+      "model": "DSE8680",
+      "channels": 58
+    },
+    {
+      "model": "AGC150_GEN",
+      "channels": 84
+    },
+    {
+      "model": "AGC150_GEN_BUS",
+      "channels": 82
+    },
+    {
+      "model": "AGC150_MAINS",
+      "channels": 67
+    },
+    {
+      "model": "AGC150_ATS",
+      "channels": 63
+    },
+    {
+      "model": "AGC150_ENG",
+      "channels": 43
+    },
+    {
+      "model": "SGC420_MKII",
+      "channels": 81
+    },
+    {
+      "model": "CGC412",
+      "channels": 53
+    },
+    {
+      "model": "CGC413",
+      "channels": 66
+    }
+  ],
+  "maps_unchanged_from": "1932128",
+  "resource_hashes": {
+    "dse7420.json": "54e609ec28a78c03d1352bdfc676829b33a929ab5b38145cc92631446a0c3c58",
+    "template.bin": "0f2323bb50add9e889864c681e73a54e4f303cea2bc8c787dbae6e4fc476c46a",
+    "profiles.json": "4ff44ec8cd28b55f595398f39c03ff69e21bdfdf120f3565821f86b2b9c3c71a",
+    "agc150_alarms.json": "a7056be0aa3dbc2b48825c979dc37c74b7c1c11c4d39f7afc9fa268f2ba284b3",
+    "sgc420_alarms.json": "5ad2fa1157d02aea39ddced639fdaa3c48cd931f0554bb783a316ee5d41a080b",
+    "dse8610.json": "77c66d5f21a61dc519f37dd7bd39795464415d6e7afdc1c296b302de9ae21f4d",
+    "logsis_symbol.png": "d690f321f3f53383e2ae4014dbbd94c1047491a12cb023d4e23be0b89baf7c1d"
+  },
+  "source_hashes": {
+    "core.py": "9009235aa825e57f8964b4960064ad9830d6b69f390faf6d681bcf28fdad4f1e",
+    "app.py": "ae1919547b5682eab4394ddcaa7c20b4b02400455c7a5891a6658e8827b1a873",
+    "__init__.py": "9648be4be39440d6342ac8dd6cf173327a6123da10edb8e0d3c12ae8c9c6b5c3",
+    "standard_layout.py": "2d5ce0c66d804c91f4159a05c626c8522c45f42ac3e1fee560d11c3196cb8128",
+    "codecs.py": "643a193bcfd487b5f86f4b82ae10c0bf10a868ea279e2ca065cca2af81a462dc",
+    "deif_dashboard.py": "7cfd9a83d2b4c5b5bf57dd55d406a0e8a19b2e600a91a7844243ae5d4c9f9d99",
+    "transport.py": "7a976ac3e2790a96d26471e326b21a0f85f2dad4ab1999ec11fefbb6a6471402",
+    "manual_dashboard.py": "21dc046524d077a04d0f022ee38771b5c173063f44e3cf3c2e72c5cfb0de1093"
+  },
+  "distribution": "Readable Python source; no BAT/EXE/DLL/installer. Separate JSON-only dashboard archive.",
+  "antivirus": "See separate LOGSIS_STUDIO_9_1_ANTIVIRUS.json for actual scan and database date. No claim of Defender reputation or signing.",
+  "physical_tests": false,
+  "extracted_package_smoke": "passed: 17 exports from clean extracted source; no BAT/EXE/installer",
+  "visual": {
+    "result": "passed",
+    "profiles": 17,
+    "widths": [
+      1440,
+      390
+    ],
+    "clipping": 0,
+    "query_errors": []
+  }
+}
