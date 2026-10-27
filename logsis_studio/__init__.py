@@ -1,2 +1,2 @@
 """LogSis Studio: controller maps and matched Grafana dashboards for Sistel."""
-__version__ = '9.0.0'
+__version__ = '9.0.1'

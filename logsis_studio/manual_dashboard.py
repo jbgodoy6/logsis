@@ -27,7 +27,7 @@ def radio(wifi,color=CYAN):
 
 @lru_cache(maxsize=1)
 def reference():
- return json.loads((Path(__file__).parent/'resources/dse7420.json').read_text())
+ return json.loads((Path(__file__).parent/'resources/dse7420.json').read_text(encoding='utf-8'))
 @lru_cache(maxsize=1)
 def assets():
  d=reference();sql=d['panels'][0]['targets'][0]['rawSql'];p=sql.index('END AS "GERADOR_ALARME_SVG"')

@@ -1,11 +1,13 @@
-# LogSis Studio 9 — Sistel
+# LogSis Studio 9.0.1 — Sistel
+
+Correção 9.0.1: leitura explícita em UTF-8 dos recursos DSE/DEIF, eliminando o erro `'charmap' codec can't decode byte 0x8d in position 18005` no Windows ao exportar. O iniciador também ativa o modo UTF-8 do Python. Extraia esta versão em uma pasta nova e mantenha os BINs já salvos; os mapas e endereços não foram alterados. O relatório 9.0.1 registra a regressão de codificação; os relatórios 9.0.0 incluídos preservam a validação anterior de SQL e interface.
 
 Aplicativo desktop para preparar a configuração BIN do equipamento LogSis e exportar o dashboard Grafana correspondente. Identidade LogSis com o símbolo aprovado e cores azul e amarelo Sistel. Não configura o controlador DEIF/DSE nem envia comandos de partida ou disjuntores.
 
 ## Iniciar
 
 1. Extraia a pasta inteira do ZIP, incluindo `logsis_studio/resources`.
-2. No Windows, instale Python 3.10 ou superior com Tcl/Tk e execute `INICIAR_LOGSIS_STUDIO.bat`. Alternativa: `python LogSis_Studio.py`.
+2. No Windows, instale Python 3.10 ou superior com Tcl/Tk e execute `INICIAR_LOGSIS_STUDIO.bat`. Alternativa: `py -3 -X utf8 LogSis_Studio.py`.
 3. Escolha o controlador/aplicação no seletor superior. Informe o Slave ID e os parâmetros do LogSis em Equipamento & rede.
 4. Confira o mapa e ajuste nomes de entradas/manutenções e valores nominais. Endereços, funções e posições MDB são definidos pelo perfil.
 5. Em Validar & exportar, informe nome da planta, tabela `Id_Logsis` e UID do datasource PostgreSQL. Exporte o pacote e importe seu arquivo `GRAFANA.json`.

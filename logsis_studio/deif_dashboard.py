@@ -23,9 +23,9 @@ def bit(expr,n):return f'((({expr})::bigint >> {n}) & 1)'
 def raw(c,alias='payload'):return numeric(alias+'->>'+sq(c.column))
 def decoded(c,alias='payload'):return sql_value(c,raw(c,alias))
 def sgc_alarms():
-    return json.loads((Path(__file__).parent/'resources/sgc420_alarms.json').read_text())
+    return json.loads((Path(__file__).parent/'resources/sgc420_alarms.json').read_text(encoding='utf-8'))
 def agc_alarms(app):
-    return json.loads((Path(__file__).parent/'resources/agc150_alarms.json').read_text())[app]
+    return json.loads((Path(__file__).parent/'resources/agc150_alarms.json').read_text(encoding='utf-8'))[app]
 
 
 def fields_sql(profile):

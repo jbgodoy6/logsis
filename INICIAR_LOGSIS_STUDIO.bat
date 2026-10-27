@@ -3,13 +3,13 @@ chcp 65001 >nul
 cd /d "%~dp0"
 where py >nul 2>nul
 if errorlevel 1 goto python
-py -3 LogSis_Studio.py
+py -3 -X utf8 LogSis_Studio.py
 if errorlevel 1 pause
 exit /b
 :python
 where python >nul 2>nul
 if errorlevel 1 goto missing
-python LogSis_Studio.py
+python -X utf8 LogSis_Studio.py
 if errorlevel 1 pause
 exit /b
 :missing

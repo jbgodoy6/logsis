@@ -1,0 +1,121 @@
+{
+  "version": "9.0.1",
+  "result": "passed",
+  "reported_error": {
+    "codec": "cp1252",
+    "byte": "0x8d",
+    "position": 18005
+  },
+  "cause": "UTF-8 resource files read using the operating-system default encoding.",
+  "fix": [
+    "Explicit UTF-8 for internal JSON readers",
+    "Windows launcher enables Python UTF-8 mode"
+  ],
+  "unit_tests": {
+    "discovered": 53,
+    "passed": 41,
+    "skipped": 12,
+    "skip_reason": "GUI tests require DISPLAY; this fresh environment has no display server."
+  },
+  "windows_cp1252_exports": [
+    "DSE7420",
+    "DSE8610",
+    "DSE4520",
+    "DSE6120",
+    "DSE6320",
+    "DSE7320",
+    "DSE8620",
+    "DSE8660",
+    "DSE8680",
+    "AGC150_GEN",
+    "AGC150_GEN_BUS",
+    "AGC150_MAINS",
+    "AGC150_ATS",
+    "AGC150_ENG",
+    "SGC420_MKII",
+    "CGC412",
+    "CGC413"
+  ],
+  "unchanged_bin_and_dashboard_hashes": {
+    "DSE7420": {
+      "bin": "68c8b9fdac78c0aefddb736ac337cdb880e21b0ef3f4bbf295e325dd7d4b8a86",
+      "dashboard": "40e01ccd41b40cf20e61c94f73d654686af53f0ef4145603596490850b4bd696"
+    },
+    "DSE8610": {
+      "bin": "7d18090b56db368241f59f29d821a94bfb88a84c2137c51060545abceca4b55c",
+      "dashboard": "b8df1311ad43d7644a2876d204b4d57f839d0cb222b1fe59ae0a2e70d5893098"
+    },
+    "DSE4520": {
+      "bin": "0faf6275d070524e73d4add6a3460744d195c9954016caa3c8e884530320d818",
+      "dashboard": "68ed4623c6090f019beee391b98f88fd5a8c0e5b9121c74ea8c065d0af9a4ce5"
+    },
+    "DSE6120": {
+      "bin": "22443999e6ffaeb5f27908f0163dbec0ca8d2ab9bfe0aa6099c42bce553ff650",
+      "dashboard": "f64b162d6bfb96799e7c6f89a94199bb92bd0389ce19630864ca963d8b53a357"
+    },
+    "DSE6320": {
+      "bin": "0faf6275d070524e73d4add6a3460744d195c9954016caa3c8e884530320d818",
+      "dashboard": "79f4420fb0b7527fec61c88a351d3333fe8ef2a01d87776f3b811f7e28ff5895"
+    },
+    "DSE7320": {
+      "bin": "0faf6275d070524e73d4add6a3460744d195c9954016caa3c8e884530320d818",
+      "dashboard": "db2ac6af39f380dc20067b9a5fd349f6bebb5c3e06f1fcca839b176041d853e3"
+    },
+    "DSE8620": {
+      "bin": "d5d9192ffabce3975da587526d364e1cf9cd75b3e37707864fa4a94d3da4d401",
+      "dashboard": "6501367236d90b38bc9f1b2e3d4784f44713b89bece6e2f7a927566c8fa5b65a"
+    },
+    "DSE8660": {
+      "bin": "6712b4d105ce025188eb91e8409097fcfefdd140bf5fc7d981b482209554d73a",
+      "dashboard": "9010c0f285475c7ce8aa181ce4e86b55dd410d88a394ca68d20490515d58648c"
+    },
+    "DSE8680": {
+      "bin": "cbe6fa86788d7a2402132f57071f1128b5b41d340de01a88ef4c72e9c4ad66d9",
+      "dashboard": "2f9ca6e6b8a81e544ba5bc3b22e767b11159a105f93ba02608e5d862b869f936"
+    },
+    "AGC150_GEN": {
+      "bin": "6300b6d289e8fe3f38504a6523ce0152a5a71eb41812b390715b165dfbaba20c",
+      "dashboard": "75413eb3e9682ae0d8a2cb6d13b7411bc7a708a6c484e90d2623708ff487f443"
+    },
+    "AGC150_GEN_BUS": {
+      "bin": "bda5e8751bdbb3cb78e1593bbc3d5d2dce404b30f334d75dbf3068211168973d",
+      "dashboard": "7c20b8c474fce2d011fb74aa4e69c20ca9b0f1a4d199d77b865bfe3b95538e34"
+    },
+    "AGC150_MAINS": {
+      "bin": "d241f02af20b2023475f6dc6d03618a37ae5fcaf9e562783d8f16deb4042ef86",
+      "dashboard": "3bd3fc0be45d72723970317a2a5811ebdbcdaf2147464b4f8548646b07abe474"
+    },
+    "AGC150_ATS": {
+      "bin": "25e5b9deac1cd0adfafe46750c887e9926721d6318a4f41d9a5a1be1904a4cfd",
+      "dashboard": "51ce2ed4136f75655a1541122e13a92a4aafca63bcb1360ae54f183e169da53b"
+    },
+    "AGC150_ENG": {
+      "bin": "a46e0c8be2bed042a3c991ebf864a8c9ddfd952a36e83c8db254da894da3d288",
+      "dashboard": "6b1ef26ae0f73509c2e5a2615be854137e3ea7ff598afca338f5540ad15db1ac"
+    },
+    "SGC420_MKII": {
+      "bin": "e8e8da34e1bb1bb897db7a8b87b8cc115c0a8d46ee693b41aace21112bd95fb5",
+      "dashboard": "230a921efb5cbf1e1cb6a7dacad30294256a94816e3cb52bc4ae86e15d4353b3"
+    },
+    "CGC412": {
+      "bin": "04a537d770759939e3e3452f70ee4467b63654951f331401bddaca17f8dafeb1",
+      "dashboard": "16fad735f495d1428e9932b2a26ab4e836478475c316b9ae74cafeb95470ba88"
+    },
+    "CGC413": {
+      "bin": "e395ac22a39f183cb0931c285de757545a9882983d2e6e479fa67f4b0672c3b3",
+      "dashboard": "667aa6fa50e703f70c17a03bb2d494c15d9f43f4e7b4d0d1882300fca180e469"
+    }
+  },
+  "baseline": "LOGSIS_STUDIO_9_0.zip from b926ea6",
+  "runtime_hashes": {
+    "logsis_studio/__init__.py": "a890adc59fd7a0c4ddae7dbf5af85b4650412d806997ac3c99a4bfb19773fd53",
+    "logsis_studio/app.py": "ae1919547b5682eab4394ddcaa7c20b4b02400455c7a5891a6658e8827b1a873",
+    "logsis_studio/codecs.py": "643a193bcfd487b5f86f4b82ae10c0bf10a868ea279e2ca065cca2af81a462dc",
+    "logsis_studio/core.py": "394c8e5746d53662db058da4aa3547b80b4493c7955397e132d5b40f4f54d315",
+    "logsis_studio/deif_dashboard.py": "f81c1b9ff7381d0e0e4144cd8dd3a44a0af290e7a4c5c89064c94f67d595c0df",
+    "logsis_studio/manual_dashboard.py": "21dc046524d077a04d0f022ee38771b5c173063f44e3cf3c2e72c5cfb0de1093",
+    "logsis_studio/transport.py": "7a976ac3e2790a96d26471e326b21a0f85f2dad4ab1999ec11fefbb6a6471402"
+  },
+  "extracted_package_smoke": "passed: all 17 exports under Windows CP1252 simulation, both launcher branches use UTF-8",
+  "limits": "Encoding simulated as Windows CP1252; no physical Windows/controller or new visual/SQL test was required for this resource-reading fix. Previous 9.0.0 reports are included separately."
+}
