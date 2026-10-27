@@ -1,0 +1,15 @@
+{
+  "status": "planejamento documental; não implementado",
+  "source": "Modbus - Deif CGC 400.pdf",
+  "document": "4189340865A",
+  "title": "CGC 400 — Option H2, Modbus communication",
+  "models_explicitly_covered": [
+    "CGC412",
+    "CGC413"
+  ],
+  "software": "1.00.0 ou posterior, conforme página 3",
+  "sha256": "b5b3075407e057117a8eb3676d9fb618fd547975d59ee39b6a4d6603ed33893e",
+  "pages": 42,
+  "transport": "RS485, Modbus RTU ou ASCII; protocolo real do coletor a conferir",
+  "note": "O índice é extração textual candidata, não resolve células de bits, cabeçalhos ou linhas continuadas automaticamente. Usar TEXTO_FONTE e páginas do PDF para validação."
+}

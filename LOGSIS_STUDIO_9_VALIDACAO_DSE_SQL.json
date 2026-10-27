@@ -1,0 +1,132 @@
+{
+  "result": "passed",
+  "scope": "Document-based profiles, synthetic Modbus register fixture and isolated PostgreSQL. No physical controller or production access.",
+  "models": [
+    {
+      "model": "DSE4520",
+      "label": "DSE4520 MkII",
+      "channels": 57,
+      "kind": "engine_transfer",
+      "sourceFamily": "4xxx",
+      "periods": [
+        {
+          "title": "HORAS / PERÍODO",
+          "value": 3.5
+        },
+        {
+          "title": "ENERGIA / PERÍODO",
+          "value": 18.0
+        }
+      ],
+      "passed": true
+    },
+    {
+      "model": "DSE6120",
+      "label": "DSE6120 MkII",
+      "channels": 58,
+      "kind": "engine_transfer",
+      "sourceFamily": "61xx MkII",
+      "periods": [
+        {
+          "title": "HORAS / PERÍODO",
+          "value": 3.5
+        },
+        {
+          "title": "ENERGIA / PERÍODO",
+          "value": 18.0
+        }
+      ],
+      "passed": true
+    },
+    {
+      "model": "DSE6320",
+      "label": "DSE6320",
+      "channels": 57,
+      "kind": "engine_transfer",
+      "sourceFamily": "6xxx",
+      "periods": [
+        {
+          "title": "HORAS / PERÍODO",
+          "value": 3.5
+        },
+        {
+          "title": "ENERGIA / PERÍODO",
+          "value": 18.0
+        }
+      ],
+      "passed": true
+    },
+    {
+      "model": "DSE7320",
+      "label": "DSE7320 MkII",
+      "channels": 57,
+      "kind": "engine_transfer",
+      "sourceFamily": "72xx/73xx",
+      "periods": [
+        {
+          "title": "HORAS / PERÍODO",
+          "value": 3.5
+        },
+        {
+          "title": "ENERGIA / PERÍODO",
+          "value": 18.0
+        }
+      ],
+      "passed": true
+    },
+    {
+      "model": "DSE8620",
+      "label": "DSE8620",
+      "channels": 74,
+      "kind": "engine_transfer",
+      "sourceFamily": "8xxx/74xx",
+      "periods": [
+        {
+          "title": "HORAS / PERÍODO",
+          "value": 3.5
+        },
+        {
+          "title": "ENERGIA / PERÍODO",
+          "value": 18.0
+        },
+        {
+          "title": "ENERGIA DA COMPANHIA / PERÍODO",
+          "value": 27.0
+        }
+      ],
+      "passed": true
+    },
+    {
+      "model": "DSE8660",
+      "label": "DSE8660",
+      "channels": 58,
+      "kind": "mains_bus",
+      "sourceFamily": "8x60",
+      "periods": [
+        {
+          "title": "Energia positiva · rede / PERÍODO",
+          "value": 27.0
+        },
+        {
+          "title": "Energia positiva · BUS / PERÍODO",
+          "value": 45.0
+        }
+      ],
+      "passed": true
+    },
+    {
+      "model": "DSE8680",
+      "label": "DSE8680",
+      "channels": 58,
+      "kind": "bus_tie",
+      "sourceFamily": "8680",
+      "periods": [
+        {
+          "title": "Energia positiva · BUS 1 / PERÍODO",
+          "value": 45.0
+        }
+      ],
+      "passed": true
+    }
+  ]
+}

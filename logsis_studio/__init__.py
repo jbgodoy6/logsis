@@ -1,2 +1,2 @@
-"""LogSis Studio: fixed DSE profiles aligned with the approved Grafana dashboards."""
-__version__ = '8.0.0'
+"""LogSis Studio: controller maps and matched Grafana dashboards for Sistel."""
+__version__ = '9.0.0'

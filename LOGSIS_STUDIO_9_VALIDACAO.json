@@ -1,0 +1,125 @@
+{
+  "version": "9.0.0",
+  "result": "passed",
+  "unit_tests": 51,
+  "models": [
+    {
+      "model": "DSE7420",
+      "channels": 59,
+      "vendor": "DSE"
+    },
+    {
+      "model": "DSE8610",
+      "channels": 58,
+      "vendor": "DSE"
+    },
+    {
+      "model": "DSE4520",
+      "channels": 57,
+      "vendor": "DSE"
+    },
+    {
+      "model": "DSE6120",
+      "channels": 58,
+      "vendor": "DSE"
+    },
+    {
+      "model": "DSE6320",
+      "channels": 57,
+      "vendor": "DSE"
+    },
+    {
+      "model": "DSE7320",
+      "channels": 57,
+      "vendor": "DSE"
+    },
+    {
+      "model": "DSE8620",
+      "channels": 74,
+      "vendor": "DSE"
+    },
+    {
+      "model": "DSE8660",
+      "channels": 58,
+      "vendor": "DSE"
+    },
+    {
+      "model": "DSE8680",
+      "channels": 58,
+      "vendor": "DSE"
+    },
+    {
+      "model": "AGC150_GEN",
+      "channels": 84,
+      "vendor": "DEIF"
+    },
+    {
+      "model": "AGC150_GEN_BUS",
+      "channels": 82,
+      "vendor": "DEIF"
+    },
+    {
+      "model": "AGC150_MAINS",
+      "channels": 67,
+      "vendor": "DEIF"
+    },
+    {
+      "model": "AGC150_ATS",
+      "channels": 63,
+      "vendor": "DEIF"
+    },
+    {
+      "model": "AGC150_ENG",
+      "channels": 43,
+      "vendor": "DEIF"
+    },
+    {
+      "model": "SGC420_MKII",
+      "channels": 81,
+      "vendor": "DEIF"
+    },
+    {
+      "model": "CGC412",
+      "channels": 53,
+      "vendor": "DEIF"
+    },
+    {
+      "model": "CGC413",
+      "channels": 66,
+      "vendor": "DEIF"
+    }
+  ],
+  "postgresql_synthetic_deif": 8,
+  "postgresql_synthetic_dse": 9,
+  "grafana_version": "11.2.2",
+  "browser_widths": [
+    1440,
+    390
+  ],
+  "browser_deif_profiles": 8,
+  "dse8620_browser_company_period_kwh": 27,
+  "legacy_7420_8610_hashes": "Passed against tests/fixtures/studio72_legacy_hashes.json",
+  "source_hashes": {
+    "agc-150-modbus-server-tables-4189341212-uk.xlsx": "882c96e86317db425d81896e340cf5b478c3ef0c520dc23aef9143ef439c0fbf",
+    "sgc-420-mk-ii-modbus-tables-4189341402-uk.xlsx": "6c46ed847debba1b34d492b405778ee2fc46dfd9d7eb717258d826271b615f9b",
+    "Modbus - Deif CGC 400.pdf": "b5b3075407e057117a8eb3676d9fb618fd547975d59ee39b6a4d6603ed33893e"
+  },
+  "runtime_hashes": {
+    "logsis_studio/__init__.py": "cd3106c9738dbf0ffbfd2abd93a371e32f6f6544deee0aa2acfd85d826bbe9b1",
+    "logsis_studio/app.py": "ae1919547b5682eab4394ddcaa7c20b4b02400455c7a5891a6658e8827b1a873",
+    "logsis_studio/codecs.py": "643a193bcfd487b5f86f4b82ae10c0bf10a868ea279e2ca065cca2af81a462dc",
+    "logsis_studio/core.py": "394c8e5746d53662db058da4aa3547b80b4493c7955397e132d5b40f4f54d315",
+    "logsis_studio/deif_dashboard.py": "479a233a02da45a3e6127e5ca98f2ba0b3d7e0a596fe0a433e6da4c32032b559",
+    "logsis_studio/manual_dashboard.py": "56b3682a1dbf9e0df79314fc26ca60c7b6e2a0984c83f85551e131da5b5f2648",
+    "logsis_studio/transport.py": "7a976ac3e2790a96d26471e326b21a0f85f2dad4ab1999ec11fefbb6a6471402"
+  },
+  "limitations": [
+    "Sem teste em controlador físico ou produção.",
+    "CGC412 não recebe medições BB/MB inexistentes no manual.",
+    "CGC EIC H5/H7 não mapeado sem manual complementar.",
+    "FNC2 e ordem do inteiro bruto de 32 bits dependem do firmware LogSis.",
+    "SGC420 horímetro ECU 60/61/minutos deve ser confrontado com o controlador.",
+    "AGC classes e recursos dependem de aplicação, firmware e configuração."
+  ],
+  "extracted_package_smoke": "passed: 17 BIN/bundle roundtrips and real Tk launch with branded resource"
+}

@@ -1,0 +1,51 @@
+SGC 120 Mk II Modbus descriptions
+Software version
+The information contained in these tables (Revision C) is applicable to software version R18.0 of the SGC 120 Mk II.
+
+Row | Hyperlink index
+11 | Modbus function codes
+19 | Holding_Read_register
+43 | Enum_list
+
+
+Back to index | Modbus function codes
+Function code | Description
+03 | Reads one or more 16‑bit holding registers.
+04 | Reads one or more 16‑bit input registers.
+16 | Writes values to one or more 16‑bit holding registers.
+
+
+
+Back to index | Holding & Read register
+Function code | Effect
+03 or 04 | Read
+16 | Write
+
+Function group | Description
+AC measurement | Read the operating value of the associated AC measurement.
+Energy counter | Read the counter value.
+Engine measurement | Read the operating value of the associated engine measurement.
+Running hours | Read the running hours value.
+Alarm status | Read the alarm status.
+Input and output diagnostics | Read the state of a digital input or output on the controller.
+DG status | Read the status of the genset.
+CPCB IV+ Alarm Status | Read the CPCB IV alarm status.
+EGR Modbus | Read EGR related data via Modbus communication.
+DTC status | Read the DTC status.
+DTC Value | Read the DTC value reported by the engine.
+Custom Sensor | Read the Custom Sensor value.
+EIC Data Over Modbus | Read EIC data via Modbus communication.
+DG mode change | Write the controller changes the state of the genset if a valid value is entered.
+DTC status | Write the DTC status.
+
+
+
+Back to index | ENUM list
+Register 65 to 76, 110 and 111 ( 03; 04)
+Decimal value | Interpretation
+00 | Alarm disabled
+01 | Alarm not active
+02 | Warning alarm active
+03 | Shutdown alarm active
+04 | Electrical trip alarm active
+05 | Notification

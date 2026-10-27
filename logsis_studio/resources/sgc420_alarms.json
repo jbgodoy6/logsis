@@ -1,0 +1,578 @@
+[
+  {
+    "address": 72,
+    "shift": 0,
+    "name": "Water level switch",
+    "maintenance": false,
+    "reserved": false,
+    "source_row": 68
+  },
+  {
+    "address": 72,
+    "shift": 4,
+    "name": "Low fuel level",
+    "maintenance": false,
+    "reserved": false,
+    "source_row": 72
+  },
+  {
+    "address": 72,
+    "shift": 8,
+    "name": "High coolant temperature",
+    "maintenance": false,
+    "reserved": false,
+    "source_row": 76
+  },
+  {
+    "address": 72,
+    "shift": 12,
+    "name": "Low oil pressure",
+    "maintenance": false,
+    "reserved": false,
+    "source_row": 80
+  },
+  {
+    "address": 73,
+    "shift": 0,
+    "name": "Fail to stop",
+    "maintenance": false,
+    "reserved": false,
+    "source_row": 84
+  },
+  {
+    "address": 73,
+    "shift": 4,
+    "name": "Fail to start",
+    "maintenance": false,
+    "reserved": false,
+    "source_row": 88
+  },
+  {
+    "address": 73,
+    "shift": 8,
+    "name": "Over speed",
+    "maintenance": false,
+    "reserved": false,
+    "source_row": 92
+  },
+  {
+    "address": 73,
+    "shift": 12,
+    "name": "Under speed",
+    "maintenance": false,
+    "reserved": false,
+    "source_row": 96
+  },
+  {
+    "address": 74,
+    "shift": 0,
+    "name": "Generator high Frequency",
+    "maintenance": false,
+    "reserved": false,
+    "source_row": 100
+  },
+  {
+    "address": 74,
+    "shift": 4,
+    "name": "Generator low frequency",
+    "maintenance": false,
+    "reserved": false,
+    "source_row": 104
+  },
+  {
+    "address": 74,
+    "shift": 8,
+    "name": "High shelter temp",
+    "maintenance": false,
+    "reserved": false,
+    "source_row": 108
+  },
+  {
+    "address": 74,
+    "shift": 12,
+    "name": "Shelter temperature open circuit",
+    "maintenance": false,
+    "reserved": false,
+    "source_row": 112
+  },
+  {
+    "address": 75,
+    "shift": 0,
+    "name": "Emergency stop",
+    "maintenance": false,
+    "reserved": false,
+    "source_row": 116
+  },
+  {
+    "address": 75,
+    "shift": 4,
+    "name": "Unbalanced load",
+    "maintenance": false,
+    "reserved": false,
+    "source_row": 120
+  },
+  {
+    "address": 75,
+    "shift": 8,
+    "name": "Generator overload",
+    "maintenance": false,
+    "reserved": false,
+    "source_row": 124
+  },
+  {
+    "address": 75,
+    "shift": 12,
+    "name": "Generator high current",
+    "maintenance": false,
+    "reserved": false,
+    "source_row": 128
+  },
+  {
+    "address": 76,
+    "shift": 0,
+    "name": "Red lamp (Automation)",
+    "maintenance": false,
+    "reserved": false,
+    "source_row": 132
+  },
+  {
+    "address": 76,
+    "shift": 4,
+    "name": "MIL lamp (Automation)",
+    "maintenance": false,
+    "reserved": false,
+    "source_row": 136
+  },
+  {
+    "address": 76,
+    "shift": 8,
+    "name": "Oil filter maintenance / filter maintenance",
+    "maintenance": true,
+    "reserved": false,
+    "source_row": 140
+  },
+  {
+    "address": 76,
+    "shift": 12,
+    "name": "Charge alternator failure",
+    "maintenance": false,
+    "reserved": false,
+    "source_row": 144
+  },
+  {
+    "address": 77,
+    "shift": 0,
+    "name": "Reverse Power Detected",
+    "maintenance": false,
+    "reserved": false,
+    "source_row": 148
+  },
+  {
+    "address": 77,
+    "shift": 4,
+    "name": "Engine Temperature Circuit open",
+    "maintenance": false,
+    "reserved": false,
+    "source_row": 152
+  },
+  {
+    "address": 77,
+    "shift": 8,
+    "name": "Battery high voltage",
+    "maintenance": false,
+    "reserved": false,
+    "source_row": 156
+  },
+  {
+    "address": 77,
+    "shift": 12,
+    "name": "Battery low voltage",
+    "maintenance": false,
+    "reserved": false,
+    "source_row": 160
+  },
+  {
+    "address": 78,
+    "shift": 0,
+    "name": "Reserved",
+    "maintenance": false,
+    "reserved": true,
+    "source_row": 164
+  },
+  {
+    "address": 78,
+    "shift": 4,
+    "name": "Oil pressure circuit open",
+    "maintenance": false,
+    "reserved": false,
+    "source_row": 168
+  },
+  {
+    "address": 78,
+    "shift": 8,
+    "name": "Magnetic pick up fault",
+    "maintenance": false,
+    "reserved": false,
+    "source_row": 172
+  },
+  {
+    "address": 78,
+    "shift": 12,
+    "name": "Fuel theft",
+    "maintenance": false,
+    "reserved": false,
+    "source_row": 176
+  },
+  {
+    "address": 79,
+    "shift": 0,
+    "name": "Auxiliary input D",
+    "maintenance": false,
+    "reserved": false,
+    "source_row": 180
+  },
+  {
+    "address": 79,
+    "shift": 4,
+    "name": "Auxiliary input C",
+    "maintenance": false,
+    "reserved": false,
+    "source_row": 184
+  },
+  {
+    "address": 79,
+    "shift": 8,
+    "name": "Auxiliary input B",
+    "maintenance": false,
+    "reserved": false,
+    "source_row": 188
+  },
+  {
+    "address": 79,
+    "shift": 12,
+    "name": "Auxiliary input A",
+    "maintenance": false,
+    "reserved": false,
+    "source_row": 192
+  },
+  {
+    "address": 80,
+    "shift": 0,
+    "name": "Auxiliary input H",
+    "maintenance": false,
+    "reserved": false,
+    "source_row": 196
+  },
+  {
+    "address": 80,
+    "shift": 4,
+    "name": "Auxiliary input G",
+    "maintenance": false,
+    "reserved": false,
+    "source_row": 200
+  },
+  {
+    "address": 80,
+    "shift": 8,
+    "name": "Auxiliary input F",
+    "maintenance": false,
+    "reserved": false,
+    "source_row": 204
+  },
+  {
+    "address": 80,
+    "shift": 12,
+    "name": "Auxiliary input E",
+    "maintenance": false,
+    "reserved": false,
+    "source_row": 208
+  },
+  {
+    "address": 81,
+    "shift": 0,
+    "name": "Auxiliary input L",
+    "maintenance": false,
+    "reserved": false,
+    "source_row": 212
+  },
+  {
+    "address": 81,
+    "shift": 4,
+    "name": "Auxiliary input K",
+    "maintenance": false,
+    "reserved": false,
+    "source_row": 216
+  },
+  {
+    "address": 81,
+    "shift": 8,
+    "name": "Auxiliary input J",
+    "maintenance": false,
+    "reserved": false,
+    "source_row": 220
+  },
+  {
+    "address": 81,
+    "shift": 12,
+    "name": "Auxiliary input I",
+    "maintenance": false,
+    "reserved": false,
+    "source_row": 224
+  },
+  {
+    "address": 82,
+    "shift": 0,
+    "name": "Auxiliary input P",
+    "maintenance": false,
+    "reserved": false,
+    "source_row": 228
+  },
+  {
+    "address": 82,
+    "shift": 4,
+    "name": "Auxiliary input O",
+    "maintenance": false,
+    "reserved": false,
+    "source_row": 232
+  },
+  {
+    "address": 82,
+    "shift": 8,
+    "name": "Auxiliary input N",
+    "maintenance": false,
+    "reserved": false,
+    "source_row": 236
+  },
+  {
+    "address": 82,
+    "shift": 12,
+    "name": "Auxiliary input M",
+    "maintenance": false,
+    "reserved": false,
+    "source_row": 240
+  },
+  {
+    "address": 83,
+    "shift": 0,
+    "name": "Gen L2 phase high volt",
+    "maintenance": false,
+    "reserved": false,
+    "source_row": 244
+  },
+  {
+    "address": 83,
+    "shift": 4,
+    "name": "Gen L2 phase low volt",
+    "maintenance": false,
+    "reserved": false,
+    "source_row": 248
+  },
+  {
+    "address": 83,
+    "shift": 8,
+    "name": "Gen L1 phase high volt",
+    "maintenance": false,
+    "reserved": false,
+    "source_row": 252
+  },
+  {
+    "address": 83,
+    "shift": 12,
+    "name": "Gen L1 phase low volt",
+    "maintenance": false,
+    "reserved": false,
+    "source_row": 256
+  },
+  {
+    "address": 84,
+    "shift": 0,
+    "name": "Mains phase rotation",
+    "maintenance": false,
+    "reserved": false,
+    "source_row": 260
+  },
+  {
+    "address": 84,
+    "shift": 4,
+    "name": "Dg phase rotation",
+    "maintenance": false,
+    "reserved": false,
+    "source_row": 264
+  },
+  {
+    "address": 84,
+    "shift": 8,
+    "name": "Gen L3 phase high volt",
+    "maintenance": false,
+    "reserved": false,
+    "source_row": 268
+  },
+  {
+    "address": 84,
+    "shift": 12,
+    "name": "Gen L3 phase low volt",
+    "maintenance": false,
+    "reserved": false,
+    "source_row": 272
+  },
+  {
+    "address": 85,
+    "shift": 0,
+    "name": "High oil pressure detected",
+    "maintenance": false,
+    "reserved": false,
+    "source_row": 276
+  },
+  {
+    "address": 85,
+    "shift": 4,
+    "name": "Open Ckt fuel level",
+    "maintenance": false,
+    "reserved": false,
+    "source_row": 280
+  },
+  {
+    "address": 85,
+    "shift": 8,
+    "name": "V belt broken",
+    "maintenance": false,
+    "reserved": false,
+    "source_row": 284
+  },
+  {
+    "address": 85,
+    "shift": 12,
+    "name": "Low Load",
+    "maintenance": false,
+    "reserved": false,
+    "source_row": 288
+  },
+  {
+    "address": 86,
+    "shift": 0,
+    "name": "Auxiliary Input S1",
+    "maintenance": false,
+    "reserved": false,
+    "source_row": 292
+  },
+  {
+    "address": 86,
+    "shift": 4,
+    "name": "Auxiliary Input S2",
+    "maintenance": false,
+    "reserved": false,
+    "source_row": 296
+  },
+  {
+    "address": 86,
+    "shift": 8,
+    "name": "Auxiliary Input S3",
+    "maintenance": false,
+    "reserved": false,
+    "source_row": 300
+  },
+  {
+    "address": 86,
+    "shift": 12,
+    "name": "Auxiliary Input S4",
+    "maintenance": false,
+    "reserved": false,
+    "source_row": 304
+  },
+  {
+    "address": 87,
+    "shift": 0,
+    "name": "Auxiliary S1 open Ckt alarm",
+    "maintenance": false,
+    "reserved": false,
+    "source_row": 308
+  },
+  {
+    "address": 87,
+    "shift": 4,
+    "name": "Auxiliary S2 open Ckt alarm",
+    "maintenance": false,
+    "reserved": false,
+    "source_row": 312
+  },
+  {
+    "address": 87,
+    "shift": 8,
+    "name": "Auxiliary S3 open Ckt alarm",
+    "maintenance": false,
+    "reserved": false,
+    "source_row": 316
+  },
+  {
+    "address": 87,
+    "shift": 12,
+    "name": "Auxiliary S4 open Ckt alarm",
+    "maintenance": false,
+    "reserved": false,
+    "source_row": 320
+  },
+  {
+    "address": 88,
+    "shift": 0,
+    "name": "Ash Load Maintenance",
+    "maintenance": true,
+    "reserved": false,
+    "source_row": 324
+  },
+  {
+    "address": 88,
+    "shift": 4,
+    "name": "AFT Activation Timeout",
+    "maintenance": false,
+    "reserved": false,
+    "source_row": 328
+  },
+  {
+    "address": 88,
+    "shift": 8,
+    "name": "Auxiliary S3 Short to battery",
+    "maintenance": false,
+    "reserved": false,
+    "source_row": 332
+  },
+  {
+    "address": 88,
+    "shift": 12,
+    "name": "Auxiliary S4 Short to battery",
+    "maintenance": false,
+    "reserved": false,
+    "source_row": 336
+  },
+  {
+    "address": 158,
+    "shift": 0,
+    "name": "Fail to Open Gen Contactor",
+    "maintenance": false,
+    "reserved": false,
+    "source_row": 547
+  },
+  {
+    "address": 158,
+    "shift": 4,
+    "name": "Fail to Open Mains Contactor",
+    "maintenance": false,
+    "reserved": false,
+    "source_row": 551
+  },
+  {
+    "address": 158,
+    "shift": 8,
+    "name": "Fail to Latch Gen Contactor",
+    "maintenance": false,
+    "reserved": false,
+    "source_row": 555
+  },
+  {
+    "address": 158,
+    "shift": 12,
+    "name": "Fail to Latch Mains Contactor",
+    "maintenance": false,
+    "reserved": false,
+    "source_row": 559
+  }
+]

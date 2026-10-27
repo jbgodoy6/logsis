@@ -1,0 +1,51 @@
+{
+  "model": "SGC120_MKII",
+  "status": "planejamento; não implementado",
+  "source": "sgc-120-mk-ii-modbus-tables-4189341403-uk.xlsx",
+  "sha256": "e0b206be2429733680c21e46c3372107f9125acffff5f0ca279dfc4b31bb6582",
+  "revision": "C",
+  "software_reference": "R18.0",
+  "read_rows": 441,
+  "read_unique_addresses_per_sheet": {
+    "Holding & Read (03;04;16)": 126
+  },
+  "command_reference_rows": 2,
+  "groups": {
+    "Protocol revision": 1,
+    "AC measurement": 38,
+    "Energy counter": 6,
+    "Engine measurement": 9,
+    "Running hours": 4,
+    "Alarm Status for Alarm 1": 16,
+    "Alarm Status for Alarm 2": 16,
+    "Alarm Status for Alarm 3": 16,
+    "Alarm Status for Alarm 4": 16,
+    "Alarm Status for Alarm 5": 16,
+    "Alarm Status for Alarm 6": 16,
+    "Alarm Status for Alarm 7": 16,
+    "Alarm Status for Alarm 8": 16,
+    "Alarm Status for Alarm 9": 16,
+    "Alarm Status for Alarm 10": 16,
+    "Alarm Status for Alarm 11": 16,
+    "Alarm Status for Alarm 12": 16,
+    "Output diagnostics": 7,
+    "Input diagnostics": 9,
+    "DG status": 65,
+    "CPCB IV+ alarm status": 8,
+    "EGR Modbus": 11,
+    "DTC status ": 1,
+    "DTC Value ": 15,
+    "Custom Sensor": 1,
+    "Alarm Status for Alarm 13": 16,
+    "Alarm Status for Alarm 14": 16,
+    "EIC Data Over Modbus": 42
+  },
+  "notices": [
+    "Bits mantidos na numeração original; verificar conversão para índice zero.",
+    "Escala original preservada como número ou texto; não aplicar automaticamente a regra de expoente do AGC150.",
+    "FLOAT32 CDAB não é INT32; conferir suporte do coletor antes de exportar.",
+    "Registro 60 do SGC420 declarado INT16u e linhas 60/61 descritas separadamente; não equiparar ao INT32u do SGC120 sem confirmação.",
+    "Linhas repetidas de alarmes e modos descrevem campos multibit; não são necessariamente alarmes independentes.",
+    "Escritas FC16 apenas como referência; nenhum comando implementado."
+  ]
+}

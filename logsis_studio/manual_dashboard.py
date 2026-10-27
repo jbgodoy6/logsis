@@ -165,6 +165,7 @@ def stat(profile,id,title,c,pos,period=False):
   p['datasource']={'type':'grafana-postgresql-datasource','uid':'zKW_ld27k'}
   p['targets']=[{'refId':'A','rawQuery':True,'format':'table','editorMode':'code','rawSql':sql}]
   p['transformations']=[{'id':'filterFieldsByName','options':{'include':{'names':['EXIBICAO']}}}]
+  p['options']['reduceOptions']['fields']='/^EXIBICAO$/'
   p['description']='Diferença final − inicial do contador, usando a base válida anterior ao filtro quando compatível. * indica cobertura parcial ou queda; consulte SITUACAO na consulta.'
  return p
 
@@ -268,6 +269,11 @@ def build_dashboard(profile):
   control_y=42;end_y=54
  controls=[c for c in profile.channels if c.role in ['mode','warning','trip','shutdown'] or c.role.startswith('led_')]
  inputs=[c for c in profile.channels if c.input_letter]
+ if profile.model=='DSE8620' and 'mains_i_l1' in roles:
+  company=[c for role,c in roles.items() if role.startswith('mains_') and ('_v_' not in role and role!='mains_frequency')]
+  panels.append(group(profile,50,'Companhia · correntes, potências e fator de potência',company,{'x':0,'y':end_y,'w':24,'h':18},height=600,cols=2))
+  panels.append(stat(profile,51,'ENERGIA DA COMPANHIA / PERÍODO',roles['energy_mains'],{'x':0,'y':end_y+18,'w':24,'h':3},True))
+  end_y+=21
  panels += [group(profile,25,'06 / Controle e indicadores LED',controls,{'x':0,'y':control_y,'w':12,'h':12}),group(profile,26,'07 / Entradas digitais e flexíveis',inputs,{'x':12,'y':control_y,'w':12,'h':12}),history(profile,end_y)]
  # Mode is text in controls rather than the numeric code.
  for panel in panels:

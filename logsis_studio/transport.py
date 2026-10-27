@@ -35,13 +35,13 @@ def read_exact(reader, size):
 def request_parameters(slave, function, address):
     slave = integer(slave, 'Slave ID', 1, 247)
     function = integer(function, 'Função')
-    if function not in [3, 4, 30, 40]:
-        raise ModbusError('O teste aceita funções LogSis 3, 4, 30 e 40 (somente leitura).')
+    if function not in [2, 3, 4, 30, 40]:
+        raise ModbusError('O teste aceita funções LogSis 2, 3, 4, 30 e 40 (somente leitura).')
     address = integer(address, 'Endereço', 0, 65535)
     count = 2 if function in [30, 40] else 1
     if address + count > 65536:
         raise ModbusError('A leitura ultrapassa o último registrador Modbus.')
-    return slave, 3 if function in [3, 30] else 4, address, count
+    return slave, 2 if function==2 else 3 if function in [3, 30] else 4, address, count
 
 
 def parse_pdu(pdu, function, count):
@@ -52,9 +52,11 @@ def parse_pdu(pdu, function, count):
         raise ModbusError(f'Exceção Modbus {pdu[1]:02d}: {names.get(pdu[1], "verifique o controlador")}.')
     if len(pdu) < 2 or pdu[0] != function:
         raise ModbusError('A resposta não corresponde à função solicitada.')
-    expected = count * 2
+    expected = (count+7)//8 if function==2 else count * 2
     if pdu[1] != expected or len(pdu) != expected + 2:
         raise ModbusError('Quantidade de bytes diferente da leitura solicitada.')
+    if function==2:
+        return tuple((pdu[2+i//8] >> (i%8)) & 1 for i in range(count))
     return tuple(struct.unpack('>' + 'H' * count, pdu[2:]))
 
 
@@ -129,6 +131,13 @@ def decode(channel: Channel, row, registers, low_first=False, energy_divisor='10
     signed = unsigned if unsigned < 1 << (width - 1) else unsigned - (1 << width)
     selected_bit = integer(row['BIT'], 'Bit', -1, width - 1)
     bit = (unsigned >> selected_bit) & 1 if selected_bit >= 0 else None
+    if channel.source_reference.startswith(('sgc-', 'agc-', 'DEIF 418934')):
+        from .codecs import decode_value
+        # Reproduce the exact integer payload sent by LogSis. Explicit BIT
+        # extraction happens before storage, as in existing DSE profiles.
+        engineering = decode_value(channel, bit if bit is not None else unsigned)
+        state = 'SEM DADOS' if engineering is None else ('ATIVO' if engineering else 'INATIVO') if channel.codec=='boolean' else ''
+        return Reading(tuple(registers), unsigned, signed, engineering, state, bit)
     unavailable = unsigned >= 32760 if expected == 1 else unsigned in [0x7FFFFFFF, 0x80000000, 0xFFFFFFFF]
     # Negative signed temperatures/PF are legitimate, except the sentinel band.
     if expected == 1 and channel.signed:

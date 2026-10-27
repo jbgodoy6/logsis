@@ -1,0 +1,57 @@
+{
+  "status": "planejamento; não implementado",
+  "source": "agc-150-modbus-server-tables-4189341212-uk.xlsx",
+  "sha256": "882c96e86317db425d81896e340cf5b478c3ef0c520dc23aef9143ef439c0fbf",
+  "revision": "Y",
+  "software_reference": "1.38.0",
+  "equipment_identity": "AGC150 Extended informado pelo usuário; capacidades por licença/opção pendentes do manual específico",
+  "included_applications": [
+    "GEN",
+    "MAINS",
+    "ATS",
+    "ENG"
+  ],
+  "excluded_applications": [
+    "GEN-H",
+    "BTB"
+  ],
+  "read_rows": 8446,
+  "command_reference_rows": 391,
+  "read_rows_per_application": {
+    "GEN": 8262,
+    "MAINS": 2678,
+    "ATS": 822,
+    "ENG": 2849
+  },
+  "read_groups": {
+    "Status flag": 49,
+    "Digital input": 86,
+    "Digital output": 45,
+    "APPL version": 1,
+    "AC measurement": 166,
+    "Counter": 98,
+    "DC measurement": 34,
+    "EIC measurement": 265,
+    "Control command state": 14,
+    "Plant logic state": 37,
+    "Alarm": 242,
+    "PM Plant logic state": 1286,
+    "EIC state": 79,
+    "DAVR measurement": 18,
+    "AC alarm": 109,
+    "Relay state": 16,
+    "Modes": 14,
+    "EIC alarm": 183,
+    "PM alarm": 152,
+    "Digital output state": 33,
+    "M-Logic state": 214,
+    "DAVR Alarm": 3,
+    "Digital input state": 86,
+    "PM AC measurement": 236,
+    "EIC measurements value": 774,
+    "EIC measurements validity": 735,
+    "Plant config": 42,
+    "PMS lite": 3429
+  },
+  "limits": "Linhas de variantes/contextos não são endereços únicos nem quantidade de canais MDB. Nenhuma escrita ou comunicação com controlador realizada."
+}

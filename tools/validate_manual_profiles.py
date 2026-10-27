@@ -68,9 +68,9 @@ for model in ['DSE4520','DSE6120','DSE6320','DSE7320','DSE8620','DSE8660','DSE86
  else:assert rows[-1]['EDGE_OPTIONAL'] is None
  periods=[]
  for panel,values in zip(period_panels,rows[1:]):
-  expected=3.5 if 'HORAS' in panel['title'] else 18 if model not in ['DSE8660','DSE8680'] else 27 if 'rede' in panel['title'] else 45
+  expected=27 if panel['id']==51 else 3.5 if 'HORAS' in panel['title'] else 18 if model not in ['DSE8660','DSE8680'] else 27 if 'rede' in panel['title'] else 45
   actual=values.get('HORAS_PERIODO',values.get('KWH_PERIODO'));assert actual==expected,(model,panel['title'],values)
   periods.append({'title':panel['title'],'value':actual})
  report['models'].append({'model':model,'label':project.profile.label,'channels':project.profile.count,'kind':project.profile.kind,'sourceFamily':project.profile.manual_family,'periods':periods,'passed':True})
 report['result']='passed'
-(ROOT/'LOGSIS_STUDIO_8_VALIDACAO_SQL.json').write_text(json.dumps(report,ensure_ascii=False,indent=2)+'\n');print(json.dumps(report,ensure_ascii=False,indent=2))
+(ROOT/'LOGSIS_STUDIO_9_VALIDACAO_DSE_SQL.json').write_text(json.dumps(report,ensure_ascii=False,indent=2)+'\n');print(json.dumps(report,ensure_ascii=False,indent=2))

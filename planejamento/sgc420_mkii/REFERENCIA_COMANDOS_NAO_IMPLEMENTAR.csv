@@ -1,0 +1,17 @@
+﻿model;source_sheet;source_row;group_source;modbus_address;bit_source;function_codes_source;name_source;data_type;data_format;scaling_source;unit_source;enum_source;status
+SGC420_MKII;"Holding & Read (03;04;16)";699;DG mode change;0;;16;DG mode change command ;INT16u;-;1;-;"Decimal value:
+1: STOP, 2: START, 4: AUTO, 64: ACK";"documental; sem slot MDB; validar firmware e configuração"
+SGC420_MKII;"Holding & Read (03;04;16)";700;DTC Status ;1;;16;DTC Parent Specfier ;INT16u;-;1;-;"Decimal value:
+0: DTC DM1 parent, 1: DTC DM1 child1, 16: DTC DM2 parent, 17: DTC DM2 child1";"documental; sem slot MDB; validar firmware e configuração"
+SGC420_MKII;"Holding & Read (03;04;16)";701;Digital Input ;2;1;16;MODBUS Digital Input 8;INT16u;-;1;-;-;"documental; sem slot MDB; validar firmware e configuração"
+SGC420_MKII;"Holding & Read (03;04;16)";702;Digital Input ;2;2;16;MODBUS Digital Input 7;INT16u;-;1;-;-;"documental; sem slot MDB; validar firmware e configuração"
+SGC420_MKII;"Holding & Read (03;04;16)";703;Digital Input ;2;3;16;MODBUS Digital Input 6;INT16u;-;1;-;-;"documental; sem slot MDB; validar firmware e configuração"
+SGC420_MKII;"Holding & Read (03;04;16)";704;Digital Input ;2;4;16;MODBUS Digital Input 5;INT16u;-;1;-;-;"documental; sem slot MDB; validar firmware e configuração"
+SGC420_MKII;"Holding & Read (03;04;16)";705;Digital Input ;2;5;16;MODBUS Digital Input 4;INT16u;-;1;-;-;"documental; sem slot MDB; validar firmware e configuração"
+SGC420_MKII;"Holding & Read (03;04;16)";706;Digital Input ;2;6;16;MODBUS Digital Input 3;INT16u;-;1;-;-;"documental; sem slot MDB; validar firmware e configuração"
+SGC420_MKII;"Holding & Read (03;04;16)";707;Digital Input ;2;7;16;MODBUS Digital Input 2;INT16u;-;1;-;-;"documental; sem slot MDB; validar firmware e configuração"
+SGC420_MKII;"Holding & Read (03;04;16)";708;Digital Input ;2;8;16;MODBUS Digital Input 1;INT16u;-;1;-;-;"documental; sem slot MDB; validar firmware e configuração"
+SGC420_MKII;"Holding & Read (03;04;16)";709;Analog Inputs;3;;16;Analog Input 1;INT16u;-;1;-;-;"documental; sem slot MDB; validar firmware e configuração"
+SGC420_MKII;"Holding & Read (03;04;16)";710;Analog Inputs;4;;16;Analog Input 2;INT16u;-;1;-;-;"documental; sem slot MDB; validar firmware e configuração"
+SGC420_MKII;"Holding & Read (03;04;16)";711;Analog Inputs;5;;16;Analog Input 3;INT16u;-;1;-;-;"documental; sem slot MDB; validar firmware e configuração"
+SGC420_MKII;"Holding & Read (03;04;16)";712;Analog Inputs;6;;16;Analog Input 4;INT16u;-;1;-;-;"documental; sem slot MDB; validar firmware e configuração"

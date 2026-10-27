@@ -1,0 +1,2002 @@
+{
+  "GEN": [
+    {
+      "address": 1000,
+      "bit": 0,
+      "name": "G -P> 1",
+      "maintenance": false
+    },
+    {
+      "address": 1000,
+      "bit": 1,
+      "name": "G -P> 2",
+      "maintenance": false
+    },
+    {
+      "address": 1000,
+      "bit": 2,
+      "name": "G -P> 3",
+      "maintenance": false
+    },
+    {
+      "address": 1000,
+      "bit": 3,
+      "name": "G I> 1",
+      "maintenance": false
+    },
+    {
+      "address": 1000,
+      "bit": 4,
+      "name": "G I> 2",
+      "maintenance": false
+    },
+    {
+      "address": 1000,
+      "bit": 5,
+      "name": "G I> 3",
+      "maintenance": false
+    },
+    {
+      "address": 1000,
+      "bit": 6,
+      "name": "G I> 4",
+      "maintenance": false
+    },
+    {
+      "address": 1000,
+      "bit": 7,
+      "name": "G I> inv.",
+      "maintenance": false
+    },
+    {
+      "address": 1000,
+      "bit": 8,
+      "name": "G Iv>",
+      "maintenance": false
+    },
+    {
+      "address": 1000,
+      "bit": 9,
+      "name": "G I>> 1",
+      "maintenance": false
+    },
+    {
+      "address": 1000,
+      "bit": 10,
+      "name": "G I>> 2",
+      "maintenance": false
+    },
+    {
+      "address": 1000,
+      "bit": 11,
+      "name": "G U> 1",
+      "maintenance": false
+    },
+    {
+      "address": 1000,
+      "bit": 12,
+      "name": "G U> 2",
+      "maintenance": false
+    },
+    {
+      "address": 1000,
+      "bit": 13,
+      "name": "G U< 1",
+      "maintenance": false
+    },
+    {
+      "address": 1000,
+      "bit": 14,
+      "name": "G U< 2",
+      "maintenance": false
+    },
+    {
+      "address": 1000,
+      "bit": 15,
+      "name": "G U< 3",
+      "maintenance": false
+    },
+    {
+      "address": 1001,
+      "bit": 0,
+      "name": "G f> 1",
+      "maintenance": false
+    },
+    {
+      "address": 1001,
+      "bit": 1,
+      "name": "G f> 2",
+      "maintenance": false
+    },
+    {
+      "address": 1001,
+      "bit": 2,
+      "name": "G f> 3",
+      "maintenance": false
+    },
+    {
+      "address": 1001,
+      "bit": 3,
+      "name": "G f< 1",
+      "maintenance": false
+    },
+    {
+      "address": 1001,
+      "bit": 4,
+      "name": "G f< 2",
+      "maintenance": false
+    },
+    {
+      "address": 1001,
+      "bit": 5,
+      "name": "G f< 3",
+      "maintenance": false
+    },
+    {
+      "address": 1001,
+      "bit": 6,
+      "name": "BB U> 1",
+      "maintenance": false
+    },
+    {
+      "address": 1001,
+      "bit": 7,
+      "name": "BB U> 2",
+      "maintenance": false
+    },
+    {
+      "address": 1001,
+      "bit": 8,
+      "name": "BB U> 3",
+      "maintenance": false
+    },
+    {
+      "address": 1001,
+      "bit": 9,
+      "name": "BB U< 1",
+      "maintenance": false
+    },
+    {
+      "address": 1001,
+      "bit": 10,
+      "name": "BB U< 2",
+      "maintenance": false
+    },
+    {
+      "address": 1001,
+      "bit": 11,
+      "name": "BB U< 3",
+      "maintenance": false
+    },
+    {
+      "address": 1001,
+      "bit": 12,
+      "name": "BB U< 4",
+      "maintenance": false
+    },
+    {
+      "address": 1001,
+      "bit": 13,
+      "name": "BB f> 1",
+      "maintenance": false
+    },
+    {
+      "address": 1001,
+      "bit": 14,
+      "name": "BB f> 2",
+      "maintenance": false
+    },
+    {
+      "address": 1001,
+      "bit": 15,
+      "name": "BB f> 3",
+      "maintenance": false
+    },
+    {
+      "address": 1002,
+      "bit": 0,
+      "name": "BB f< 1",
+      "maintenance": false
+    },
+    {
+      "address": 1002,
+      "bit": 1,
+      "name": "BB f< 2",
+      "maintenance": false
+    },
+    {
+      "address": 1002,
+      "bit": 2,
+      "name": "BB f< 3",
+      "maintenance": false
+    },
+    {
+      "address": 1002,
+      "bit": 3,
+      "name": "BB f< 4",
+      "maintenance": false
+    },
+    {
+      "address": 1002,
+      "bit": 4,
+      "name": "df/dt (ROCOF)",
+      "maintenance": false
+    },
+    {
+      "address": 1002,
+      "bit": 5,
+      "name": "Vector jump",
+      "maintenance": false
+    },
+    {
+      "address": 1002,
+      "bit": 6,
+      "name": "BB pos. seq. volt. low",
+      "maintenance": false
+    },
+    {
+      "address": 1002,
+      "bit": 7,
+      "name": "G P> 1",
+      "maintenance": false
+    },
+    {
+      "address": 1002,
+      "bit": 8,
+      "name": "G P> 2",
+      "maintenance": false
+    },
+    {
+      "address": 1002,
+      "bit": 9,
+      "name": "G P> 3",
+      "maintenance": false
+    },
+    {
+      "address": 1002,
+      "bit": 10,
+      "name": "G P> 4",
+      "maintenance": false
+    },
+    {
+      "address": 1002,
+      "bit": 11,
+      "name": "G P> 5",
+      "maintenance": false
+    },
+    {
+      "address": 1002,
+      "bit": 12,
+      "name": "Unbalance curr. 1",
+      "maintenance": false
+    },
+    {
+      "address": 1002,
+      "bit": 13,
+      "name": "Unbalance volt.",
+      "maintenance": false
+    },
+    {
+      "address": 1002,
+      "bit": 14,
+      "name": "G -Q>",
+      "maintenance": false
+    },
+    {
+      "address": 1002,
+      "bit": 15,
+      "name": "G Q>",
+      "maintenance": false
+    },
+    {
+      "address": 1003,
+      "bit": 0,
+      "name": "Gen. neg. seq. I",
+      "maintenance": false
+    },
+    {
+      "address": 1003,
+      "bit": 1,
+      "name": "Generator neg. seq. U",
+      "maintenance": false
+    },
+    {
+      "address": 1003,
+      "bit": 2,
+      "name": "Gen. zero seq. I",
+      "maintenance": false
+    },
+    {
+      "address": 1003,
+      "bit": 3,
+      "name": "Zero seq. U",
+      "maintenance": false
+    },
+    {
+      "address": 1003,
+      "bit": 4,
+      "name": "Directional overcurrent 1",
+      "maintenance": false
+    },
+    {
+      "address": 1003,
+      "bit": 5,
+      "name": "Directional overcurrent 2",
+      "maintenance": false
+    },
+    {
+      "address": 1003,
+      "bit": 6,
+      "name": "BB unbalance U",
+      "maintenance": false
+    },
+    {
+      "address": 1004,
+      "bit": 6,
+      "name": "U and Q< 1",
+      "maintenance": false
+    },
+    {
+      "address": 1004,
+      "bit": 7,
+      "name": "U and Q< 2",
+      "maintenance": false
+    },
+    {
+      "address": 1004,
+      "bit": 8,
+      "name": "GB ext. trip",
+      "maintenance": false
+    },
+    {
+      "address": 1004,
+      "bit": 9,
+      "name": "MB ext. trip",
+      "maintenance": false
+    },
+    {
+      "address": 1004,
+      "bit": 14,
+      "name": "G P dep. Q<",
+      "maintenance": false
+    },
+    {
+      "address": 1004,
+      "bit": 15,
+      "name": "G P dep. Q>",
+      "maintenance": false
+    },
+    {
+      "address": 1005,
+      "bit": 0,
+      "name": "Synchronising window",
+      "maintenance": false
+    },
+    {
+      "address": 1005,
+      "bit": 1,
+      "name": "Synchronising failure GB",
+      "maintenance": false
+    },
+    {
+      "address": 1005,
+      "bit": 2,
+      "name": "Synchronising failure MB",
+      "maintenance": false
+    },
+    {
+      "address": 1005,
+      "bit": 3,
+      "name": "Phase seq. failure A",
+      "maintenance": false
+    },
+    {
+      "address": 1005,
+      "bit": 4,
+      "name": "GB open failure",
+      "maintenance": false
+    },
+    {
+      "address": 1005,
+      "bit": 5,
+      "name": "GB close failure",
+      "maintenance": false
+    },
+    {
+      "address": 1005,
+      "bit": 6,
+      "name": "GB pos. failure",
+      "maintenance": false
+    },
+    {
+      "address": 1005,
+      "bit": 7,
+      "name": "MB open failure",
+      "maintenance": false
+    },
+    {
+      "address": 1005,
+      "bit": 8,
+      "name": "MB close failure",
+      "maintenance": false
+    },
+    {
+      "address": 1005,
+      "bit": 9,
+      "name": "MB pos. failure",
+      "maintenance": false
+    },
+    {
+      "address": 1005,
+      "bit": 10,
+      "name": "Close before excitation failure",
+      "maintenance": false
+    },
+    {
+      "address": 1005,
+      "bit": 11,
+      "name": "Phase seq. failure B",
+      "maintenance": false
+    },
+    {
+      "address": 1006,
+      "bit": 0,
+      "name": "GOVERNOR regulation fail.",
+      "maintenance": false
+    },
+    {
+      "address": 1006,
+      "bit": 1,
+      "name": "Deload error",
+      "maintenance": false
+    },
+    {
+      "address": 1006,
+      "bit": 2,
+      "name": "AVR regulation fail.",
+      "maintenance": false
+    },
+    {
+      "address": 1007,
+      "bit": 0,
+      "name": "Digital alarm input 39",
+      "maintenance": false
+    },
+    {
+      "address": 1007,
+      "bit": 1,
+      "name": "Digital alarm input 40",
+      "maintenance": false
+    },
+    {
+      "address": 1007,
+      "bit": 2,
+      "name": "Digital alarm input 41",
+      "maintenance": false
+    },
+    {
+      "address": 1007,
+      "bit": 3,
+      "name": "Digital alarm input 42",
+      "maintenance": false
+    },
+    {
+      "address": 1007,
+      "bit": 4,
+      "name": "Digital alarm input 43",
+      "maintenance": false
+    },
+    {
+      "address": 1007,
+      "bit": 5,
+      "name": "Digital alarm input 44",
+      "maintenance": false
+    },
+    {
+      "address": 1007,
+      "bit": 6,
+      "name": "Digital alarm input 45",
+      "maintenance": false
+    },
+    {
+      "address": 1007,
+      "bit": 7,
+      "name": "Digital alarm input 46",
+      "maintenance": false
+    },
+    {
+      "address": 1007,
+      "bit": 8,
+      "name": "Digital alarm input 47",
+      "maintenance": false
+    },
+    {
+      "address": 1007,
+      "bit": 9,
+      "name": "Digital alarm input 48",
+      "maintenance": false
+    },
+    {
+      "address": 1007,
+      "bit": 10,
+      "name": "Digital alarm input 49",
+      "maintenance": false
+    },
+    {
+      "address": 1007,
+      "bit": 11,
+      "name": "Digital alarm input 50",
+      "maintenance": false
+    },
+    {
+      "address": 1010,
+      "bit": 12,
+      "name": "Digital alarm input 4 (Emergency stop)",
+      "maintenance": false
+    },
+    {
+      "address": 1011,
+      "bit": 7,
+      "name": "M-Logic alarm 1",
+      "maintenance": false
+    },
+    {
+      "address": 1011,
+      "bit": 8,
+      "name": "M-Logic alarm 2",
+      "maintenance": false
+    },
+    {
+      "address": 1011,
+      "bit": 9,
+      "name": "M-Logic alarm 3",
+      "maintenance": false
+    },
+    {
+      "address": 1011,
+      "bit": 10,
+      "name": "M-Logic alarm 4",
+      "maintenance": false
+    },
+    {
+      "address": 1011,
+      "bit": 11,
+      "name": "M-Logic alarm 5",
+      "maintenance": false
+    },
+    {
+      "address": 1011,
+      "bit": 12,
+      "name": "M-Logic extended alarm 1",
+      "maintenance": false
+    },
+    {
+      "address": 1011,
+      "bit": 13,
+      "name": "M-Logic extended alarm 2",
+      "maintenance": false
+    },
+    {
+      "address": 1011,
+      "bit": 14,
+      "name": "M-Logic extended alarm 3",
+      "maintenance": false
+    },
+    {
+      "address": 1011,
+      "bit": 15,
+      "name": "M-Logic extended alarm 4",
+      "maintenance": false
+    },
+    {
+      "address": 1013,
+      "bit": 0,
+      "name": "Multi input terminal 20.1",
+      "maintenance": false
+    },
+    {
+      "address": 1013,
+      "bit": 1,
+      "name": "Multi input terminal 20.2",
+      "maintenance": false
+    },
+    {
+      "address": 1013,
+      "bit": 2,
+      "name": "W. fail. 20",
+      "maintenance": false
+    },
+    {
+      "address": 1013,
+      "bit": 3,
+      "name": "Multi input terminal 21.1",
+      "maintenance": false
+    },
+    {
+      "address": 1013,
+      "bit": 4,
+      "name": "Multi input terminal 21.2",
+      "maintenance": false
+    },
+    {
+      "address": 1013,
+      "bit": 5,
+      "name": "W. fail. 21",
+      "maintenance": false
+    },
+    {
+      "address": 1013,
+      "bit": 6,
+      "name": "Multi input terminal 22.1",
+      "maintenance": false
+    },
+    {
+      "address": 1013,
+      "bit": 7,
+      "name": "Multi input terminal 22.2",
+      "maintenance": false
+    },
+    {
+      "address": 1013,
+      "bit": 8,
+      "name": "W. fail. 22",
+      "maintenance": false
+    },
+    {
+      "address": 1013,
+      "bit": 9,
+      "name": "Overspeed 1",
+      "maintenance": false
+    },
+    {
+      "address": 1013,
+      "bit": 10,
+      "name": "Overspeed 2",
+      "maintenance": false
+    },
+    {
+      "address": 1013,
+      "bit": 11,
+      "name": "Crank failure",
+      "maintenance": false
+    },
+    {
+      "address": 1013,
+      "bit": 12,
+      "name": "Running feedback failure",
+      "maintenance": false
+    },
+    {
+      "address": 1013,
+      "bit": 13,
+      "name": "MPU wire failure",
+      "maintenance": false
+    },
+    {
+      "address": 1013,
+      "bit": 14,
+      "name": "Hz/V failure",
+      "maintenance": false
+    },
+    {
+      "address": 1013,
+      "bit": 15,
+      "name": "Start failure",
+      "maintenance": false
+    },
+    {
+      "address": 1014,
+      "bit": 0,
+      "name": "Stop failure",
+      "maintenance": false
+    },
+    {
+      "address": 1014,
+      "bit": 1,
+      "name": "U< aux. term. 1",
+      "maintenance": false
+    },
+    {
+      "address": 1014,
+      "bit": 2,
+      "name": "U> aux. term. 1",
+      "maintenance": false
+    },
+    {
+      "address": 1014,
+      "bit": 5,
+      "name": "Underspeed 1",
+      "maintenance": false
+    },
+    {
+      "address": 1014,
+      "bit": 6,
+      "name": "Multi input terminal 23.1",
+      "maintenance": false
+    },
+    {
+      "address": 1014,
+      "bit": 7,
+      "name": "Multi input terminal 23.2",
+      "maintenance": false
+    },
+    {
+      "address": 1014,
+      "bit": 8,
+      "name": "W. fail. 23",
+      "maintenance": false
+    },
+    {
+      "address": 1015,
+      "bit": 0,
+      "name": "Service timer 1",
+      "maintenance": true
+    },
+    {
+      "address": 1015,
+      "bit": 1,
+      "name": "Service timer 2",
+      "maintenance": true
+    },
+    {
+      "address": 1015,
+      "bit": 2,
+      "name": "Stop coil wire break",
+      "maintenance": false
+    },
+    {
+      "address": 1015,
+      "bit": 4,
+      "name": "Engine heater 1",
+      "maintenance": false
+    },
+    {
+      "address": 1015,
+      "bit": 5,
+      "name": "Battery test",
+      "maintenance": false
+    },
+    {
+      "address": 1015,
+      "bit": 6,
+      "name": "Battery asymmetry 1",
+      "maintenance": false
+    },
+    {
+      "address": 1015,
+      "bit": 7,
+      "name": "Battery asymmetry 2",
+      "maintenance": false
+    },
+    {
+      "address": 1015,
+      "bit": 8,
+      "name": "Max. ventilation 1",
+      "maintenance": false
+    },
+    {
+      "address": 1015,
+      "bit": 9,
+      "name": "Max. ventilation 2",
+      "maintenance": false
+    },
+    {
+      "address": 1015,
+      "bit": 10,
+      "name": "Block switchboard error",
+      "maintenance": false
+    },
+    {
+      "address": 1015,
+      "bit": 11,
+      "name": "Stop switchboard error",
+      "maintenance": false
+    },
+    {
+      "address": 1015,
+      "bit": 12,
+      "name": "Unit not in auto",
+      "maintenance": false
+    },
+    {
+      "address": 1015,
+      "bit": 13,
+      "name": "Fuel pump logic",
+      "maintenance": false
+    }
+  ],
+  "MAINS": [
+    {
+      "address": 1000,
+      "bit": 0,
+      "name": "M -P> 1",
+      "maintenance": false
+    },
+    {
+      "address": 1000,
+      "bit": 1,
+      "name": "M -P> 2",
+      "maintenance": false
+    },
+    {
+      "address": 1000,
+      "bit": 2,
+      "name": "M -P> 3",
+      "maintenance": false
+    },
+    {
+      "address": 1000,
+      "bit": 3,
+      "name": "M I> 1",
+      "maintenance": false
+    },
+    {
+      "address": 1000,
+      "bit": 4,
+      "name": "M I> 2",
+      "maintenance": false
+    },
+    {
+      "address": 1000,
+      "bit": 5,
+      "name": "M I> 3",
+      "maintenance": false
+    },
+    {
+      "address": 1000,
+      "bit": 6,
+      "name": "M I> 4",
+      "maintenance": false
+    },
+    {
+      "address": 1000,
+      "bit": 8,
+      "name": "M Iv>",
+      "maintenance": false
+    },
+    {
+      "address": 1000,
+      "bit": 9,
+      "name": "M I>> 1",
+      "maintenance": false
+    },
+    {
+      "address": 1000,
+      "bit": 10,
+      "name": "M I>> 2",
+      "maintenance": false
+    },
+    {
+      "address": 1000,
+      "bit": 11,
+      "name": "M U> 1",
+      "maintenance": false
+    },
+    {
+      "address": 1000,
+      "bit": 12,
+      "name": "M U> 2",
+      "maintenance": false
+    },
+    {
+      "address": 1000,
+      "bit": 13,
+      "name": "M U< 1",
+      "maintenance": false
+    },
+    {
+      "address": 1000,
+      "bit": 14,
+      "name": "M U< 2",
+      "maintenance": false
+    },
+    {
+      "address": 1000,
+      "bit": 15,
+      "name": "M U< 3",
+      "maintenance": false
+    },
+    {
+      "address": 1001,
+      "bit": 0,
+      "name": "M f> 1",
+      "maintenance": false
+    },
+    {
+      "address": 1001,
+      "bit": 1,
+      "name": "M f> 2",
+      "maintenance": false
+    },
+    {
+      "address": 1001,
+      "bit": 2,
+      "name": "M f> 3",
+      "maintenance": false
+    },
+    {
+      "address": 1001,
+      "bit": 3,
+      "name": "M f< 1",
+      "maintenance": false
+    },
+    {
+      "address": 1001,
+      "bit": 4,
+      "name": "M f< 2",
+      "maintenance": false
+    },
+    {
+      "address": 1001,
+      "bit": 5,
+      "name": "M f< 3",
+      "maintenance": false
+    },
+    {
+      "address": 1001,
+      "bit": 6,
+      "name": "BB U> 1",
+      "maintenance": false
+    },
+    {
+      "address": 1001,
+      "bit": 7,
+      "name": "BB U> 2",
+      "maintenance": false
+    },
+    {
+      "address": 1001,
+      "bit": 8,
+      "name": "BB U> 3",
+      "maintenance": false
+    },
+    {
+      "address": 1001,
+      "bit": 9,
+      "name": "BB U< 1",
+      "maintenance": false
+    },
+    {
+      "address": 1001,
+      "bit": 10,
+      "name": "BB U< 2",
+      "maintenance": false
+    },
+    {
+      "address": 1001,
+      "bit": 11,
+      "name": "BB U< 3",
+      "maintenance": false
+    },
+    {
+      "address": 1001,
+      "bit": 12,
+      "name": "BB U< 4",
+      "maintenance": false
+    },
+    {
+      "address": 1001,
+      "bit": 13,
+      "name": "BB f> 1",
+      "maintenance": false
+    },
+    {
+      "address": 1001,
+      "bit": 14,
+      "name": "BB f> 2",
+      "maintenance": false
+    },
+    {
+      "address": 1001,
+      "bit": 15,
+      "name": "BB f> 3",
+      "maintenance": false
+    },
+    {
+      "address": 1002,
+      "bit": 0,
+      "name": "BB f< 1",
+      "maintenance": false
+    },
+    {
+      "address": 1002,
+      "bit": 1,
+      "name": "BB f< 2",
+      "maintenance": false
+    },
+    {
+      "address": 1002,
+      "bit": 2,
+      "name": "BB f< 3",
+      "maintenance": false
+    },
+    {
+      "address": 1002,
+      "bit": 3,
+      "name": "BB f< 4",
+      "maintenance": false
+    },
+    {
+      "address": 1002,
+      "bit": 4,
+      "name": "df/dt (ROCOF)",
+      "maintenance": false
+    },
+    {
+      "address": 1002,
+      "bit": 5,
+      "name": "Vector jump",
+      "maintenance": false
+    },
+    {
+      "address": 1002,
+      "bit": 6,
+      "name": "BB pos. seq. volt. low",
+      "maintenance": false
+    },
+    {
+      "address": 1002,
+      "bit": 7,
+      "name": "M P> 1",
+      "maintenance": false
+    },
+    {
+      "address": 1002,
+      "bit": 8,
+      "name": "M P> 2",
+      "maintenance": false
+    },
+    {
+      "address": 1002,
+      "bit": 9,
+      "name": "M P> 3",
+      "maintenance": false
+    },
+    {
+      "address": 1002,
+      "bit": 10,
+      "name": "M P> 4",
+      "maintenance": false
+    },
+    {
+      "address": 1002,
+      "bit": 11,
+      "name": "M P> 5",
+      "maintenance": false
+    },
+    {
+      "address": 1002,
+      "bit": 12,
+      "name": "Unbalance curr. 1",
+      "maintenance": false
+    },
+    {
+      "address": 1002,
+      "bit": 13,
+      "name": "Unbalance volt.",
+      "maintenance": false
+    },
+    {
+      "address": 1002,
+      "bit": 14,
+      "name": "M -Q>",
+      "maintenance": false
+    },
+    {
+      "address": 1002,
+      "bit": 15,
+      "name": "M Q>",
+      "maintenance": false
+    },
+    {
+      "address": 1003,
+      "bit": 0,
+      "name": "Mains neg. seq. I",
+      "maintenance": false
+    },
+    {
+      "address": 1003,
+      "bit": 1,
+      "name": "Mains neg. seq. U",
+      "maintenance": false
+    },
+    {
+      "address": 1003,
+      "bit": 2,
+      "name": "Mains zero seq. I",
+      "maintenance": false
+    },
+    {
+      "address": 1003,
+      "bit": 3,
+      "name": "Mains zero seq. U",
+      "maintenance": false
+    },
+    {
+      "address": 1003,
+      "bit": 4,
+      "name": "Directional overcurrent 1",
+      "maintenance": false
+    },
+    {
+      "address": 1003,
+      "bit": 5,
+      "name": "Directional overcurrent 2",
+      "maintenance": false
+    },
+    {
+      "address": 1003,
+      "bit": 6,
+      "name": "BB unbalance U",
+      "maintenance": false
+    },
+    {
+      "address": 1004,
+      "bit": 6,
+      "name": "U and Q< 1",
+      "maintenance": false
+    },
+    {
+      "address": 1004,
+      "bit": 7,
+      "name": "U and Q< 2",
+      "maintenance": false
+    },
+    {
+      "address": 1004,
+      "bit": 8,
+      "name": "TB ext. trip",
+      "maintenance": false
+    },
+    {
+      "address": 1004,
+      "bit": 9,
+      "name": "MB ext. trip",
+      "maintenance": false
+    },
+    {
+      "address": 1005,
+      "bit": 0,
+      "name": "Synchronising window",
+      "maintenance": false
+    },
+    {
+      "address": 1005,
+      "bit": 1,
+      "name": "Synchronising failure TB",
+      "maintenance": false
+    },
+    {
+      "address": 1005,
+      "bit": 2,
+      "name": "Synchronising failure MB",
+      "maintenance": false
+    },
+    {
+      "address": 1005,
+      "bit": 3,
+      "name": "Phase seq. failure A",
+      "maintenance": false
+    },
+    {
+      "address": 1005,
+      "bit": 4,
+      "name": "TB open failure",
+      "maintenance": false
+    },
+    {
+      "address": 1005,
+      "bit": 5,
+      "name": "TB close failure",
+      "maintenance": false
+    },
+    {
+      "address": 1005,
+      "bit": 6,
+      "name": "TB pos. failure",
+      "maintenance": false
+    },
+    {
+      "address": 1005,
+      "bit": 7,
+      "name": "MB open failure",
+      "maintenance": false
+    },
+    {
+      "address": 1005,
+      "bit": 8,
+      "name": "MB close failure",
+      "maintenance": false
+    },
+    {
+      "address": 1005,
+      "bit": 9,
+      "name": "MB pos. failure",
+      "maintenance": false
+    },
+    {
+      "address": 1005,
+      "bit": 11,
+      "name": "Phase seq. failure B",
+      "maintenance": false
+    },
+    {
+      "address": 1007,
+      "bit": 0,
+      "name": "Digital alarm input 39",
+      "maintenance": false
+    },
+    {
+      "address": 1007,
+      "bit": 1,
+      "name": "Digital alarm input 40",
+      "maintenance": false
+    },
+    {
+      "address": 1007,
+      "bit": 2,
+      "name": "Digital alarm input 41",
+      "maintenance": false
+    },
+    {
+      "address": 1007,
+      "bit": 3,
+      "name": "Digital alarm input 42",
+      "maintenance": false
+    },
+    {
+      "address": 1007,
+      "bit": 4,
+      "name": "Digital alarm input 43",
+      "maintenance": false
+    },
+    {
+      "address": 1007,
+      "bit": 5,
+      "name": "Digital alarm input 44",
+      "maintenance": false
+    },
+    {
+      "address": 1007,
+      "bit": 6,
+      "name": "Digital alarm input 45",
+      "maintenance": false
+    },
+    {
+      "address": 1007,
+      "bit": 7,
+      "name": "Digital alarm input 46",
+      "maintenance": false
+    },
+    {
+      "address": 1007,
+      "bit": 8,
+      "name": "Digital alarm input 47",
+      "maintenance": false
+    },
+    {
+      "address": 1007,
+      "bit": 9,
+      "name": "Digital alarm input 48",
+      "maintenance": false
+    },
+    {
+      "address": 1007,
+      "bit": 10,
+      "name": "Digital alarm input 49",
+      "maintenance": false
+    },
+    {
+      "address": 1007,
+      "bit": 11,
+      "name": "Digital alarm input 50",
+      "maintenance": false
+    },
+    {
+      "address": 1010,
+      "bit": 12,
+      "name": "Digital alarm input 4 (Emergency stop)",
+      "maintenance": false
+    },
+    {
+      "address": 1011,
+      "bit": 7,
+      "name": "M-Logic alarm 1",
+      "maintenance": false
+    },
+    {
+      "address": 1011,
+      "bit": 8,
+      "name": "M-Logic alarm 2",
+      "maintenance": false
+    },
+    {
+      "address": 1011,
+      "bit": 9,
+      "name": "M-Logic alarm 3",
+      "maintenance": false
+    },
+    {
+      "address": 1011,
+      "bit": 10,
+      "name": "M-Logic alarm 4",
+      "maintenance": false
+    },
+    {
+      "address": 1011,
+      "bit": 11,
+      "name": "M-Logic alarm 5",
+      "maintenance": false
+    },
+    {
+      "address": 1011,
+      "bit": 12,
+      "name": "M-Logic extended alarm 1",
+      "maintenance": false
+    },
+    {
+      "address": 1011,
+      "bit": 13,
+      "name": "M-Logic extended alarm 2",
+      "maintenance": false
+    },
+    {
+      "address": 1011,
+      "bit": 14,
+      "name": "M-Logic extended alarm 3",
+      "maintenance": false
+    },
+    {
+      "address": 1011,
+      "bit": 15,
+      "name": "M-Logic extended alarm 4",
+      "maintenance": false
+    },
+    {
+      "address": 1013,
+      "bit": 0,
+      "name": "Multi input terminal 20.1",
+      "maintenance": false
+    },
+    {
+      "address": 1013,
+      "bit": 1,
+      "name": "Multi input terminal 20.2",
+      "maintenance": false
+    },
+    {
+      "address": 1013,
+      "bit": 2,
+      "name": "W. fail. 20",
+      "maintenance": false
+    },
+    {
+      "address": 1013,
+      "bit": 3,
+      "name": "Multi input terminal 21.1",
+      "maintenance": false
+    },
+    {
+      "address": 1013,
+      "bit": 4,
+      "name": "Multi input terminal 21.2",
+      "maintenance": false
+    },
+    {
+      "address": 1013,
+      "bit": 5,
+      "name": "W. fail. 21",
+      "maintenance": false
+    },
+    {
+      "address": 1013,
+      "bit": 6,
+      "name": "Multi input terminal 22.1",
+      "maintenance": false
+    },
+    {
+      "address": 1013,
+      "bit": 7,
+      "name": "Multi input terminal 22.2",
+      "maintenance": false
+    },
+    {
+      "address": 1013,
+      "bit": 8,
+      "name": "W. fail. 22",
+      "maintenance": false
+    },
+    {
+      "address": 1014,
+      "bit": 1,
+      "name": "U< aux. term. 1",
+      "maintenance": false
+    },
+    {
+      "address": 1014,
+      "bit": 2,
+      "name": "U> aux. term. 1",
+      "maintenance": false
+    },
+    {
+      "address": 1014,
+      "bit": 6,
+      "name": "Multi input terminal 23.1",
+      "maintenance": false
+    },
+    {
+      "address": 1014,
+      "bit": 7,
+      "name": "Multi input terminal 23.2",
+      "maintenance": false
+    },
+    {
+      "address": 1014,
+      "bit": 8,
+      "name": "W. fail. 23",
+      "maintenance": false
+    },
+    {
+      "address": 1015,
+      "bit": 12,
+      "name": "Unit not in auto",
+      "maintenance": false
+    }
+  ],
+  "ATS": [
+    {
+      "address": 1007,
+      "bit": 0,
+      "name": "Digital alarm input 39",
+      "maintenance": false
+    },
+    {
+      "address": 1007,
+      "bit": 1,
+      "name": "Digital alarm input 40",
+      "maintenance": false
+    },
+    {
+      "address": 1007,
+      "bit": 2,
+      "name": "Digital alarm input 41",
+      "maintenance": false
+    },
+    {
+      "address": 1007,
+      "bit": 3,
+      "name": "Digital alarm input 42",
+      "maintenance": false
+    },
+    {
+      "address": 1007,
+      "bit": 4,
+      "name": "Digital alarm input 43",
+      "maintenance": false
+    },
+    {
+      "address": 1007,
+      "bit": 5,
+      "name": "Digital alarm input 44",
+      "maintenance": false
+    },
+    {
+      "address": 1007,
+      "bit": 6,
+      "name": "Digital alarm input 45",
+      "maintenance": false
+    },
+    {
+      "address": 1007,
+      "bit": 7,
+      "name": "Digital alarm input 46",
+      "maintenance": false
+    },
+    {
+      "address": 1007,
+      "bit": 8,
+      "name": "Digital alarm input 47",
+      "maintenance": false
+    },
+    {
+      "address": 1007,
+      "bit": 9,
+      "name": "Digital alarm input 48",
+      "maintenance": false
+    },
+    {
+      "address": 1007,
+      "bit": 10,
+      "name": "Digital alarm input 49",
+      "maintenance": false
+    },
+    {
+      "address": 1007,
+      "bit": 11,
+      "name": "Digital alarm input 50",
+      "maintenance": false
+    },
+    {
+      "address": 1010,
+      "bit": 12,
+      "name": "Digital alarm input 4 (Emergency stop)",
+      "maintenance": false
+    },
+    {
+      "address": 1011,
+      "bit": 7,
+      "name": "M-Logic alarm 1",
+      "maintenance": false
+    },
+    {
+      "address": 1011,
+      "bit": 8,
+      "name": "M-Logic alarm 2",
+      "maintenance": false
+    },
+    {
+      "address": 1011,
+      "bit": 9,
+      "name": "M-Logic alarm 3",
+      "maintenance": false
+    },
+    {
+      "address": 1011,
+      "bit": 10,
+      "name": "M-Logic alarm 4",
+      "maintenance": false
+    },
+    {
+      "address": 1011,
+      "bit": 11,
+      "name": "M-Logic alarm 5",
+      "maintenance": false
+    },
+    {
+      "address": 1011,
+      "bit": 12,
+      "name": "M-Logic extended alarm 1",
+      "maintenance": false
+    },
+    {
+      "address": 1011,
+      "bit": 13,
+      "name": "M-Logic extended alarm 2",
+      "maintenance": false
+    },
+    {
+      "address": 1011,
+      "bit": 14,
+      "name": "M-Logic extended alarm 3",
+      "maintenance": false
+    },
+    {
+      "address": 1011,
+      "bit": 15,
+      "name": "M-Logic extended alarm 4",
+      "maintenance": false
+    },
+    {
+      "address": 1013,
+      "bit": 0,
+      "name": "Multi input terminal 20.1",
+      "maintenance": false
+    },
+    {
+      "address": 1013,
+      "bit": 1,
+      "name": "Multi input terminal 20.2",
+      "maintenance": false
+    },
+    {
+      "address": 1013,
+      "bit": 2,
+      "name": "W. fail. 20",
+      "maintenance": false
+    },
+    {
+      "address": 1013,
+      "bit": 3,
+      "name": "Multi input terminal 21.1",
+      "maintenance": false
+    },
+    {
+      "address": 1013,
+      "bit": 4,
+      "name": "Multi input terminal 21.2",
+      "maintenance": false
+    },
+    {
+      "address": 1013,
+      "bit": 5,
+      "name": "W. fail. 21",
+      "maintenance": false
+    },
+    {
+      "address": 1013,
+      "bit": 6,
+      "name": "Multi input terminal 22.1",
+      "maintenance": false
+    },
+    {
+      "address": 1013,
+      "bit": 7,
+      "name": "Multi input terminal 22.2",
+      "maintenance": false
+    },
+    {
+      "address": 1013,
+      "bit": 8,
+      "name": "W. fail. 22",
+      "maintenance": false
+    },
+    {
+      "address": 1014,
+      "bit": 1,
+      "name": "U< aux. term. 1",
+      "maintenance": false
+    },
+    {
+      "address": 1014,
+      "bit": 2,
+      "name": "U> aux. term. 1",
+      "maintenance": false
+    },
+    {
+      "address": 1014,
+      "bit": 6,
+      "name": "Multi input terminal 23.1",
+      "maintenance": false
+    },
+    {
+      "address": 1014,
+      "bit": 7,
+      "name": "Multi input terminal 23.2",
+      "maintenance": false
+    },
+    {
+      "address": 1014,
+      "bit": 8,
+      "name": "W. fail. 23",
+      "maintenance": false
+    },
+    {
+      "address": 1015,
+      "bit": 12,
+      "name": "Unit not in auto",
+      "maintenance": false
+    }
+  ],
+  "ENG": [
+    {
+      "address": 1007,
+      "bit": 0,
+      "name": "Digital alarm input 39",
+      "maintenance": false
+    },
+    {
+      "address": 1007,
+      "bit": 1,
+      "name": "Digital alarm input 40",
+      "maintenance": false
+    },
+    {
+      "address": 1007,
+      "bit": 2,
+      "name": "Digital alarm input 41",
+      "maintenance": false
+    },
+    {
+      "address": 1007,
+      "bit": 3,
+      "name": "Digital alarm input 42",
+      "maintenance": false
+    },
+    {
+      "address": 1007,
+      "bit": 4,
+      "name": "Digital alarm input 43",
+      "maintenance": false
+    },
+    {
+      "address": 1007,
+      "bit": 5,
+      "name": "Digital alarm input 44",
+      "maintenance": false
+    },
+    {
+      "address": 1007,
+      "bit": 6,
+      "name": "Digital alarm input 45",
+      "maintenance": false
+    },
+    {
+      "address": 1007,
+      "bit": 7,
+      "name": "Digital alarm input 46",
+      "maintenance": false
+    },
+    {
+      "address": 1007,
+      "bit": 8,
+      "name": "Digital alarm input 47",
+      "maintenance": false
+    },
+    {
+      "address": 1007,
+      "bit": 9,
+      "name": "Digital alarm input 48",
+      "maintenance": false
+    },
+    {
+      "address": 1007,
+      "bit": 10,
+      "name": "Digital alarm input 49",
+      "maintenance": false
+    },
+    {
+      "address": 1007,
+      "bit": 11,
+      "name": "Digital alarm input 50",
+      "maintenance": false
+    },
+    {
+      "address": 1010,
+      "bit": 12,
+      "name": "Digital alarm input 4 (Emergency stop)",
+      "maintenance": false
+    },
+    {
+      "address": 1011,
+      "bit": 7,
+      "name": "M-Logic alarm 1",
+      "maintenance": false
+    },
+    {
+      "address": 1011,
+      "bit": 8,
+      "name": "M-Logic alarm 2",
+      "maintenance": false
+    },
+    {
+      "address": 1011,
+      "bit": 9,
+      "name": "M-Logic alarm 3",
+      "maintenance": false
+    },
+    {
+      "address": 1011,
+      "bit": 10,
+      "name": "M-Logic alarm 4",
+      "maintenance": false
+    },
+    {
+      "address": 1011,
+      "bit": 11,
+      "name": "M-Logic alarm 5",
+      "maintenance": false
+    },
+    {
+      "address": 1011,
+      "bit": 12,
+      "name": "M-Logic extended alarm 1",
+      "maintenance": false
+    },
+    {
+      "address": 1011,
+      "bit": 13,
+      "name": "M-Logic extended alarm 2",
+      "maintenance": false
+    },
+    {
+      "address": 1011,
+      "bit": 14,
+      "name": "M-Logic extended alarm 3",
+      "maintenance": false
+    },
+    {
+      "address": 1011,
+      "bit": 15,
+      "name": "M-Logic extended alarm 4",
+      "maintenance": false
+    },
+    {
+      "address": 1013,
+      "bit": 0,
+      "name": "Multi input terminal 20.1",
+      "maintenance": false
+    },
+    {
+      "address": 1013,
+      "bit": 1,
+      "name": "Multi input terminal 20.2",
+      "maintenance": false
+    },
+    {
+      "address": 1013,
+      "bit": 2,
+      "name": "W. fail. 20",
+      "maintenance": false
+    },
+    {
+      "address": 1013,
+      "bit": 3,
+      "name": "Multi input terminal 21.1",
+      "maintenance": false
+    },
+    {
+      "address": 1013,
+      "bit": 4,
+      "name": "Multi input terminal 21.2",
+      "maintenance": false
+    },
+    {
+      "address": 1013,
+      "bit": 5,
+      "name": "W. fail. 21",
+      "maintenance": false
+    },
+    {
+      "address": 1013,
+      "bit": 6,
+      "name": "Multi input terminal 22.1",
+      "maintenance": false
+    },
+    {
+      "address": 1013,
+      "bit": 7,
+      "name": "Multi input terminal 22.2",
+      "maintenance": false
+    },
+    {
+      "address": 1013,
+      "bit": 8,
+      "name": "W. fail. 22",
+      "maintenance": false
+    },
+    {
+      "address": 1013,
+      "bit": 9,
+      "name": "Overspeed 1",
+      "maintenance": false
+    },
+    {
+      "address": 1013,
+      "bit": 10,
+      "name": "Overspeed 2",
+      "maintenance": false
+    },
+    {
+      "address": 1013,
+      "bit": 11,
+      "name": "Crank failure",
+      "maintenance": false
+    },
+    {
+      "address": 1013,
+      "bit": 12,
+      "name": "Running feedback failure",
+      "maintenance": false
+    },
+    {
+      "address": 1013,
+      "bit": 13,
+      "name": "MPU wire failure",
+      "maintenance": false
+    },
+    {
+      "address": 1013,
+      "bit": 15,
+      "name": "Start failure",
+      "maintenance": false
+    },
+    {
+      "address": 1014,
+      "bit": 0,
+      "name": "Stop failure",
+      "maintenance": false
+    },
+    {
+      "address": 1014,
+      "bit": 1,
+      "name": "U< aux. term. 1",
+      "maintenance": false
+    },
+    {
+      "address": 1014,
+      "bit": 2,
+      "name": "U> aux. term. 1",
+      "maintenance": false
+    },
+    {
+      "address": 1014,
+      "bit": 5,
+      "name": "Underspeed 1",
+      "maintenance": false
+    },
+    {
+      "address": 1014,
+      "bit": 6,
+      "name": "Multi input terminal 23.1",
+      "maintenance": false
+    },
+    {
+      "address": 1014,
+      "bit": 7,
+      "name": "Multi input terminal 23.2",
+      "maintenance": false
+    },
+    {
+      "address": 1014,
+      "bit": 8,
+      "name": "W. fail. 23",
+      "maintenance": false
+    },
+    {
+      "address": 1015,
+      "bit": 0,
+      "name": "Service timer 1",
+      "maintenance": true
+    },
+    {
+      "address": 1015,
+      "bit": 1,
+      "name": "Service timer 2",
+      "maintenance": true
+    },
+    {
+      "address": 1015,
+      "bit": 2,
+      "name": "Stop coil wire break",
+      "maintenance": false
+    },
+    {
+      "address": 1015,
+      "bit": 4,
+      "name": "Engine heater 1",
+      "maintenance": false
+    },
+    {
+      "address": 1015,
+      "bit": 5,
+      "name": "Battery test",
+      "maintenance": false
+    },
+    {
+      "address": 1015,
+      "bit": 6,
+      "name": "Battery asymmetry 1",
+      "maintenance": false
+    },
+    {
+      "address": 1015,
+      "bit": 7,
+      "name": "Battery asymmetry 2",
+      "maintenance": false
+    },
+    {
+      "address": 1015,
+      "bit": 8,
+      "name": "Max. ventilation 1",
+      "maintenance": false
+    },
+    {
+      "address": 1015,
+      "bit": 9,
+      "name": "Max. ventilation 2",
+      "maintenance": false
+    },
+    {
+      "address": 1015,
+      "bit": 12,
+      "name": "Unit not in auto",
+      "maintenance": false
+    },
+    {
+      "address": 1015,
+      "bit": 13,
+      "name": "Fuel pump logic",
+      "maintenance": false
+    }
+  ]
+}

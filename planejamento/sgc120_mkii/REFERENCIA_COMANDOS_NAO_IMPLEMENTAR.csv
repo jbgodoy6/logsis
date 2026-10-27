@@ -1,0 +1,5 @@
+﻿model;source_sheet;source_row;group_source;modbus_address;bit_source;function_codes_source;name_source;data_type;data_format;scaling_source;unit_source;enum_source;status
+SGC120_MKII;"Holding & Read (03;04;16)";443;DG mode change;0;;16;DG mode change command ;INT16u;-;1;-;"Decimal value:
+1: STOP, 2: START, 4: AUTO, 64: ACK";"documental; sem slot MDB; validar firmware e configuração"
+SGC120_MKII;"Holding & Read (03;04;16)";444;DTC Status ;1;;16;DTC Parent Specifier;INT16u;-;1;-;"Decimal value:
+0: DTC DM1 parent, 1: DTC DM1 child1, 16: DTC DM2 parent, 17: DTC DM2 child1";"documental; sem slot MDB; validar firmware e configuração"

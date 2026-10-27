@@ -70,6 +70,8 @@ class Channel:
     role: str = ''
     signed_value: bool | None = None
     label_variable: str = ''
+    codec: str = 'integer'
+    source_reference: str = ''
 
     @property
     def index(self):
@@ -106,6 +108,10 @@ class Profile:
     kind: str = 'legacy'
     manual_family: str = ''
     manual_notes: list[str] | None = None
+    vendor: str = 'DSE'
+    application: str = ''
+    topology: str = ''
+    source_document: str = ''
 
 
 def available_models():
@@ -195,11 +201,11 @@ def nominal_limits(channel: Channel, nominal: dict) -> tuple[str, str] | None:
         if '_v_' in role:
             ll = float(number(nominal['voltage'], 'Tensão nominal'))
             base = ll / math.sqrt(3) if role.endswith(('l1n','l2n','l3n')) else ll
-            low, high = base*.9*10, base*1.1*10
+            low, high = base*.9*channel.divisor, base*1.1*channel.divisor
         elif role.endswith('_frequency'):
-            base = number(nominal['frequency']); low, high = base*Decimal('.9')*10, base*Decimal('1.1')*10
+            base = number(nominal['frequency']); low, high = base*Decimal('.9')*channel.divisor, base*Decimal('1.1')*channel.divisor
         elif role == 'battery':
-            base = number(nominal['battery']); low, high = base*Decimal('.8')*10, base*Decimal('1.2')*10
+            base = number(nominal['battery']); low, high = base*Decimal('.8')*channel.divisor, base*Decimal('1.2')*channel.divisor
         elif role == 'rpm':
             base = number(nominal['rpm']); low, high = base*Decimal('.9'), base*Decimal('1.1')
         else:
@@ -231,7 +237,7 @@ class Project:
         self.rows = rows or [dict(DEFAULT_MDB) for _ in range(100)]
         self.slave = '10'
         self.nominal = {'voltage': '380', 'frequency': '60', 'battery': '24', 'rpm': '1800'}
-        self.energy_divisor = '10'
+        self.energy_divisor = '1' if self.profile.vendor == 'DEIF' else '10'
         self.maintenance_alert_hours = '50'
         self.source = None
 
@@ -267,6 +273,14 @@ class Project:
         else:
             candidate = rows[28]['ADDR'].strip()
             model = fallback_model if fallback_model not in ['DSE7420','DSE8610'] else 'DSE8610' if candidate == '1091' else 'DSE7420' if candidate == '1059' else fallback_model
+            # Studio 8 exported a 59-channel DSE8620. Recognize its complete
+            # signature rather than misidentifying it as a DSE7420 by frequency.
+            expanded=load_profile('DSE8620')
+            if expanded.count>59 and all(all(rows[c.index][field].strip()==c.params[field].strip() for field in ['ADDR','FNC','BIT']) for c in expanded.channels[:59]) and all(row['ID'].strip() in ['', '-1'] for row in rows[59:]):
+                model='DSE8620'
+                for c in expanded.channels[59:]:
+                    rows[c.index]=dict(c.params)
+                    rows[c.index]['ID']=rows[0]['ID']
         project = cls(model, document, rows)
         ids = {row['ID'].strip() for row in rows[:project.profile.count] if row['ID'].strip() not in ['', '-1']}
         project.slave = next(iter(ids)) if len(ids) == 1 else '10'
@@ -375,10 +389,15 @@ class Project:
         return edited if edited and edited != channel.params['DM'] else channel.name
 
     def channel_divisor(self, channel):
+        if self.profile.vendor == 'DEIF':
+            return Decimal(channel.divisor)
         energy = channel.role.startswith('energy_') if channel.role else channel.number == 37
         return number(self.energy_divisor) if energy else Decimal(channel.divisor)
 
     def dashboard_template(self):
+        if self.profile.vendor == 'DEIF':
+            from .deif_dashboard import build_dashboard
+            return build_dashboard(self.profile)
         if self.profile.kind != 'legacy':
             from .manual_dashboard import build_dashboard
             return build_dashboard(self.profile)
@@ -387,10 +406,10 @@ class Project:
     def csv_bytes(self):
         output = io.StringIO(newline='')
         writer = csv.writer(output, delimiter=';')
-        writer.writerow(['Canal Grafana', 'Coluna SQL', 'Índice BIN', 'Medição', 'Grupo', 'Slave ID', 'Endereço', 'Função LogSis', 'Função Modbus', 'Bit', 'Divisor Grafana', 'Unidade', 'Compatibilidade'])
+        writer.writerow(['Canal Grafana', 'Coluna SQL', 'Índice BIN', 'Medição', 'Grupo', 'Slave ID', 'Endereço', 'Função LogSis', 'Função Modbus', 'Bit', 'Divisor Grafana', 'Unidade', 'Compatibilidade']+(['Codec anterior à escala','Fonte documental'] if self.profile.vendor=='DEIF' else []))
         for c in self.profile.channels:
             row = self.rows[c.index]
-            writer.writerow([f'MDB{c.number:02}', c.column, c.index, c.name, c.group, row['ID'], row['ADDR'], row['FNC'], '03' if row['FNC'] in ['3', '30'] else '04', row['BIT'], str(self.channel_divisor(c)), c.unit, 'OK' if not self.row_issues(c) else 'DIVERGENTE'])
+            writer.writerow([f'MDB{c.number:02}', c.column, c.index, c.name, c.group, row['ID'], row['ADDR'], row['FNC'], '02' if row['FNC']=='2' else '03' if row['FNC'] in ['3', '30'] else '04', row['BIT'], str(self.channel_divisor(c)), c.unit, ('OK · decodificar FLOAT32/CDAB antes da escala' if c.codec=='float32_cdab' else 'OK') if not self.row_issues(c) else 'DIVERGENTE']+([c.codec,c.source_reference] if self.profile.vendor=='DEIF' else []))
         return ('\ufeff' + output.getvalue()).encode('utf-8')
 
     def dashboard(self, table: str, plant: str, datasource: str, uid=''):
@@ -472,6 +491,15 @@ class Project:
                           alarm_fields={c.role:f'{c.column} / bit {c.params["BIT"]}' for c in self.profile.channels if c.role in ['warning','trip','shutdown']},
                           breaker={c.role:c.column for c in self.profile.channels if c.role.startswith('led_')},transfer_generator=None,
                           role_columns={c.role:c.column for c in self.profile.channels if c.role})
+        if self.profile.vendor == 'DEIF':
+            report.update(vendor='DEIF', application=self.profile.application, topology=self.profile.topology,
+                          verification_basis=self.profile.source_document+'; validação documental e simulada, sem teste físico',
+                          signal_semantics='Retornos ON/OFF, ou estado lógico de alimentação quando explicitamente identificado. Dados desconhecidos não confirmam posição.',
+                          mode_codes=None, mode_field='MODO_LOCAL derivado de bits documentados',
+                          alarm_fields='Derivados dos registros nativos; severidade não documentada permanece sem classificação',
+                          breaker='Verificar semântica por aplicação no dashboard e no mapa',
+                          raw_contract='O coletor envia os bits como inteiro. FLOAT32/CDAB é reinterpretado no SQL; nenhuma conversão float é exigida do LogSis.',
+                          codecs={c.column:{'codec':c.codec,'divisor':c.divisor,'source':c.source_reference} for c in self.profile.channels})
         stream = io.BytesIO()
         with zipfile.ZipFile(stream, 'w', zipfile.ZIP_DEFLATED) as archive:
             prefix = self.profile.model
@@ -479,7 +507,8 @@ class Project:
             archive.writestr(prefix + '_GRAFANA.json', json.dumps(dashboard, ensure_ascii=False, indent=2, allow_nan=False) + '\n')
             archive.writestr(prefix + '_MAPA.csv', self.csv_bytes())
             archive.writestr('COMPATIBILIDADE.json', json.dumps(report, ensure_ascii=False, indent=2) + '\n')
-            archive.writestr('LEIA-ME.txt', f'LogSis Studio {__version__} / {prefix}\n\n1. O BIN é a configuração do equipamento LogSis.\n2. Importe o arquivo GRAFANA.json no Grafana.\n3. Tabela: {table}\n4. UID do dashboard: {dashboard["uid"]}\n5. O CSV relaciona o índice zero do BIN com MDB01/mdb1 e os demais canais.\n\nEscalas e endereços seguem os perfis desta versão. O teste local não certifica a variante/firmware em campo.\nOs campos de alarme têm BIT10/11/12 configurados para extração pelo coletor.\n')
+            note = ('DEIF: estados, escalas e codecs seguem o perfil específico. FLOAT32/CDAB é decodificado no SQL a partir dos 32 bits brutos. Para CGC, entradas FC02 exigem suporte FNC2 no coletor. Consulte COMPATIBILIDADE.json.\n' if self.profile.vendor=='DEIF' else 'Os campos de alarme têm BIT10/11/12 configurados para extração pelo coletor.\n')
+            archive.writestr('LEIA-ME.txt', f'LogSis Studio {__version__} / {prefix}\n\n1. O BIN é a configuração do equipamento LogSis.\n2. Importe o arquivo GRAFANA.json no Grafana.\n3. Tabela: {table}\n4. UID do dashboard: {dashboard["uid"]}\n5. O CSV relaciona o índice zero do BIN com MDB01/mdb1 e os demais canais.\n\nEscalas e endereços seguem os perfis desta versão. O teste local não certifica a variante/firmware em campo.\n'+note)
         return stream.getvalue()
 
 

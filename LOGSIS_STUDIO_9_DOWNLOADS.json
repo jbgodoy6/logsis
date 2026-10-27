@@ -1,0 +1,15 @@
+{
+  "version": "9.0.0",
+  "artifacts": [
+    {
+      "file": "LOGSIS_STUDIO_9_0.zip",
+      "bytes": 545236,
+      "sha256": "8a12bd5aa2bbb3995e31a59b2ba7cfbd796ab28b80a32803ceb4ac13cb81f37b"
+    },
+    {
+      "file": "LOGSIS_STUDIO_9_MODELOS.zip",
+      "bytes": 1101287,
+      "sha256": "6bf2f5e7638282bcf88656a1f2a297e78b0f16489c33ae78d2baa6a92a78633b"
+    }
+  ]
+}

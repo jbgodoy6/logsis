@@ -8,7 +8,7 @@ from logsis_studio.transport import decode
 NEW=['DSE4520','DSE6120','DSE6320','DSE7320','DSE8620','DSE8660','DSE8680']
 class ManualProfilesTests(unittest.TestCase):
  def test_catalog_and_generations(self):
-  self.assertEqual(len(available_models()),9)
+  self.assertEqual(len([m for m in available_models() if m.startswith('DSE')]),9)
   for model in ['DSE4520','DSE6120','DSE7320']:self.assertIn('MkII',Project.new(model).profile.label)
  def test_delivered_legacy_bin_definitions_and_dashboards_unchanged(self):
   expected=json.loads((Path(__file__).parent/'fixtures/studio72_legacy_hashes.json').read_text())
@@ -76,7 +76,7 @@ class ManualInterfaceTests(unittest.TestCase):
   from logsis_studio.app import Studio
   app=Studio();app.update()
   try:
-   self.assertEqual(len(app.model_labels),9)
+   self.assertEqual(len(app.model_labels),len(available_models()))
    with patch('logsis_studio.app.messagebox.askyesno',return_value=True):
     for model in NEW:
      app.switch_model(model);app.show_page(4);app.update()

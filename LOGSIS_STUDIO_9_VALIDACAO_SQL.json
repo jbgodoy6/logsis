@@ -1,0 +1,162 @@
+{
+  "result": "passed",
+  "scope": "Documental, BIN integer payload and isolated PostgreSQL/Grafana synthetic tests. No physical controller test.",
+  "models": [
+    {
+      "model": "AGC150_GEN",
+      "channels": 84,
+      "periods": [
+        {
+          "title": "HORAS / PERÍODO",
+          "value": 1.0
+        },
+        {
+          "title": "Gerador · energia ativa / PERÍODO",
+          "value": 100.0
+        }
+      ],
+      "edges": [
+        "dados ausentes permanecem desconhecidos",
+        "classe de falha nativa",
+        "manutenção separada",
+        "modos conflitantes"
+      ],
+      "passed": true
+    },
+    {
+      "model": "AGC150_GEN_BUS",
+      "channels": 82,
+      "periods": [
+        {
+          "title": "HORAS / PERÍODO",
+          "value": 1.0
+        },
+        {
+          "title": "Gerador · energia ativa / PERÍODO",
+          "value": 100.0
+        }
+      ],
+      "edges": [
+        "dados ausentes permanecem desconhecidos",
+        "classe de falha nativa",
+        "manutenção separada",
+        "modos conflitantes"
+      ],
+      "passed": true
+    },
+    {
+      "model": "AGC150_MAINS",
+      "channels": 67,
+      "periods": [
+        {
+          "title": "Companhia · energia ativa / PERÍODO",
+          "value": 100.0
+        }
+      ],
+      "edges": [
+        "dados ausentes permanecem desconhecidos",
+        "classe de falha nativa",
+        "manutenção separada",
+        "modos conflitantes"
+      ],
+      "passed": true
+    },
+    {
+      "model": "AGC150_ATS",
+      "channels": 63,
+      "periods": [
+        {
+          "title": "Fonte S1 · energia ativa / PERÍODO",
+          "value": 100.0
+        }
+      ],
+      "edges": [
+        "dados ausentes permanecem desconhecidos",
+        "classe de falha nativa",
+        "manutenção separada"
+      ],
+      "passed": true
+    },
+    {
+      "model": "AGC150_ENG",
+      "channels": 43,
+      "periods": [
+        {
+          "title": "HORAS / PERÍODO",
+          "value": 1.0
+        }
+      ],
+      "edges": [
+        "dados ausentes permanecem desconhecidos",
+        "classe de falha nativa",
+        "manutenção separada",
+        "modos conflitantes"
+      ],
+      "passed": true
+    },
+    {
+      "model": "SGC420_MKII",
+      "channels": 81,
+      "periods": [
+        {
+          "title": "HORAS / PERÍODO",
+          "value": 1.5
+        },
+        {
+          "title": "Gerador · energia ativa / PERÍODO",
+          "value": 10
+        },
+        {
+          "title": "Companhia · energia ativa / PERÍODO",
+          "value": 10
+        }
+      ],
+      "edges": [
+        "dados ausentes permanecem desconhecidos",
+        "manutenção isolada não colore gerador",
+        "warning/trip/shutdown",
+        "NaN → nulo",
+        "inteiro negativo → bits FLOAT preservados"
+      ],
+      "passed": true
+    },
+    {
+      "model": "CGC412",
+      "channels": 53,
+      "periods": [
+        {
+          "title": "HORAS / PERÍODO",
+          "value": 1.0
+        },
+        {
+          "title": "Energia gerador / PERÍODO",
+          "value": 100.0
+        }
+      ],
+      "edges": [
+        "dados ausentes permanecem desconhecidos",
+        "modos conflitantes"
+      ],
+      "passed": true
+    },
+    {
+      "model": "CGC413",
+      "channels": 66,
+      "periods": [
+        {
+          "title": "HORAS / PERÍODO",
+          "value": 1.0
+        },
+        {
+          "title": "Energia gerador / PERÍODO",
+          "value": 100.0
+        }
+      ],
+      "edges": [
+        "dados ausentes permanecem desconhecidos",
+        "modos conflitantes"
+      ],
+      "passed": true
+    }
+  ]
+}

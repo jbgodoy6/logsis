@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from pathlib import Path
 import queue
+import struct
 import threading
 import tkinter as tk
 from tkinter import filedialog, font, messagebox, ttk
@@ -12,8 +13,8 @@ from . import __version__
 from .core import Project, RESOURCES, atomic_write, integer, number, safe_text, safe_value, available_models, load_profile
 from .transport import decode, read_rtu, read_tcp, request_parameters
 
-BG, PANEL, SIDE, INPUT = '#0b111b', '#111c2a', '#080e17', '#172535'
-INK, MUTED, CYAN, GREEN, GOLD, RED, BORDER = '#edf3fa', '#91a4ba', '#65d5e6', '#63d4ad', '#e9bd79', '#fa8d92', '#25364a'
+BG, PANEL, SIDE, INPUT = '#091421', '#10243a', '#061020', '#16324c'
+INK, MUTED, CYAN, GREEN, GOLD, RED, BORDER = '#edf5ff', '#a0b5cb', '#329bea', '#63d4ad', '#ffbf19', '#fa8d92', '#254562'
 
 
 class ScrollFrame(ttk.Frame):
@@ -39,7 +40,7 @@ class Studio(tk.Tk):
 
     def __init__(self):
         super().__init__()
-        self.title('LogSis Studio 8 • Controladores DSE')
+        self.title('LogSis Studio 9 • Sistel · DSE + DEIF')
         width, height = min(1460, self.winfo_screenwidth() - 70), min(920, self.winfo_screenheight() - 70)
         self.geometry(f'{width}x{height}')
         self.minsize(1120, 720)
@@ -92,8 +93,8 @@ class Studio(tk.Tk):
         style.configure('Heading.TLabel', font=(self.family, 13, 'bold'))
         style.configure('TButton', background=INPUT, foreground=INK, borderwidth=0, padding=(14, 10), focuscolor=CYAN)
         style.map('TButton', background=[('active', '#263d54'), ('disabled', '#15202c')], foreground=[('disabled', '#63768a')])
-        style.configure('Primary.TButton', background=CYAN, foreground=SIDE, font=(self.family, 10, 'bold'))
-        style.map('Primary.TButton', background=[('active', '#9fe9f3'), ('disabled', '#23444c')], foreground=[('disabled', MUTED)])
+        style.configure('Primary.TButton', background=GOLD, foreground=SIDE, font=(self.family, 10, 'bold'))
+        style.map('Primary.TButton', background=[('active', '#ffd466'), ('disabled', '#514621')], foreground=[('disabled', MUTED)])
         style.configure('Nav.TButton', background=SIDE, foreground=MUTED, anchor='w', padding=(18, 14), font=(self.family, 10))
         style.map('Nav.TButton', background=[('active', '#132332')])
         style.configure('Active.Nav.TButton', background='#143040', foreground=CYAN)
@@ -115,8 +116,18 @@ class Studio(tk.Tk):
             style.map(scrollbar, background=[('active', '#496c8b'), ('!active', '#30465d')])
         style.configure('TSeparator', background=BORDER)
         style.configure('TCheckbutton', background=BG, foreground=INK, indicatorbackground=INPUT)
-        icon = tk.PhotoImage(width=32, height=32)
-        icon.put(SIDE, to=(0, 0, 32, 32)); icon.put(CYAN, to=(7, 6, 12, 25)); icon.put(CYAN, to=(7, 20, 25, 25))
+        # Some Tk PNG readers select an embedded provenance thumbnail rather
+        # than the image pixels. Keep the original asset intact and pass only
+        # PNG rendering chunks to Tk (no third-party runtime dependency).
+        png=(RESOURCES/'logsis_symbol.png').read_bytes()
+        chunks=[png[:8]];offset=8
+        while offset<len(png):
+            size=struct.unpack('>I',png[offset:offset+4])[0]
+            chunk=png[offset:offset+12+size]
+            if chunk[4:8]!=b'caBX':chunks.append(chunk)
+            offset+=size+12
+        self._brand_source=tk.PhotoImage(data=b''.join(chunks),format='png')
+        icon=self._brand_source.subsample(max(1,self._brand_source.width()//64))
         self.iconphoto(True, icon)
         self._icon = icon
 
@@ -140,9 +151,11 @@ class Studio(tk.Tk):
     def build(self):
         sidebar = tk.Frame(self, bg=SIDE, width=218)
         sidebar.pack(side='left', fill='y'); sidebar.pack_propagate(False)
-        self.label(sidebar, 'L /', 30, CYAN, SIDE, True).pack(anchor='w', padx=22, pady=(26, 2))
+        self._brand=self._brand_source.subsample(max(1,self._brand_source.width()//128))
+        tk.Label(sidebar,image=self._brand,bg=SIDE).pack(anchor='w',padx=26,pady=(18,0))
         self.label(sidebar, 'LOGSIS', 22, INK, SIDE, True).pack(anchor='w', padx=22)
-        self.label(sidebar, 'S T U D I O   /   8', 10, MUTED, SIDE).pack(anchor='w', padx=23, pady=(3, 28))
+        self.label(sidebar, 'S T U D I O   /   9', 10, GOLD, SIDE).pack(anchor='w', padx=23, pady=(3, 8))
+        self.label(sidebar, 'SISTEL · energia confiável', 9, MUTED, SIDE).pack(anchor='w', padx=23, pady=(0,18))
         self.label(sidebar, 'ESPAÇO DE TRABALHO', 8, MUTED, SIDE, True).pack(anchor='w', padx=22, pady=(10, 12))
         self.nav = []
         for i, title in enumerate(self.page_names):
@@ -153,7 +166,7 @@ class Studio(tk.Tk):
         footer.pack(side='bottom', fill='x', padx=22, pady=23)
         self.label(footer, 'BIN + GRAFANA', 10, GREEN, SIDE, True).pack(anchor='w')
         self.label(footer, 'Dois lados. O mesmo mapa.', 9, MUTED, SIDE).pack(anchor='w', pady=(6, 12))
-        self.label(footer, f'DSE / {len(available_models())} perfis de controlador', 9, MUTED, SIDE).pack(anchor='w')
+        self.label(footer, f'DSE + DEIF / {len(available_models())} perfis', 9, MUTED, SIDE).pack(anchor='w')
         self.label(footer, f'Versão {__version__}', 8, MUTED, SIDE).pack(anchor='w', pady=(5, 0))
         host = ttk.Frame(self, padding=(24, 18, 24, 14)); host.pack(side='left', fill='both', expand=True)
         top = ttk.Frame(host); top.pack(fill='x', pady=(0, 16))
@@ -161,7 +174,7 @@ class Studio(tk.Tk):
         self.model_buttons = {}
         self.model_labels = {(load_profile(model).label or model):model for model in available_models()}
         self.model_var = tk.StringVar(value=self.project.profile.label or self.project.profile.model)
-        self.model_box = ttk.Combobox(top,textvariable=self.model_var,values=list(self.model_labels),state='readonly',width=24)
+        self.model_box = ttk.Combobox(top,textvariable=self.model_var,values=list(self.model_labels),state='readonly',width=36)
         self.model_box.pack(side='right')
         self.model_box.bind('<<ComboboxSelected>>',lambda _:self.select_model())
         titlebar = ttk.Frame(host); titlebar.pack(fill='x', pady=(0, 18))
@@ -223,6 +236,9 @@ class Studio(tk.Tk):
         elif self.project.profile.kind=='bus_tie': items=[('Fonte 1','BUS 1'),('Acoplamento','Indicador LED'),('Fonte 2','BUS 2')]
         elif self.project.profile.kind=='engine_transfer': items=[('Fontes','Rede + Gerador'),('Indicadores','LEDs do controlador'),('Instalação','Carga')]
         elif self.project.profile.model == 'DSE8610': items = [('Fonte', 'Gerador'), ('Acoplamento', 'MDB52 / GCB'), ('Instalação', 'BUS + Carga')]
+        if self.project.profile.vendor=='DEIF':
+            topology=self.project.profile.topology
+            items=([('Fontes','Companhia + Gerador'),('Transferência','Estados nativos'),('Instalação','Carga')] if topology=='transfer' else [('Origem','Companhia' if topology=='mains_bus' else 'Motor' if topology=='engine' else 'Gerador'),('Ligação','Barramento' if topology!='engine' else 'Acionamento'),('Instalação','Carga')])
         gap = 36; cardw = (width - gap * 2 - 4) / 3
         for i, (caption, value) in enumerate(items):
             x = 2 + i * (cardw + gap)
@@ -360,7 +376,8 @@ class Studio(tk.Tk):
         self.plant_var = self.tracked('Minha planta'); self.table_var = self.tracked(); self.datasource_var = self.tracked('zKW_ld27k'); self.uid_var = self.tracked(); self.energy_var = self.tracked('10'); self.maintenance_var = self.tracked('50')
         for label, variable in [('Nome da planta', self.plant_var), ('Tabela SQL · Id_Logsis', self.table_var), ('UID do datasource PostgreSQL', self.datasource_var), ('UID do dashboard · opcional', self.uid_var), ('Divisor de energia · bruto → kWh', self.energy_var), ('Avisar manutenção a partir de · horas', self.maintenance_var)]:
             self.label(form, label, 9, MUTED, PANEL).pack(anchor='w', padx=20, pady=(7, 4))
-            ttk.Entry(form, textvariable=variable).pack(fill='x', padx=20)
+            entry=ttk.Entry(form, textvariable=variable);entry.pack(fill='x', padx=20)
+            if variable is self.energy_var:self.energy_entry=entry
         self.label(form, 'Tabela: id_planta ou public.id_planta.\nUID vazio: gera um identificador por modelo e tabela.\nPara atualizar um dashboard, informe seu UID atual.', 8, MUTED, PANEL, justify='left').pack(anchor='w', padx=20, pady=(9, 9))
         ttk.Button(form, text='Usar UID do dashboard de referência', command=self.reference_uid).pack(anchor='w', padx=20, pady=(0, 9))
         results = self.card(layout); results.grid(row=0, column=1, sticky='nsew')
@@ -390,8 +407,11 @@ class Studio(tk.Tk):
         self.flow_note.set('K1 usa MDB52 e K2 usa MDB53. Ambos com 0 aberto e 1 fechado.' if p.profile.model == 'DSE7420' else 'Um único gerador. O BUS é medido independentemente do estado do disjuntor MDB52.')
         if p.profile.kind!='legacy':
             labels={'engine_transfer':'Rede, gerador e motor','mains_bus':'Rede e barramento comum','bus_tie':'BUS 1, acoplamento e BUS 2'}
-            self.overview_subtitle.set(labels[p.profile.kind]+' · mapa GenComm 2.93')
+            self.overview_subtitle.set(labels.get(p.profile.kind,p.profile.application)+' · '+('mapa DEIF' if p.profile.vendor=='DEIF' else 'mapa GenComm 2.93'))
             self.flow_note.set('Família '+p.profile.manual_family+'. LEDs são indicadores, não retorno físico. '+('Flexíveis A–D seguem a tabela 61xx MkII.' if p.profile.model=='DSE6120' else 'Recursos dependem do hardware e firmware.'))
+        if p.profile.vendor=='DEIF':
+            self.flow_note.set(p.profile.source_document+'. '+(p.profile.manual_notes or [''])[0])
+        self.energy_entry.configure(state='disabled' if p.profile.vendor=='DEIF' else 'normal')
         self.group_filter.set('Todos os grupos')
         self.group_box.configure(values=['Todos os grupos'] + list(dict.fromkeys(c.group for c in p.profile.channels)))
         self.test_channel_box.configure(values=[f'MDB{c.number:02} · {c.name}' for c in p.profile.channels])
@@ -431,7 +451,7 @@ class Studio(tk.Tk):
             if query and query not in text: continue
             if group != 'Todos os grupos' and channel.group != group: continue
             issues = self.project.row_issues(channel)
-            scale = '÷ ' + str(self.project.channel_divisor(channel)) if channel.divisor != 1 else channel.unit
+            scale = ('FLOAT CDAB → ÷ '+str(channel.divisor)) if channel.codec=='float32_cdab' else '÷ ' + str(self.project.channel_divisor(channel)) if channel.divisor != 1 else channel.unit
             self.tree.insert('', 'end', iid=str(channel.index), values=(f'MDB{channel.number:02}', self.project.channel_name(channel), channel.group, row['ADDR'], row['FNC'], scale, 'Revisar' if issues else 'OK'), tags=(('odd',) if channel.index % 2 else ()) + (('error',) if issues else ()))
         if self.tree.exists(selected): self.tree.selection_set(selected)
 
@@ -441,7 +461,8 @@ class Studio(tk.Tk):
         row = self.project.rows[self.current]
         self.detail_title.set(f'MDB{channel.number:02}')
         bit = row['BIT'] if row['BIT'] != '-1' else 'nenhum'
-        self.detail_info.set(f'{channel.name}\n\nSQL: {channel.column}  ·  BIN: índice {channel.index}\nEndereço: {row["ADDR"]}  ·  FNC: {row["FNC"]}\nBit: {bit}  ·  Slave ID: {row["ID"]}\nGrafana: bruto ÷ {self.project.channel_divisor(channel)} {channel.unit}')
+        conversion='bits brutos → FLOAT32/CDAB →' if channel.codec=='float32_cdab' else 'inteiro →'
+        self.detail_info.set(f'{channel.name}\n\nSQL: {channel.column}  ·  BIN: índice {channel.index}\nEndereço: {row["ADDR"]}  ·  FNC: {row["FNC"]}\nBit: {bit}  ·  Slave ID: {row["ID"]}\nGrafana: {conversion} ÷ {self.project.channel_divisor(channel)} {channel.unit}')
         for key, variable in self.editor.items(): variable.set(row[key])
         self.detail_problem.set('\n'.join(self.project.row_issues(channel)))
 

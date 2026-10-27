@@ -1,0 +1,70 @@
+{
+  "result": "passed",
+  "models": [
+    {
+      "model": "AGC150_GEN",
+      "widths": [
+        1440,
+        390
+      ],
+      "clipping": []
+    },
+    {
+      "model": "AGC150_GEN_BUS",
+      "widths": [
+        1440,
+        390
+      ],
+      "clipping": []
+    },
+    {
+      "model": "AGC150_MAINS",
+      "widths": [
+        1440,
+        390
+      ],
+      "clipping": []
+    },
+    {
+      "model": "AGC150_ATS",
+      "widths": [
+        1440,
+        390
+      ],
+      "clipping": []
+    },
+    {
+      "model": "AGC150_ENG",
+      "widths": [
+        1440,
+        390
+      ],
+      "clipping": []
+    },
+    {
+      "model": "SGC420_MKII",
+      "widths": [
+        1440,
+        390
+      ],
+      "clipping": []
+    },
+    {
+      "model": "CGC412",
+      "widths": [
+        1440,
+        390
+      ],
+      "clipping": []
+    },
+    {
+      "model": "CGC413",
+      "widths": [
+        1440,
+        390
+      ],
+      "clipping": []
+    }
+  ],
+  "queryErrors": []
+}

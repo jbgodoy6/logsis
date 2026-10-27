@@ -1,0 +1,68 @@
+SGC 420 Mk II Modbus descriptions
+Software version
+The information contained in these tables (Revision C) is applicable to software version R19.0 of the SGC 420 Mk II.
+
+Row | Hyperlink index
+12 | Modbus function codes
+21 | Holding_Read_register
+51 | Discrete_input_contact
+60 | Enum_list
+
+
+Back to index | Modbus function codes
+Function code | Description
+02 | Reads one or more read-only discrete input bits (digital ON/OFF states) from the device.
+03 | Reads one or more 16‑bit holding registers.
+04 | Reads one or more 16‑bit input registers.
+16 | Writes values to one or more 16‑bit holding registers.
+
+
+
+Back to index | Holding & Read register
+Function code | Effect
+03 or 04 | Read
+16 | Write
+
+Function group | Description
+AC measurement | Read the operating value of the associated AC measurement.
+Energy counter | Read the counter value.
+Engine measurement | Read the operating value of the associated engine measurement.
+Running hours | Read the running hours value.
+Auxiliary input | Read the operating value of the associated auxiliary input.
+Site battery | Read the site battery voltage value.
+Alarm status | Read the alarm status.
+Input and output diagnostics | Read the state of a digital input or output on the controller.
+DG status | Read the status of the genset.
+AI Measurements  | Read the AI measurement value.
+Custom Sensor | Read the Custom Sensor value.
+AI Alarm status  | Read the AI Alarm status.
+AI Status | Read the status of AI status.
+CPCB IV+ Alarm Status | Read the CPCB IV alarm status.
+DTC status | Read the DTC status.
+DTC Value | Read the DTC value reported by the engine.
+EIC Data Over Modbus | Read EIC data via Modbus communication.
+EGR Modbus | Read EGR related data via Modbus communication.
+Discrete Inputs | Read the state of discrete inputs configured in the controller.
+DG mode change | Write the controller changes the state of the genset if a valid value is entered.
+DTC status | Write the DTC status.
+
+
+
+Back to index | Discrete input contact
+Function code | Effect
+02 | Read
+
+Function group | Description
+Digital input | Read the state of a digital input on the controller.
+
+
+
+Back to index | ENUM list
+Register 72 to 88  and 158 ( 03; 04)
+Decimal value | Interpretation
+00 | Alarm disabled
+01 | Alarm not active
+02 | Warning alarm active
+03 | Shutdown alarm active
+04 | Electrical trip alarm active
+05 | Notification

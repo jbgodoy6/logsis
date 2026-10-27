@@ -14,7 +14,9 @@ for model in ['DSE4520','DSE6120','DSE6320','DSE7320','DSE8620','DSE8660','DSE86
   value=registers[int(c.params['ADDR'])];bit=int(c.params['BIT']);value=((value>>bit)&1 if bit>=0 else value)
   if c.role in ['warning','trip','shutdown']:value=0
   values.append(value)
- sql=f'CREATE TABLE IF NOT EXISTS {table}(time timestamptz,gsm_rssi numeric,"WiFi_rssi" numeric,{columns});TRUNCATE {table};'
+ sql=f'CREATE TABLE IF NOT EXISTS {table}(time timestamptz,gsm_rssi numeric,"WiFi_rssi" numeric,{columns});'
+ sql+=''.join(f'ALTER TABLE {table} ADD COLUMN IF NOT EXISTS {c.column} numeric;' for c in p.profile.channels)
+ sql+=f'TRUNCATE {table};'
  for time,previous in [('2026-10-23T11:59Z',True),('2026-10-23T12:30Z',False)]:
   sample=list(values)
   if previous:
