@@ -1,0 +1,19 @@
+LogSis Android 1.1 — verificação ClamAV
+Assinaturas disponíveis de 25/10/2026. Log em UTC. Sem envio dos arquivos a terceiros.
+Ausência de detecção não garante ausência de alertas em outros mecanismos.
+
+/scan/LOGSIS_ANDROID_1_1_PREVIA.apk: OK
+/scan/LOGSIS_APP_1_1_FONTE_E_SERVICO.zip: OK
+/scan/LOGSIS_SERVICO_TECNICOS_1_1.zip: OK
+
+----------- SCAN SUMMARY -----------
+Known viruses: 3628192
+Engine version: 1.5.4
+Scanned directories: 0
+Scanned files: 3
+Infected files: 0
+Data scanned: 4.08 MiB
+Data read: 1.85 MiB (ratio 2.20:1)
+Time: 27.424 sec (0 m 27 s)
+Start Date: 2026:10:28 16:15:18
+End Date:   2026:10:28 16:15:45

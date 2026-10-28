@@ -1,0 +1,21 @@
+{
+  "version": "1.1.0",
+  "status": "preview; authorization service publication and fixed URL pending",
+  "artifacts": [
+    {
+      "file": "LOGSIS_ANDROID_1_1_PREVIA.apk",
+      "bytes": 1031831,
+      "sha256": "64c1b61ef3a19a40028faebe1b9199a2e319b2667bbfd6c5a5f6ccc0d1c47708"
+    },
+    {
+      "file": "LOGSIS_APP_1_1_FONTE_E_SERVICO.zip",
+      "bytes": 903387,
+      "sha256": "a7087c2e466ec839acd7acf7c9e7a6e2d2f66928b55c57751124944214d6ab7a"
+    },
+    {
+      "file": "LOGSIS_SERVICO_TECNICOS_1_1.zip",
+      "bytes": 8328,
+      "sha256": "b9d4e503e34a3686e00cdb505e345a99504688935b7ba19b45e6b1e970b5b8ad"
+    }
+  ]
+}

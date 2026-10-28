@@ -5,6 +5,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
+import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.widget.Button;
@@ -59,6 +60,13 @@ public class MainActivityTest {
         return null;
     }
     private WebView web() { return web(activity.getWindow().getDecorView()); }
+
+    @Test public void ordinarySiteCannotUseEquipmentHttpException() {
+        WebResourceResponse blocked=web().getWebViewClient().shouldInterceptRequest(web(),request("http://192.168.4.1/config"));
+        assertNotNull(blocked);assertEquals(403,blocked.getStatusCode());
+        assertNull(web().getWebViewClient().shouldInterceptRequest(web(),request("https://logsis.com.br/style.css")));
+        assertNull(web().getWebViewClient().shouldInterceptRequest(web(),request("data:image/png;base64,AA==")));
+    }
 
     @Test public void brandedHomeOpensConfiguredSite() {
         assertNotNull(find("Logsis"));

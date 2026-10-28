@@ -1,0 +1,2 @@
+LogSis Studio 9.1.4 BIN presets. No Grafana dashboards.
+Profile SHA-256: 4ff44ec8cd28b55f595398f39c03ff69e21bdfdf120f3565821f86b2b9c3c71a

@@ -140,6 +140,11 @@ public final class MainActivity extends Activity {
         LinearLayout.LayoutParams hintParams = new LinearLayout.LayoutParams(-1, -2);
         hintParams.topMargin = dp(14);
         content.addView(hint, hintParams);
+        Button technician = primaryButton("Área técnica");
+        LinearLayout.LayoutParams technicianParams = new LinearLayout.LayoutParams(-1, dp(52));
+        technicianParams.setMargins(dp(12), dp(18), dp(12), 0);
+        content.addView(technician, technicianParams);
+        technician.setOnClickListener(view -> startActivity(new Intent(this, TechnicianActivity.class)));
         content.addView(new View(this), new LinearLayout.LayoutParams(1, dp(35)));
         content.addView(new View(this), new LinearLayout.LayoutParams(1, 0, 1));
         content.addView(image(R.drawable.sistel_logo, "Grupo Sistel — energia confiável"),
@@ -400,6 +405,15 @@ public final class MainActivity extends Activity {
     }
 
     private final class SiteClient extends WebViewClient {
+        @Override public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
+            // The per-domain HTTP exception belongs only to TechnicianActivity.
+            // This also blocks POSTs, which do not call shouldOverrideUrlLoading.
+            if ("http".equalsIgnoreCase(request.getUrl().getScheme())) {
+                return new WebResourceResponse("text/plain", "utf-8", 403, "Forbidden",
+                        java.util.Collections.emptyMap(), new java.io.ByteArrayInputStream(new byte[0]));
+            }
+            return null;
+        }
         @Override public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
             if (!request.isForMainFrame()) return !"https".equalsIgnoreCase(request.getUrl().getScheme());
             String url = request.getUrl().toString();

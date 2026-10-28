@@ -1,0 +1,98 @@
+{
+  "version": "1.1.0",
+  "result": "passed",
+  "releaseStatus": "preview; authorization service publication and fixed URL pending",
+  "applicationId": "br.com.sistel.logsis.avaliacao",
+  "minSdk": 26,
+  "targetSdk": 35,
+  "build": {
+    "assembleDebug": "passed",
+    "lintErrors": 0,
+    "lintWarnings": 18,
+    "lintWarningTypes": [
+      "MonochromeLauncherIcon",
+      "SetJavaScriptEnabled",
+      "SetTextI18n",
+      "UnusedAttribute"
+    ],
+    "jdk": "21.0.6",
+    "gradle": "8.9",
+    "sdk": 35,
+    "buildTools": "35.0.0",
+    "sdkImageDigest": "sha256:c724009e305b4607157287624033ab97f319af44c244bfc9f73b6293f3bb01b9"
+  },
+  "robolectric": {
+    "passed": 16,
+    "failed": 0,
+    "sdkLevels": [
+      28,
+      35
+    ],
+    "classes": [
+      {
+        "class": "br.com.sistel.logsis.MainActivityTest",
+        "passed": 8
+      },
+      {
+        "class": "br.com.sistel.logsis.TechnicianActivityTest",
+        "passed": 8
+      }
+    ],
+    "scope": "Simulated Android, not physical devices."
+  },
+  "nativeCoreChecks": {
+    "navigation": 19,
+    "BINAndLocalOrigin": 31,
+    "StudioCompatibleModels": 17,
+    "compatibilityCases": [
+      "Slave ID 247",
+      "13.8 kV / 50 Hz / 12 V / 1500 rpm nominal limits"
+    ],
+    "match": "byte-for-byte against independent Studio outputs"
+  },
+  "backendTests": {
+    "passed": 76,
+    "scope": "Mock Google services only; no real spreadsheet access."
+  },
+  "activation": {
+    "programmingEnabledInPreview": false,
+    "authUrlConfigured": false,
+    "fixedRegistry": "17HCp2CX3eUZXqQsTkTNDZvrLkGqzZQrJkCfeHo-toPQ",
+    "sheet": "Tecnicos",
+    "publicationRequired": true,
+    "driveFolderRequiredForRemoteUpdates": true
+  },
+  "apk": {
+    "signatureVerified": true,
+    "schemes": [
+      "v2",
+      "v3"
+    ],
+    "certificateRole": "evaluation, not production owner key",
+    "certificateSha256": "3189f4fe28444d86d8b6dc0afb314c9ad908b563a34509358d794f94b8a8de3a",
+    "zipAlignment": "passed",
+    "BINPresets": 17,
+    "grafanaDashboards": 0
+  },
+  "physicalWiFi4GTest": false,
+  "realEquipmentUploadTest": false,
+  "liveGoogleServiceTest": false,
+  "sourceHashes": {
+    "app/android/app/src/main/java/br/com/sistel/logsis/MainActivity.java": "b314ccf0e78c078164c874d8e655fffdca02512b9e7d30a85fab116bd9bf392c",
+    "app/android/app/src/main/java/br/com/sistel/logsis/DeviceConnection.java": "f649a8ba681fcfad7a0902d54ee547ae40347f9bb63e9a63afbc63ccec59c8c7",
+    "app/android/app/src/main/java/br/com/sistel/logsis/LibraryUpdate.java": "e0471dcaad4de4c3d9729bab5f2cabda6427ceb48f62fa147dfea4b7f8962c68",
+    "app/android/app/src/main/java/br/com/sistel/logsis/NominalLimits.java": "2d9230e4717c3edd21b9065157437e5d3e4c9510d00734e541e5be902925cdf5",
+    "app/android/app/src/main/java/br/com/sistel/logsis/BinProvider.java": "4a1c9eb0a5395822a54fa9aec5470c916e4f3d862b26e75d8bfb3d39acf3d5e4",
+    "app/android/app/src/main/java/br/com/sistel/logsis/BinLibrary.java": "5cec29228ec12f49168747f608fb9d0c7ddd56b1fc9d68ce5cc8a1544eb2fd9a",
+    "app/android/app/src/main/java/br/com/sistel/logsis/NavigationPolicy.java": "c4995e535dec2a37c576efb7bbb2cd05cee9dd7f11043f523eb85ec821e9c810",
+    "app/android/app/src/main/java/br/com/sistel/logsis/DevicePolicy.java": "c972c0ed5b16990f38f2f20e6bb1df8a629c67197deb569cb2ff59218441d79f",
+    "app/android/app/src/main/java/br/com/sistel/logsis/BinDocument.java": "b6c54840be7902d1f3be48cbde6d0d777c5e745a8d09dca8f22843d8c899cd53",
+    "app/android/app/src/main/java/br/com/sistel/logsis/TechnicianActivity.java": "14ffe11b83694a8ec461cdeacbd90ea4e99caa22bcb0e46f2d44f760f8ff687d",
+    "app/android/app/src/main/java/br/com/sistel/logsis/TechnicianAuth.java": "ffea096d7df4b267ea7175d9a5c609027de29a2d0ca39fb80922d77458d39bfa",
+    "app/android/app/src/main/AndroidManifest.xml": "2e5e866ad7d5a539c734f655bf37fc8878c90aee2db44c59fd8ec0d594c1c0a4",
+    "app/android/app/build.gradle": "04df1ef4ac8f81cbd0ecdda1fb4672df5847dfdc54be133883edc749fde58cbb",
+    "app/backend/Code.gs": "f8e886d4a28fdada01c85ce3deefe289fb066ed747b3f758cc1f783db690285a",
+    "app/backend/appsscript.json": "2eabfb582a6499a493c8e232fdbb9d6a2c73b8c5b03838fbe134ab6cac8d27c3"
+  },
+  "securityRegression": "Normal site WebView blocks HTTP requests, including equipment access; inline and HTTPS resources remain available. Technical HTTP is limited to the equipment browser and authorization checks."
+}
