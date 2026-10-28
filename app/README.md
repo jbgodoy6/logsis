@@ -1,4 +1,12 @@
-# Logsis para Android — base 1.0.0
+# LogSis Android — área técnica 1.1.0
+
+O desenvolvimento atual acrescenta conexão local ao equipamento, biblioteca de 17 controladores e geração **somente de BIN**, sem exportador Grafana. A área técnica exige ativação do serviço de autorização e permanece bloqueada até essa etapa.
+
+[Funcionamento da versão 1.1](README_TECNICO.md) · [Ativar o serviço da planilha](backend/README.md)
+
+## Histórico: base 1.0.0
+
+As instruções e permissões abaixo descrevem a versão original 1.0, anterior à área técnica.
 
 [Baixar APK de teste](../LOGSIS_ANDROID_1_0_TESTE.apk) · [Projeto-fonte](../LOGSIS_APP_ANDROID_FONTE_1_0.zip) · [Identidade visual aprovada](identidade/LOGSIS_PROPOSTA_VISUAL.png)
 
