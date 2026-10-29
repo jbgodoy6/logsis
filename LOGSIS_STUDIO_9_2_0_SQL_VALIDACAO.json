@@ -1,0 +1,100 @@
+{
+  "result": "passed",
+  "scope": "isolated PostgreSQL synthetic BIN-map fixtures, not physical hardware",
+  "models": [
+    {
+      "model": "DSE7420_ECU",
+      "channels": 71,
+      "allQueriesPassed": true,
+      "fuelPressure": 4.5,
+      "fuelRate": 23.4,
+      "zeroAndSentinel": true,
+      "nativeValidityOrSnapshot": true
+    },
+    {
+      "model": "DSE8610_ECU",
+      "channels": 70,
+      "allQueriesPassed": true,
+      "fuelPressure": 4.5,
+      "fuelRate": 23.4,
+      "zeroAndSentinel": true,
+      "nativeValidityOrSnapshot": true
+    },
+    {
+      "model": "DSE4520_ECU",
+      "channels": 69,
+      "allQueriesPassed": true,
+      "fuelPressure": 4.5,
+      "fuelRate": 23.4,
+      "zeroAndSentinel": true,
+      "nativeValidityOrSnapshot": true
+    },
+    {
+      "model": "DSE6120_ECU",
+      "channels": 70,
+      "allQueriesPassed": true,
+      "fuelPressure": 4.5,
+      "fuelRate": 23.4,
+      "zeroAndSentinel": true,
+      "nativeValidityOrSnapshot": true
+    },
+    {
+      "model": "DSE6320_ECU",
+      "channels": 69,
+      "allQueriesPassed": true,
+      "fuelPressure": 4.5,
+      "fuelRate": 23.4,
+      "zeroAndSentinel": true,
+      "nativeValidityOrSnapshot": true
+    },
+    {
+      "model": "DSE7320_ECU",
+      "channels": 69,
+      "allQueriesPassed": true,
+      "fuelPressure": 4.5,
+      "fuelRate": 23.4,
+      "zeroAndSentinel": true,
+      "nativeValidityOrSnapshot": true
+    },
+    {
+      "model": "DSE8620_ECU",
+      "channels": 77,
+      "allQueriesPassed": true,
+      "fuelPressure": 4.5,
+      "fuelRate": 23.4,
+      "zeroAndSentinel": true,
+      "nativeValidityOrSnapshot": true
+    },
+    {
+      "model": "AGC150_GEN_ECU",
+      "channels": 59,
+      "allQueriesPassed": true,
+      "fuelPressure": 4.5,
+      "fuelRate": 23.4,
+      "zeroAndSentinel": true,
+      "nativeValidityOrSnapshot": true
+    },
+    {
+      "model": "AGC150_GEN_BUS_ECU",
+      "channels": 59,
+      "allQueriesPassed": true,
+      "fuelPressure": 4.5,
+      "fuelRate": 23.4,
+      "zeroAndSentinel": true,
+      "nativeValidityOrSnapshot": true
+    },
+    {
+      "model": "AGC150_ENG_ECU",
+      "channels": 36,
+      "allQueriesPassed": true,
+      "fuelPressure": 4.5,
+      "fuelRate": 23.4,
+      "zeroAndSentinel": true,
+      "nativeValidityOrSnapshot": true
+    }
+  ],
+  "sourceHashes": {
+    "core.py": "b385bd61d1ac43afd4cf3f96abff62003f70ca057ed15cd3097be87f8387900a",
+    "electronic_dashboard.py": "503314dc06343d8602884300d121c0d3fb3873cb89593baa4e1ca5977d19cd7c"
+  }
+}

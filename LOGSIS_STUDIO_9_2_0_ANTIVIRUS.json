@@ -1,0 +1,10 @@
+{
+  "result": "passed",
+  "scanner": "ClamAV 1.5.4",
+  "knownViruses": 3628192,
+  "scannedFiles": 1,
+  "infectedFiles": 0,
+  "networkUpload": false,
+  "sha256": "28458b6827c35ff95391e1643eb2a2d4c6dc4d355fc3d132b7d38771fe6c2510",
+  "scope": "Offline scan of the final ZIP with available signatures; does not guarantee Windows/SmartScreen verdict."
+}

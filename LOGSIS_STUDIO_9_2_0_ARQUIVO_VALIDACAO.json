@@ -1,0 +1,9 @@
+{
+  "result": "passed",
+  "cleanExtract": true,
+  "profiles": 28,
+  "startup": true,
+  "gui": "Linux/Tk",
+  "windowsNative": false,
+  "hardware": false
+}

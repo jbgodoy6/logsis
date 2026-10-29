@@ -1,0 +1,12 @@
+{
+  "version": "9.2.0",
+  "profiles": 28,
+  "sourceOnly": true,
+  "artifacts": [
+    {
+      "file": "LOGSIS_STUDIO_9_2_0_FONTE.zip",
+      "bytes": 552878,
+      "sha256": "28458b6827c35ff95391e1643eb2a2d4c6dc4d355fc3d132b7d38771fe6c2510"
+    }
+  ]
+}

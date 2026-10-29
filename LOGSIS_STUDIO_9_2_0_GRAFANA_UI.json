@@ -1,0 +1,37 @@
+{
+  "result": "passed",
+  "models": [
+    {
+      "model": "DSE7420_ECU",
+      "widths": [
+        1440,
+        390
+      ],
+      "nativeJsonImport": true
+    },
+    {
+      "model": "DSE8610_ECU",
+      "widths": [
+        1440,
+        390
+      ],
+      "nativeJsonImport": true
+    },
+    {
+      "model": "AGC150_GEN_ECU",
+      "widths": [
+        1440,
+        390
+      ],
+      "nativeJsonImport": true
+    },
+    {
+      "model": "AGC150_GEN_BUS_ECU",
+      "widths": [
+        1440,
+        390
+      ],
+      "nativeJsonImport": true
+    }
+  ]
+}

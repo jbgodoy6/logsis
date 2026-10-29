@@ -37,9 +37,21 @@ class ScrollFrame(ttk.Frame):
 class Studio(tk.Tk):
     page_names = ['Visão geral', 'Mapa de variáveis', 'Equipamento & rede', 'Teste Modbus', 'Validar & exportar']
 
+    @staticmethod
+    def profile_title(profile):
+        title = profile.label or profile.model
+        if profile.motor_type == 'ecu' and profile.base_model.startswith('AGC150'):
+            application = {'GEN': 'Rede + gerador', 'GEN_BUS': 'Gerador + BUS', 'ENG': 'Motor'}
+            return 'AGC150 · ' + application[profile.base_model.removeprefix('AGC150_')] + ' · ECU/CAN'
+        if profile.model == 'DSE8620':
+            return title + ' · mapa anterior (74 canais)'
+        if profile.model.startswith('DSE') and not profile.motor_type and profile.model not in ['DSE8660', 'DSE8680', 'DSE8620_TC_UNICO']:
+            return title + ' · Convencional'
+        return title
+
     def __init__(self):
         super().__init__()
-        self.title('LogSis Studio 9 • Sistel · DSE + DEIF')
+        self.title('LogSis Studio 9.2 • Sistel · Convencional + ECU/CAN')
         width, height = min(1460, self.winfo_screenwidth() - 70), min(920, self.winfo_screenheight() - 70)
         self.geometry(f'{width}x{height}')
         self.minsize(1120, 720)
@@ -153,7 +165,7 @@ class Studio(tk.Tk):
         self._brand=self._brand_source.subsample(max(1,self._brand_source.width()//128))
         tk.Label(sidebar,image=self._brand,bg=SIDE).pack(anchor='w',padx=26,pady=(18,0))
         self.label(sidebar, 'LOGSIS', 22, INK, SIDE, True).pack(anchor='w', padx=22)
-        self.label(sidebar, 'S T U D I O   /   9', 10, GOLD, SIDE).pack(anchor='w', padx=23, pady=(3, 8))
+        self.label(sidebar, 'S T U D I O   /   9 . 2', 10, GOLD, SIDE).pack(anchor='w', padx=23, pady=(3, 8))
         self.label(sidebar, 'SISTEL · energia confiável', 9, MUTED, SIDE).pack(anchor='w', padx=23, pady=(0,18))
         self.label(sidebar, 'ESPAÇO DE TRABALHO', 8, MUTED, SIDE, True).pack(anchor='w', padx=22, pady=(10, 12))
         self.nav = []
@@ -171,9 +183,9 @@ class Studio(tk.Tk):
         top = ttk.Frame(host); top.pack(fill='x', pady=(0, 16))
         self.label(top, 'ENGENHARIA  /  CONFIGURAÇÃO', 9, MUTED).pack(side='left')
         self.model_buttons = {}
-        self.model_labels = {(load_profile(model).label or model):model for model in available_models()}
-        self.model_var = tk.StringVar(value=self.project.profile.label or self.project.profile.model)
-        self.model_box = ttk.Combobox(top,textvariable=self.model_var,values=list(self.model_labels),state='readonly',width=36)
+        self.model_labels = {self.profile_title(load_profile(model)):model for model in available_models()}
+        self.model_var = tk.StringVar(value=self.profile_title(self.project.profile))
+        self.model_box = ttk.Combobox(top,textvariable=self.model_var,values=list(self.model_labels),state='readonly',width=48)
         self.model_box.pack(side='right')
         self.model_box.bind('<<ComboboxSelected>>',lambda _:self.select_model())
         titlebar = ttk.Frame(host); titlebar.pack(fill='x', pady=(0, 18))
@@ -235,6 +247,7 @@ class Studio(tk.Tk):
         elif self.project.profile.kind=='bus_tie': items=[('Fonte 1','BUS 1'),('Acoplamento','Indicador LED'),('Fonte 2','BUS 2')]
         elif self.project.profile.kind=='engine_transfer': items=[('Fontes','Rede + Gerador'),('Indicadores','LEDs do controlador'),('Instalação','Carga')]
         elif self.project.profile.model == 'DSE8610': items = [('Fonte', 'Gerador'), ('Acoplamento', 'MDB52 / GCB'), ('Instalação', 'BUS + Carga')]
+        if self.project.profile.topology == 'gen_bus': items = [('Fonte', 'Gerador'), ('Acoplamento', 'Disjuntor do gerador'), ('Instalação', 'BUS + Carga')]
         if self.project.profile.vendor=='DEIF':
             topology=self.project.profile.topology
             items=([('Fontes','Companhia + Gerador'),('Transferência','Estados nativos'),('Instalação','Carga')] if topology=='transfer' else [('Origem','Companhia' if topology=='mains_bus' else 'Motor' if topology=='engine' else 'Gerador'),('Ligação','Barramento' if topology!='engine' else 'Acionamento'),('Instalação','Carga')])
@@ -401,7 +414,7 @@ class Studio(tk.Tk):
         self.maintenance_var.set(p.maintenance_alert_hours)
         self.serial_baud.set(p.general.get('MDB_BAUD', '19200'))
         self.overview_model.set(p.profile.label or p.profile.model)
-        self.model_var.set(p.profile.label or p.profile.model)
+        self.model_var.set(self.profile_title(p.profile))
         self.overview_subtitle.set('Rede, transferência e gerador' if p.profile.model == 'DSE7420' else 'Gerador, acoplamento e barramento comum')
         self.flow_note.set('K1 usa MDB52 e K2 usa MDB53. Ambos com 0 aberto e 1 fechado.' if p.profile.model == 'DSE7420' else 'Um único gerador. O BUS é medido independentemente do estado do disjuntor MDB52.')
         if p.profile.kind!='legacy':
@@ -410,6 +423,9 @@ class Studio(tk.Tk):
             self.flow_note.set('Família '+p.profile.manual_family+'. LEDs são indicadores, não retorno físico. '+('Flexíveis A–D seguem a tabela 61xx MkII.' if p.profile.model=='DSE6120' else 'Recursos dependem do hardware e firmware.'))
         if p.profile.vendor=='DEIF':
             self.flow_note.set(p.profile.source_document+'. '+(p.profile.manual_notes or [''])[0])
+        if p.profile.motor_type == 'ecu':
+            self.overview_subtitle.set('Eletrônico / ECU-CAN · perfil separado do convencional')
+            self.flow_note.set('Leituras adicionais dependem do motor, CAN e firmware. Dados indisponíveis aparecem como traço. Modos e contatos são apenas monitorados. ' + (p.profile.manual_notes or [''])[0])
         self.energy_entry.configure(state='disabled' if p.profile.vendor=='DEIF' else 'normal')
         self.group_filter.set('Todos os grupos')
         self.group_box.configure(values=['Todos os grupos'] + list(dict.fromkeys(c.group for c in p.profile.channels)))
@@ -532,12 +548,32 @@ class Studio(tk.Tk):
 
     def select_model(self):
         self.switch_model(self.model_labels[self.model_var.get()])
-        self.model_var.set(self.project.profile.label or self.project.profile.model)
+        self.model_var.set(self.profile_title(self.project.profile))
 
     def switch_model(self, model):
         if model == self.project.profile.model: return
         if not self.can_discard(): return
-        self.project = Project.new(model); self.dirty = False
+        previous = self.project
+        self.project = Project.new(model)
+        if previous.source is not None:
+            # A new map must not replace installed Wi-Fi/APN/serial settings
+            # with factory defaults when it is created from a real backup.
+            self.project.document = previous.document.without_mdbs()
+            self.project.general = dict(previous.general)
+            self.project.slave = previous.slave
+            self.project.source = previous.source
+            self.project.apply_profile()
+            previous_base = previous.profile.base_model or previous.profile.model
+            current_base = self.project.profile.base_model or self.project.profile.model
+            if previous_base == current_base:
+                saved = {(r['ADDR'], r['FNC'], r['BIT']): r for r in previous.rows
+                         if r['ID'] not in ['', '-1']}
+                for row in self.project.rows[:self.project.profile.count]:
+                    old = saved.get((row['ADDR'], row['FNC'], row['BIT']))
+                    if old:
+                        for key in ['DH', 'DM', 'DL', 'H', 'VR', 'TH', 'TL', 'SM']:
+                            row[key] = old[key]
+        self.dirty = False
         self.reset_export_fields()
         self.sync_project(); self.status.set(f'Novo projeto {model}. Perfil completo aplicado.')
 

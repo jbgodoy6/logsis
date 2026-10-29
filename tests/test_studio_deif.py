@@ -15,7 +15,7 @@ from logsis_studio.transport import decode,parse_pdu,request_parameters
 
 class DeifTests(unittest.TestCase):
     def test_catalog_and_sgc_exclusions(self):
-        self.assertEqual(len(available_models()),17)
+        self.assertEqual(len(available_models()),28)
         self.assertIn('SGC420_MKII',available_models())
         self.assertNotIn('SGC120_MKII',available_models())
         self.assertNotIn('SGC410',available_models())

@@ -1,0 +1,76 @@
+{
+  "result": "passed",
+  "reference": "00475aa / Studio 9.1.4",
+  "preserved": {
+    "DSE7420": {
+      "bin": "68c8b9fdac78c0aefddb736ac337cdb880e21b0ef3f4bbf295e325dd7d4b8a86",
+      "dashboard": "001e45711148b328747eac5e4922f49547afb2372ce506839ed5949c6d88d55f"
+    },
+    "DSE8610": {
+      "bin": "7d18090b56db368241f59f29d821a94bfb88a84c2137c51060545abceca4b55c",
+      "dashboard": "f05b9f7cf3296efd30b6460ba110045f16e6f38275eb8268a62d64fe51561656"
+    },
+    "DSE4520": {
+      "bin": "0faf6275d070524e73d4add6a3460744d195c9954016caa3c8e884530320d818",
+      "dashboard": "062e2d8319ea7c5e43487ecbafb4706f0d779c6cc058bbc7845485e9a2f09416"
+    },
+    "DSE6120": {
+      "bin": "22443999e6ffaeb5f27908f0163dbec0ca8d2ab9bfe0aa6099c42bce553ff650",
+      "dashboard": "f5244770aedf1e62ba39024aba857aa83900180e5bfbb1f3740c4531ca9feb8a"
+    },
+    "DSE6320": {
+      "bin": "0faf6275d070524e73d4add6a3460744d195c9954016caa3c8e884530320d818",
+      "dashboard": "ec0f7417a53f00aec9c5b9cc959ca990cad343f10472f38c3f49f0a3963ec46e"
+    },
+    "DSE7320": {
+      "bin": "0faf6275d070524e73d4add6a3460744d195c9954016caa3c8e884530320d818",
+      "dashboard": "154d60aae9788acc8f60026e3062962546029fe7c1fa0a30dcacb0c5718251ae"
+    },
+    "DSE8620": {
+      "bin": "d5d9192ffabce3975da587526d364e1cf9cd75b3e37707864fa4a94d3da4d401",
+      "dashboard": "883da55ae7326fc2f76a4cd881c6c05f2b93b52798194f10971bb0644652be44"
+    },
+    "DSE8660": {
+      "bin": "6712b4d105ce025188eb91e8409097fcfefdd140bf5fc7d981b482209554d73a",
+      "dashboard": "af5258b2db34e932188a3e1f8aced9e10c506a4abf99949b118ec983b9e2167d"
+    },
+    "DSE8680": {
+      "bin": "cbe6fa86788d7a2402132f57071f1128b5b41d340de01a88ef4c72e9c4ad66d9",
+      "dashboard": "6b6c2832d862688ff8163262c587a64febc0b160870ac825410183b7f4ae67fc"
+    },
+    "AGC150_GEN": {
+      "bin": "6300b6d289e8fe3f38504a6523ce0152a5a71eb41812b390715b165dfbaba20c",
+      "dashboard": "3b90c85b35355e522278c937fa94d4c407d1ff8d437d9d036c30df9d239d2b7d"
+    },
+    "AGC150_GEN_BUS": {
+      "bin": "bda5e8751bdbb3cb78e1593bbc3d5d2dce404b30f334d75dbf3068211168973d",
+      "dashboard": "f96de58bfc3c103d6ac6716d338508834a2a1daa2bb609bc2ad048e8677730a5"
+    },
+    "AGC150_MAINS": {
+      "bin": "d241f02af20b2023475f6dc6d03618a37ae5fcaf9e562783d8f16deb4042ef86",
+      "dashboard": "fef041261b9e16581936214e539fed4c62a3894b42384cd9af891783fcb54e0d"
+    },
+    "AGC150_ATS": {
+      "bin": "25e5b9deac1cd0adfafe46750c887e9926721d6318a4f41d9a5a1be1904a4cfd",
+      "dashboard": "903a181ec94ff5d376c4ff629442d108472eca8f72198a26d857f4c3a229db2f"
+    },
+    "AGC150_ENG": {
+      "bin": "a46e0c8be2bed042a3c991ebf864a8c9ddfd952a36e83c8db254da894da3d288",
+      "dashboard": "db539d70948b7c1cbca59aa5520da9f0e9e492dfa9806c8a21e0c11aed6082a2"
+    },
+    "SGC420_MKII": {
+      "bin": "e8e8da34e1bb1bb897db7a8b87b8cc115c0a8d46ee693b41aace21112bd95fb5",
+      "dashboard": "c7743bada31a3f091a44d749f8fcf8f75d2fff7d05785d1a37b60daeeaa4364d"
+    },
+    "CGC412": {
+      "bin": "04a537d770759939e3e3452f70ee4467b63654951f331401bddaca17f8dafeb1",
+      "dashboard": "6a3d802252f9e94fee5b17843aaf141a835e88dcebffb70ecd201a40b6d77a6d"
+    },
+    "CGC413": {
+      "bin": "e395ac22a39f183cb0931c285de757545a9882983d2e6e479fa67f4b0672c3b3",
+      "dashboard": "6a12dd001cc31f8bd8c47cbce9b50c386007a6792cee4bf6e5a2774094622170"
+    }
+  },
+  "count": 17,
+  "scope": "Exact BIN bytes and canonical JSON equality for every existing profile."
+}

@@ -72,6 +72,8 @@ class Channel:
     label_variable: str = ''
     codec: str = 'integer'
     source_reference: str = ''
+    validity_role: str = ''
+    validity_bit: int = -1
 
     @property
     def index(self):
@@ -112,14 +114,27 @@ class Profile:
     application: str = ''
     topology: str = ''
     source_document: str = ''
+    base_model: str = ''
+    motor_type: str = ''
+
+
+def profile_catalog():
+    profiles = json.loads((RESOURCES / 'profiles.json').read_text(encoding='utf-8'))
+    extra = RESOURCES / 'profiles_ecu.json'
+    if extra.exists():
+        variants = json.loads(extra.read_text(encoding='utf-8'))
+        if profiles.keys() & variants.keys():
+            raise ValueError('Um perfil novo não pode sobrescrever um perfil preservado.')
+        profiles.update(variants)
+    return profiles
 
 
 def available_models():
-    return tuple(json.loads((RESOURCES / 'profiles.json').read_text(encoding='utf-8')))
+    return tuple(profile_catalog())
 
 
 def load_profile(model: str) -> Profile:
-    profiles = json.loads((RESOURCES / 'profiles.json').read_text(encoding='utf-8'))
+    profiles = profile_catalog()
     if model not in profiles:
         raise ValueError('Controlador não reconhecido. Selecione um dos perfis disponíveis.')
     raw = profiles[model]
@@ -395,6 +410,11 @@ class Project:
         return number(self.energy_divisor) if energy else Decimal(channel.divisor)
 
     def dashboard_template(self):
+        if self.profile.motor_type == 'ecu':
+            from .electronic_dashboard import build_dashboard
+            return build_dashboard(self.profile)
+        if self.profile.model == 'DSE8620_TC_UNICO':
+            return json.loads((RESOURCES / 'dse8620_sequencial.json').read_text(encoding='utf-8'))
         if self.profile.vendor == 'DEIF':
             from .deif_dashboard import build_dashboard
             from .standard_layout import apply
@@ -483,6 +503,10 @@ class Project:
             'energy_divisor': str(number(self.energy_divisor)),
             'maintenance_alert_hours': str(number(self.maintenance_alert_hours)),
             'profile_version': self.profile.version,
+            'base_model': self.profile.base_model or self.profile.model,
+            'motor_type': self.profile.motor_type or 'perfil preservado',
+            'validity_fields': {c.column: {'role': c.validity_role, 'bit': c.validity_bit}
+                                for c in self.profile.channels if c.validity_role},
             'channels_map': [{'mdb': c.number, 'bin_index': c.index, 'sql_column': c.column,
                               'address': integer(self.rows[c.index]['ADDR']), 'fnc': integer(self.rows[c.index]['FNC']),
                               'bit': integer(self.rows[c.index]['BIT']), 'divisor': str(self.channel_divisor(c)), 'unit': c.unit}
@@ -503,6 +527,14 @@ class Project:
                           breaker='Verificar semântica por aplicação no dashboard e no mapa',
                           raw_contract='O coletor envia os bits como inteiro. FLOAT32/CDAB é reinterpretado no SQL; nenhuma conversão float é exigida do LogSis.',
                           codecs={c.column:{'codec':c.codec,'divisor':c.divisor,'source':c.source_reference} for c in self.profile.channels})
+        if self.profile.motor_type == 'ecu':
+            report['mode_field'] = next((c.column for c in self.profile.channels
+                                         if c.role in ['mode', 'mode_word']), None)
+            report['signal_semantics'] = ('LED do controlador, não retorno físico independente.'
+                if self.profile.vendor == 'DSE' else
+                'Estados nativos ON/OFF; estados ausentes ou contraditórios não confirmam posição.')
+            report['source_references'] = {c.column: c.source_reference for c in self.profile.channels
+                                           if c.source_reference}
         stream = io.BytesIO()
         with zipfile.ZipFile(stream, 'w', zipfile.ZIP_DEFLATED) as archive:
             prefix = self.profile.model

@@ -8,7 +8,7 @@ from logsis_studio.transport import decode
 NEW=['DSE4520','DSE6120','DSE6320','DSE7320','DSE8620','DSE8660','DSE8680']
 class ManualProfilesTests(unittest.TestCase):
  def test_catalog_and_generations(self):
-  self.assertEqual(len([m for m in available_models() if m.startswith('DSE')]),9)
+  self.assertEqual(len([m for m in available_models() if m.startswith('DSE') and not Project.new(m).profile.base_model]),9)
   for model in ['DSE4520','DSE6120','DSE7320']:self.assertIn('MkII',Project.new(model).profile.label)
  def test_delivered_legacy_bin_definitions_and_dashboards_unchanged(self):
   expected=json.loads((Path(__file__).parent/'fixtures/studio72_legacy_hashes.json').read_text())

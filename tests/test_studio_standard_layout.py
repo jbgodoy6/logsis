@@ -73,7 +73,7 @@ class StandardLayoutTests(unittest.TestCase):
                         self.assertLess(e['placement']['left']+e['placement']['right'],100,(model,e['name']))
             for c in p.profile.channels:
                 if c.role.startswith('led_'):
-                    self.assertIn('CONTACT_'+c.role.upper()+'_SVG',sql)
+                    self.assertIn(('B1_SVG' if c.role=='led_mains' else 'B2_SVG') if p.profile.motor_type=='ecu' else 'CONTACT_'+c.role.upper()+'_SVG',sql)
                     for uri in approved.values():self.assertIn(uri,sql)
 
     def test_all_models_follow_approved_grid_and_local_source_cards(self):
