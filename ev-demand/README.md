@@ -1,14 +1,14 @@
-# EnergyCube D-Max — Controlador de demanda · v0.3.1
+# EnergyCube D-Max — Controlador de demanda · v0.4.0
 
-**Distribuição Windows em análise:** o Defender bloqueou os ZIPs 0.3.0 e 0.3.1. Mantenha o bloqueio e não crie exclusões para instalá-los. [Evidências, hashes e investigação direcionada](docs/defender-investigation.md). As correções abaixo não confirmam resolução desse alerta.
+**Validação pelo Windows pendente:** o Defender bloqueou os ZIPs 0.3.0 e 0.3.1. A interface foi reescrita na 0.4.0 com componentes DOM e comunicação restrita à mesma origem. Essa mudança não garante liberação pelo antivírus. Mantenha qualquer bloqueio ativo. [Reescrita e validação da 0.4.0](docs/frontend-v040.md) · [Investigação dos ZIPs anteriores](docs/defender-investigation.md).
 
-Primeira versão para **validação em Windows**, com a mesma base Python no Linux ARM64 do Raspberry Pi 4. Interface web local, simulador, SQLite, distribuição de potência e adaptador OCPP 1.6J. Não depende dos dashboards antigos deste repositório.
+Protótipo para **validação em Windows**, com a mesma base Python no Linux ARM64 do Raspberry Pi 4. Interface web local, simulador, SQLite, distribuição de potência e adaptador OCPP 1.6J. Não depende dos dashboards antigos deste repositório.
 
 [Tela TCP/IP](docs/multimedidor-tcp.png) · [Tela RS485](docs/multimedidor-rs485.png) · [Revisão de segurança v0.3.1](docs/security-review-v031.md)
 
-A versão 0.3.1 substitui a 0.3.0 para novas validações, após atualização de dependências vulneráveis e correções de autenticação. A causa do alerta de vírus relatado no Windows permanece não determinada; esta revisão não é uma certificação antivírus.
+A versão 0.4.0 inclui as correções de dependências e autenticação da 0.3.1 e substitui a construção de HTML por texto por componentes DOM. A causa da classificação dos pacotes anteriores permanece não determinada. Esta revisão não é uma certificação antivírus.
 
-![Visão geral](docs/painel-desktop.png)
+![Visão geral](docs/painel-dom-v040.png)
 
 [Nova página de usuários](docs/usuarios.png) · [Técnicos e Google](docs/tecnicos-google.png) · [Validação v0.3](docs/validation-v03.md)
 
@@ -137,7 +137,7 @@ A versão inclui cadastro de operadores, administradores e técnicos conforme a 
 
 ## Testes
 
-Revisão 0.3.1: **73 testes aprovados em Python 3.12 e 3.14, em Linux**, incluindo autenticação concorrente e revogação durante o login. O lock foi instalado com verificação de hashes nos dois ambientes. Não equivale à homologação nativa no Windows/Raspberry nem a uma varredura do Microsoft Defender.
+Revisão 0.4.0: **73 testes aprovados em Python 3.12 e 3.14, em Linux**, mais regressão da interface no Chromium desktop/celular. Inclui autenticação concorrente, revogação durante o login, renderização literal de marcação HTML e tráfego da página restrito à origem do controlador. Não equivale à homologação nativa no Windows/Raspberry nem a uma varredura do Microsoft Defender.
 
 ```powershell
 .\.venv\Scripts\python.exe -m unittest discover -s tests -v

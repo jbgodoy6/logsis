@@ -218,7 +218,7 @@ def create_app(database=None, background=True):
         engine.flush()
         store.db.close()
 
-    app = FastAPI(title='EnergyCube D-Max · Controle de demanda', version='0.3.1', lifespan=lifespan,
+    app = FastAPI(title='EnergyCube D-Max · Controle de demanda', version='0.4.0', lifespan=lifespan,
                   docs_url=None, redoc_url=None, openapi_url=None)
     app.state.store, app.state.engine, app.state.access = store, engine, access
 
@@ -264,7 +264,11 @@ def create_app(database=None, background=True):
         response.headers['X-Content-Type-Options'] = 'nosniff'
         response.headers['X-Frame-Options'] = 'DENY'
         response.headers['Referrer-Policy'] = 'same-origin'
-        response.headers['Content-Security-Policy'] = "default-src 'self'; connect-src 'self'; style-src 'self'; script-src 'self'; img-src 'self' data:; frame-ancestors 'none'"
+        response.headers['Content-Security-Policy'] = (
+            "default-src 'self'; connect-src 'self'; style-src 'self'; script-src 'self'; "
+            "img-src 'self' data:; frame-ancestors 'none'; form-action 'self'; "
+            "base-uri 'none'; object-src 'none'; require-trusted-types-for 'script'; trusted-types 'none'"
+        )
         if request.url.path.startswith('/api'):
             response.headers['Cache-Control'] = 'no-store'
         return response
