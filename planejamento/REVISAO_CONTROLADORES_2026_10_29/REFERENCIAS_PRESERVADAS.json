@@ -1,0 +1,85 @@
+{
+  "purpose": "Read-only baseline to protect existing profiles while designing new electronic variants. Does not authorize modifying conventional profiles.",
+  "date": "2026-10-29",
+  "conventionalPolicy": "Preserve current approved behavior. Only explicitly validated changes may be consolidated. Add electronic profiles independently.",
+  "models": {
+    "DSE7420": {
+      "channels": 59,
+      "profileSha256": "d87e840fa820ac53ea058c38227fe4950ca009f1272faf98c7cda7b8336023ce",
+      "legacyDashboardSha256": "54e609ec28a78c03d1352bdfc676829b33a929ab5b38145cc92631446a0c3c58"
+    },
+    "DSE8610": {
+      "channels": 58,
+      "profileSha256": "20b11fb9d0f6e04720a94f5f945767f811da1eec3fc2df8d37d08d8ebacc97b6",
+      "legacyDashboardSha256": "77c66d5f21a61dc519f37dd7bd39795464415d6e7afdc1c296b302de9ae21f4d"
+    },
+    "DSE4520": {
+      "channels": 57,
+      "profileSha256": "12f51b1dac27958f95ff24ca3d6762b7866b07e5a75bb5bace0036d030787122"
+    },
+    "DSE6120": {
+      "channels": 58,
+      "profileSha256": "d3e0dfcf3c0b94febaaa0c51931f5b546a682a07426fbf5800e8ba8938ed1bc5"
+    },
+    "DSE6320": {
+      "channels": 57,
+      "profileSha256": "d26b4314835e8f56afd3f4fcfd168a5c733107c1cff37d54fb026e7445e3733f"
+    },
+    "DSE7320": {
+      "channels": 57,
+      "profileSha256": "bf8415dba9c81f00c6b057c3b4d18c086bac76baa2b90e1411322f9e6f582e70"
+    },
+    "DSE8620": {
+      "channels": 74,
+      "profileSha256": "4b1049f00ca1e6e38b17a1f9b2362267624bb2645af7acd99cca09c0a9ebb43a"
+    },
+    "DSE8660": {
+      "channels": 58,
+      "profileSha256": "ae7a280f6462a284118dcc0930197532c007b6153276297f9660266f6b33cff1"
+    },
+    "DSE8680": {
+      "channels": 58,
+      "profileSha256": "efba1a1d29d7533bc97b9369b736f2b2401c8d8ad7ca4d4f186aa1ffd3f6e7df"
+    },
+    "AGC150_GEN": {
+      "channels": 84,
+      "profileSha256": "78936cd9973635e74d176f5ea665202c8e6e3b24b0789d3a7ab5154ebdb4e036"
+    },
+    "AGC150_GEN_BUS": {
+      "channels": 82,
+      "profileSha256": "fc23bbc98776cfd0ea39b7897fab344512e8b048ef66594b137e35bf9ff6c5ef"
+    },
+    "AGC150_MAINS": {
+      "channels": 67,
+      "profileSha256": "9cb13d0dc63eede71ac92e7be4bcdfb7133433aca2c48fa87434fde3b42c46b2"
+    },
+    "AGC150_ATS": {
+      "channels": 63,
+      "profileSha256": "000ad112e2bd4d78c6f714ec3d0f0323b9df1223b8f7cac6385c28d4d1a1b2f2"
+    },
+    "AGC150_ENG": {
+      "channels": 43,
+      "profileSha256": "16ea27c804d27d03f17dc06563b715c99458382b03ef834cac4441a3ffae7411"
+    },
+    "SGC420_MKII": {
+      "channels": 81,
+      "profileSha256": "2af85f26cbaae2ece466b3d2bd9ff242252f94c90a744189417138b6db73d33d"
+    },
+    "CGC412": {
+      "channels": 53,
+      "profileSha256": "4c684d349a928b010f5489ff8a100fa18f09efbf5818ec0d1d58c814896a93c2"
+    },
+    "CGC413": {
+      "channels": 66,
+      "profileSha256": "2ffa0a5d014ba1dc9fc2711bf8106e67c99eeb00926d87d75be58943bb24d26f"
+    }
+  },
+  "sourceFiles": {
+    "logsis_studio/core.py": "9009235aa825e57f8964b4960064ad9830d6b69f390faf6d681bcf28fdad4f1e",
+    "logsis_studio/manual_dashboard.py": "33743b70e8276f9ad243e5d78faac8c18e6216032c3ad3e40e03b471da2b6442",
+    "logsis_studio/deif_dashboard.py": "9f78bd1ba4af3c255811d6ab5e936c7839955253d7a6c4f8acb89aa393a4fedc",
+    "logsis_studio/standard_layout.py": "7d939bd130c973a262a6a2a50e835c0691d2c23f2954f485925e6ad8629e393e",
+    "logsis_studio/codecs.py": "643a193bcfd487b5f86f4b82ae10c0bf10a868ea279e2ca065cca2af81a462dc",
+    "logsis_studio/resources/profiles.json": "4ff44ec8cd28b55f595398f39c03ff69e21bdfdf120f3565821f86b2b9c3c71a"
+  }
+}

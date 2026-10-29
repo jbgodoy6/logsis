@@ -1,0 +1,251 @@
+{
+  "date": "2026-10-29",
+  "timezone": "America/Sao_Paulo",
+  "scope": "Review only; no changes to Studio, exported operational BINs or dashboards. Isolated synthetic PostgreSQL scenarios, not physical hardware validation.",
+  "models": [
+    {
+      "model": "DSE8610",
+      "currentSlots": 58,
+      "vendor": "DSE",
+      "application": "",
+      "topology": "gen_bus",
+      "mainSqlExecuted": true,
+      "nativeAlarmWords": 0,
+      "ecuFields": [],
+      "maintenanceSlots": [
+        53,
+        54,
+        55
+      ]
+    },
+    {
+      "model": "DSE8660",
+      "currentSlots": 58,
+      "vendor": "DSE",
+      "application": "",
+      "topology": "mains_bus",
+      "mainSqlExecuted": true,
+      "nativeAlarmWords": 0,
+      "ecuFields": [],
+      "maintenanceSlots": [],
+      "zeroByOpenBreakerNotApplied": true
+    },
+    {
+      "model": "AGC150_GEN",
+      "currentSlots": 84,
+      "vendor": "DEIF",
+      "application": "GEN",
+      "topology": "transfer",
+      "mainSqlExecuted": true,
+      "nativeAlarmWords": 13,
+      "ecuFields": [
+        "coolant",
+        "oil_pressure",
+        "valid_oil",
+        "valid_coolant"
+      ],
+      "maintenanceSlots": [
+        39,
+        40,
+        41,
+        42,
+        43,
+        44
+      ]
+    },
+    {
+      "model": "AGC150_GEN_BUS",
+      "currentSlots": 82,
+      "vendor": "DEIF",
+      "application": "GEN",
+      "topology": "gen_bus",
+      "mainSqlExecuted": true,
+      "nativeAlarmWords": 13,
+      "ecuFields": [
+        "coolant",
+        "oil_pressure",
+        "valid_oil",
+        "valid_coolant"
+      ],
+      "maintenanceSlots": [
+        37,
+        38,
+        39,
+        40,
+        41,
+        42
+      ]
+    },
+    {
+      "model": "AGC150_MAINS",
+      "currentSlots": 67,
+      "vendor": "DEIF",
+      "application": "MAINS",
+      "topology": "mains_bus",
+      "mainSqlExecuted": true,
+      "nativeAlarmWords": 12,
+      "ecuFields": [],
+      "maintenanceSlots": []
+    },
+    {
+      "model": "AGC150_ATS",
+      "currentSlots": 63,
+      "vendor": "DEIF",
+      "application": "ATS",
+      "topology": "transfer",
+      "mainSqlExecuted": true,
+      "nativeAlarmWords": 6,
+      "ecuFields": [],
+      "maintenanceSlots": []
+    },
+    {
+      "model": "AGC150_ENG",
+      "currentSlots": 43,
+      "vendor": "DEIF",
+      "application": "ENG",
+      "topology": "engine",
+      "mainSqlExecuted": true,
+      "nativeAlarmWords": 6,
+      "ecuFields": [
+        "coolant",
+        "oil_pressure",
+        "valid_oil",
+        "valid_coolant"
+      ],
+      "maintenanceSlots": [
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "model": "SGC420_MKII",
+      "currentSlots": 81,
+      "vendor": "DEIF",
+      "application": "SGC420",
+      "topology": "transfer",
+      "mainSqlExecuted": true,
+      "nativeAlarmWords": 18,
+      "ecuFields": [],
+      "maintenanceSlots": []
+    },
+    {
+      "model": "CGC412",
+      "currentSlots": 53,
+      "vendor": "DEIF",
+      "application": "CGC412",
+      "topology": "transfer",
+      "mainSqlExecuted": true,
+      "nativeAlarmWords": 0,
+      "ecuFields": [],
+      "maintenanceSlots": [
+        31,
+        32,
+        33,
+        34
+      ]
+    },
+    {
+      "model": "CGC413",
+      "currentSlots": 66,
+      "vendor": "DEIF",
+      "application": "CGC413",
+      "topology": "transfer",
+      "mainSqlExecuted": true,
+      "nativeAlarmWords": 0,
+      "ecuFields": [],
+      "maintenanceSlots": [
+        38,
+        39,
+        40,
+        41
+      ]
+    }
+  ],
+  "edgeScenarios": [
+    {
+      "id": "DSE8610_UNSIGNED_SENTINEL",
+      "model": "DSE8610",
+      "scenario": "MDB9=-1, unsigned 32-bit all-ones sentinel",
+      "observed": -0.1,
+      "expected": "null / —",
+      "status": "gap reproduced"
+    },
+    {
+      "id": "DSE8610_STALE_SWITCH",
+      "model": "DSE8610",
+      "scenario": "Older GCB=0, latest GCB missing",
+      "observed": 0,
+      "expected": "null / posição desconhecida",
+      "status": "gap reproduced"
+    },
+    {
+      "id": "AGC_NO_REGULATION",
+      "model": "AGC150_GEN",
+      "scenario": "1019 bit 1 No Regulation active",
+      "observed": "OUTRO MODO",
+      "expected": "modo explícito, com rótulo confrontado com o equipamento",
+      "status": "gap reproduced"
+    },
+    {
+      "id": "AGC_RAW_ECU_FIELD",
+      "model": "AGC150_GEN",
+      "scenario": "Coolant=65535 with validity=0",
+      "observedRaw": 65535.0,
+      "observedValidated": null,
+      "expected": "all current panels and histories consume validated value, not raw",
+      "status": "raw decoded channel remains available to unguarded consumers"
+    },
+    {
+      "id": "AGC_NO_REGULATION",
+      "model": "AGC150_GEN_BUS",
+      "scenario": "1019 bit 1 No Regulation active",
+      "observed": "OUTRO MODO",
+      "expected": "modo explícito, com rótulo confrontado com o equipamento",
+      "status": "gap reproduced"
+    },
+    {
+      "id": "AGC_NO_REGULATION",
+      "model": "AGC150_MAINS",
+      "scenario": "1019 bit 1 No Regulation active",
+      "observed": "OUTRO MODO",
+      "expected": "modo explícito, com rótulo confrontado com o equipamento",
+      "status": "gap reproduced"
+    },
+    {
+      "id": "AGC_NO_REGULATION",
+      "model": "AGC150_ENG",
+      "scenario": "1019 bit 1 No Regulation active",
+      "observed": "OUTRO MODO",
+      "expected": "modo explícito, com rótulo confrontado com o equipamento",
+      "status": "gap reproduced"
+    }
+  ],
+  "existingTests": {
+    "count": 69,
+    "passed": true
+  },
+  "physicalControllerValidation": false,
+  "newInternetManualResearch": false,
+  "proposedMotorVariants": [
+    "Convencional",
+    "Eletrônico / ECU-CAN"
+  ],
+  "motorlessApplicationsNotDuplicated": [
+    "DSE8660",
+    "DSE8680",
+    "AGC150_MAINS",
+    "AGC150_ATS"
+  ],
+  "implementationAuthorizedInThisReview": false,
+  "userApprovedDirection": {
+    "preserveExistingConventionalProfiles": true,
+    "onlyExplicitlyValidatedChangesInConventional": true,
+    "newElectronicProfilesSeparate": true,
+    "noUnrequestedLegacyRenumbering": true,
+    "auditFindingsDoNotAuthorizeLegacyChanges": true
+  }
+}

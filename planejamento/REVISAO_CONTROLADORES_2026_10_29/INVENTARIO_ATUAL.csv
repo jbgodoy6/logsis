@@ -1,0 +1,656 @@
+﻿Modelo;MDB atual;Nome;Role atual;Slave padrão;Endereço;Função LogSis;Bit;Divisor;Unidade;Codec;Fonte
+DSE8610;1;Pressão do óleo;;10;1024;3;-1;100;bar;integer;
+DSE8610;2;Temperatura da água;;10;1025;3;-1;1;°C;integer;
+DSE8610;3;Temperatura do óleo;;10;1026;3;-1;1;°C;integer;
+DSE8610;4;Nível de combustível;;10;1027;3;-1;1;%;integer;
+DSE8610;5;Alternador de carga;;10;1028;3;-1;10;V;integer;
+DSE8610;6;Tensão da bateria;;10;1029;3;-1;10;V;integer;
+DSE8610;7;Rotação do motor;;10;1030;3;-1;1;rpm;integer;
+DSE8610;8;Frequência do gerador;;10;1031;3;-1;10;Hz;integer;
+DSE8610;9;Tensão do gerador L1–N;;10;1032;30;-1;10;V;integer;
+DSE8610;10;Tensão do gerador L2–N;;10;1034;30;-1;10;V;integer;
+DSE8610;11;Tensão do gerador L3–N;;10;1036;30;-1;10;V;integer;
+DSE8610;12;Tensão do gerador L1–L2;;10;1038;30;-1;10;V;integer;
+DSE8610;13;Tensão do gerador L2–L3;;10;1040;30;-1;10;V;integer;
+DSE8610;14;Tensão do gerador L3–L1;;10;1042;30;-1;10;V;integer;
+DSE8610;15;Corrente L1;;10;1044;30;-1;10;A;integer;
+DSE8610;16;Corrente L2;;10;1046;30;-1;10;A;integer;
+DSE8610;17;Corrente L3;;10;1048;30;-1;10;A;integer;
+DSE8610;18;Corrente de terra;;10;1050;30;-1;10;A;integer;
+DSE8610;19;Potência ativa L1;;10;1052;30;-1;1000;kW;integer;
+DSE8610;20;Potência ativa L2;;10;1054;30;-1;1000;kW;integer;
+DSE8610;21;Potência ativa L3;;10;1056;30;-1;1000;kW;integer;
+DSE8610;22;Potência ativa total;;10;1536;30;-1;1000;kW;integer;
+DSE8610;23;Potência aparente total;;10;1544;30;-1;1000;kVA;integer;
+DSE8610;24;Potência reativa total;;10;1552;30;-1;1000;kvar;integer;
+DSE8610;25;Fator de potência L1;;10;1554;3;-1;100;FP;integer;
+DSE8610;26;Fator de potência L2;;10;1555;3;-1;100;FP;integer;
+DSE8610;27;Fator de potência L3;;10;1556;3;-1;100;FP;integer;
+DSE8610;28;Fator de potência médio;;10;1557;3;-1;100;FP;integer;
+DSE8610;29;Frequência do BUS;;10;1091;3;-1;10;Hz;integer;
+DSE8610;30;Tensão do BUS L1–N;;10;1092;30;-1;10;V;integer;
+DSE8610;31;Tensão do BUS L2–N;;10;1094;30;-1;10;V;integer;
+DSE8610;32;Tensão do BUS L3–N;;10;1096;30;-1;10;V;integer;
+DSE8610;33;Tensão do BUS L1–L2;;10;1098;30;-1;10;V;integer;
+DSE8610;34;Tensão do BUS L2–L3;;10;1100;30;-1;10;V;integer;
+DSE8610;35;Tensão do BUS L3–L1;;10;1102;30;-1;10;V;integer;
+DSE8610;36;Horímetro acumulado;;10;1798;30;-1;3600;h;integer;
+DSE8610;37;Energia acumulada;;10;1800;30;-1;10;kWh;integer;
+DSE8610;38;Número de partidas;;10;1808;30;-1;1;partidas;integer;
+DSE8610;39;Horas até manutenção;;10;1794;30;-1;3600;h;integer;
+DSE8610;40;Modo de operação;;10;772;3;-1;1;estado;integer;
+DSE8610;41;Warning geral;;10;774;3;10;1;estado;integer;
+DSE8610;42;Trip elétrico;;10;774;3;11;1;estado;integer;
+DSE8610;43;Shutdown geral;;10;774;3;12;1;estado;integer;
+DSE8610;44;Entrada digital A;;10;43521;3;-1;1;estado;integer;
+DSE8610;45;Entrada digital B;;10;43523;3;-1;1;estado;integer;
+DSE8610;46;Entrada digital C;;10;43525;3;-1;1;estado;integer;
+DSE8610;47;Entrada digital D;;10;43527;3;-1;1;estado;integer;
+DSE8610;48;Entrada digital E;;10;43529;3;-1;1;estado;integer;
+DSE8610;49;Entrada digital F;;10;43531;3;-1;1;estado;integer;
+DSE8610;50;Entrada digital G;;10;43533;3;-1;1;estado;integer;
+DSE8610;51;Entrada digital H;;10;43535;3;-1;1;estado;integer;
+DSE8610;52;Disjuntor de acoplamento;;10;48659;3;-1;1;estado;integer;
+DSE8610;53;Manutenção 1;;10;1836;30;-1;3600;h;integer;
+DSE8610;54;Manutenção 2;;10;1840;30;-1;3600;h;integer;
+DSE8610;55;Manutenção 3;;10;1844;30;-1;3600;h;integer;
+DSE8610;56;Flexível Q · digital;;10;43553;3;-1;1;estado;integer;
+DSE8610;57;Flexível R · digital;;10;43555;3;-1;1;estado;integer;
+DSE8610;58;Flexível S · digital;;10;43557;3;-1;1;estado;integer;
+DSE8660;1;Rede · frequência;mains_frequency;10;1059;3;-1;10;Hz;integer;
+DSE8660;2;Rede · tensão L1–N;mains_v_l1n;10;1060;30;-1;10;V;integer;
+DSE8660;3;Rede · tensão L2–N;mains_v_l2n;10;1062;30;-1;10;V;integer;
+DSE8660;4;Rede · tensão L3–N;mains_v_l3n;10;1064;30;-1;10;V;integer;
+DSE8660;5;Rede · tensão L1–L2;mains_v_l1l2;10;1066;30;-1;10;V;integer;
+DSE8660;6;Rede · tensão L2–L3;mains_v_l2l3;10;1068;30;-1;10;V;integer;
+DSE8660;7;Rede · tensão L3–L1;mains_v_l3l1;10;1070;30;-1;10;V;integer;
+DSE8660;8;Rede · corrente L1;mains_i_l1;10;1076;30;-1;10;A;integer;
+DSE8660;9;Rede · corrente L2;mains_i_l2;10;1078;30;-1;10;A;integer;
+DSE8660;10;Rede · corrente L3;mains_i_l3;10;1080;30;-1;10;A;integer;
+DSE8660;11;Rede · corrente terra;mains_i_earth;10;1082;30;-1;10;A;integer;
+DSE8660;12;Rede · potência L1;mains_kw_l1;10;1084;30;-1;1000;kW;integer;
+DSE8660;13;Rede · potência L2;mains_kw_l2;10;1086;30;-1;1000;kW;integer;
+DSE8660;14;Rede · potência L3;mains_kw_l3;10;1088;30;-1;1000;kW;integer;
+DSE8660;15;Rede · total kW;mains_kw;10;1560;30;-1;1000;kW;integer;
+DSE8660;16;Rede · total kVA;mains_kva;10;1568;30;-1;1000;kVA;integer;
+DSE8660;17;Rede · total kVAr;mains_kvar;10;1576;30;-1;1000;kVAr;integer;
+DSE8660;18;Rede · FP L1;mains_fp_l1;10;1578;3;-1;100;;integer;
+DSE8660;19;Rede · FP L2;mains_fp_l2;10;1579;3;-1;100;;integer;
+DSE8660;20;Rede · FP L3;mains_fp_l3;10;1580;3;-1;100;;integer;
+DSE8660;21;Rede · FP médio;mains_fp;10;1581;3;-1;100;;integer;
+DSE8660;22;BUS · frequência;bus_frequency;10;1091;3;-1;10;Hz;integer;
+DSE8660;23;BUS · tensão L1–N;bus_v_l1n;10;1092;30;-1;10;V;integer;
+DSE8660;24;BUS · tensão L2–N;bus_v_l2n;10;1094;30;-1;10;V;integer;
+DSE8660;25;BUS · tensão L3–N;bus_v_l3n;10;1096;30;-1;10;V;integer;
+DSE8660;26;BUS · tensão L1–L2;bus_v_l1l2;10;1098;30;-1;10;V;integer;
+DSE8660;27;BUS · tensão L2–L3;bus_v_l2l3;10;1100;30;-1;10;V;integer;
+DSE8660;28;BUS · tensão L3–L1;bus_v_l3l1;10;1102;30;-1;10;V;integer;
+DSE8660;29;BUS · corrente L1;bus_i_l1;10;1104;30;-1;10;A;integer;
+DSE8660;30;BUS · corrente L2;bus_i_l2;10;1106;30;-1;10;A;integer;
+DSE8660;31;BUS · corrente L3;bus_i_l3;10;1108;30;-1;10;A;integer;
+DSE8660;32;BUS · corrente terra;bus_i_earth;10;1110;30;-1;10;A;integer;
+DSE8660;33;BUS · potência L1;bus_kw_l1;10;1112;30;-1;1000;kW;integer;
+DSE8660;34;BUS · potência L2;bus_kw_l2;10;1114;30;-1;1000;kW;integer;
+DSE8660;35;BUS · potência L3;bus_kw_l3;10;1116;30;-1;1000;kW;integer;
+DSE8660;36;BUS · total kW;bus_kw;10;1584;30;-1;1000;kW;integer;
+DSE8660;37;BUS · total kVA;bus_kva;10;1592;30;-1;1000;kVA;integer;
+DSE8660;38;BUS · total kVAr;bus_kvar;10;1600;30;-1;1000;kVAr;integer;
+DSE8660;39;BUS · FP L1;bus_fp_l1;10;1602;3;-1;100;;integer;
+DSE8660;40;BUS · FP L2;bus_fp_l2;10;1603;3;-1;100;;integer;
+DSE8660;41;BUS · FP L3;bus_fp_l3;10;1604;3;-1;100;;integer;
+DSE8660;42;BUS · FP médio;bus_fp;10;1605;3;-1;100;;integer;
+DSE8660;43;Energia positiva · rede;energy_mains;10;1810;30;-1;10;kWh;integer;
+DSE8660;44;Energia positiva · BUS;energy_bus;10;1818;30;-1;10;kWh;integer;
+DSE8660;45;Modo de operação;mode;10;772;3;-1;1;;integer;
+DSE8660;46;Warning;warning;10;774;3;10;1;;integer;
+DSE8660;47;Trip elétrico;trip;10;774;3;11;1;;integer;
+DSE8660;48;Shutdown;shutdown;10;774;3;12;1;;integer;
+DSE8660;49;Entrada A;input_A;10;43521;3;-1;1;;integer;
+DSE8660;50;Entrada B;input_B;10;43523;3;-1;1;;integer;
+DSE8660;51;Entrada C;input_C;10;43525;3;-1;1;;integer;
+DSE8660;52;Entrada D;input_D;10;43527;3;-1;1;;integer;
+DSE8660;53;Entrada E;input_E;10;43529;3;-1;1;;integer;
+DSE8660;54;Entrada F;input_F;10;43531;3;-1;1;;integer;
+DSE8660;55;Entrada G;input_G;10;43533;3;-1;1;;integer;
+DSE8660;56;Entrada H;input_H;10;43535;3;-1;1;;integer;
+DSE8660;57;LED · disjuntor da rede;led_mains;10;48659;3;-1;1;;integer;
+DSE8660;58;LED · disjuntor do BUS;led_bus;10;48660;3;-1;1;;integer;
+AGC150_GEN;1;Gerador · tensão L1L2;gen_v_l1l2;10;501;4;-1;1;V;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 7
+AGC150_GEN;2;Gerador · tensão L2L3;gen_v_l2l3;10;502;4;-1;1;V;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 11
+AGC150_GEN;3;Gerador · tensão L3L1;gen_v_l3l1;10;503;4;-1;1;V;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 15
+AGC150_GEN;4;Gerador · tensão L1–N;gen_v_l1n;10;504;4;-1;1;V;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 19
+AGC150_GEN;5;Gerador · tensão L2–N;gen_v_l2n;10;505;4;-1;1;V;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 23
+AGC150_GEN;6;Gerador · tensão L3–N;gen_v_l3n;10;506;4;-1;1;V;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 27
+AGC150_GEN;7;Gerador · frequência;gen_frequency;10;507;4;-1;100;Hz;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 31
+AGC150_GEN;8;Gerador · corrente L1;gen_i_l1;10;513;4;-1;1;A;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 55
+AGC150_GEN;9;Gerador · corrente L2;gen_i_l2;10;514;4;-1;1;A;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 59
+AGC150_GEN;10;Gerador · corrente L3;gen_i_l3;10;515;4;-1;1;A;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 62
+AGC150_GEN;11;Gerador · potência ativa L1;gen_kw_l1;10;516;4;-1;1;kW;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 66
+AGC150_GEN;12;Gerador · potência ativa L2;gen_kw_l2;10;517;4;-1;1;kW;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 71
+AGC150_GEN;13;Gerador · potência ativa L3;gen_kw_l3;10;518;4;-1;1;kW;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 75
+AGC150_GEN;14;Gerador · potência ativa;gen_kw;10;519;4;-1;1;kW;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 79
+AGC150_GEN;15;Gerador · potência reativa L1;gen_kvar_l1;10;520;4;-1;1;kVAr;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 84
+AGC150_GEN;16;Gerador · potência reativa L2;gen_kvar_l2;10;521;4;-1;1;kVAr;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 87
+AGC150_GEN;17;Gerador · potência reativa L3;gen_kvar_l3;10;522;4;-1;1;kVAr;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 91
+AGC150_GEN;18;Gerador · potência reativa;gen_kvar;10;523;4;-1;1;kVAr;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 94
+AGC150_GEN;19;Gerador · potência aparente L1;gen_kva_l1;10;524;4;-1;1;kVA;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 99
+AGC150_GEN;20;Gerador · potência aparente L2;gen_kva_l2;10;525;4;-1;1;kVA;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 103
+AGC150_GEN;21;Gerador · potência aparente L3;gen_kva_l3;10;526;4;-1;1;kVA;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 108
+AGC150_GEN;22;Gerador · potência aparente;gen_kva;10;527;4;-1;1;kVA;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 111
+AGC150_GEN;23;Gerador · fator de potência;gen_fp;10;538;4;-1;100;PF;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 135
+AGC150_GEN;24;Gerador · energia ativa;energy_gen;10;536;40;-1;1;kWh;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 131
+AGC150_GEN;25;Gerador · energia reativa;reactive_energy_gen;10;528;40;-1;1;kVArh;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 115
+AGC150_GEN;26;Companhia · tensão L1L2;mains_v_l1l2;10;539;4;-1;1;V;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 139
+AGC150_GEN;27;Companhia · tensão L2L3;mains_v_l2l3;10;540;4;-1;1;V;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 141
+AGC150_GEN;28;Companhia · tensão L3L1;mains_v_l3l1;10;541;4;-1;1;V;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 143
+AGC150_GEN;29;Companhia · tensão L1–N;mains_v_l1n;10;542;4;-1;1;V;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 145
+AGC150_GEN;30;Companhia · tensão L2–N;mains_v_l2n;10;543;4;-1;1;V;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 147
+AGC150_GEN;31;Companhia · tensão L3–N;mains_v_l3n;10;544;4;-1;1;V;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 149
+AGC150_GEN;32;Companhia · frequência;mains_frequency;10;545;4;-1;100;Hz;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 151
+AGC150_GEN;33;Companhia · kW (TC/transdutor/PMS);mains_kw;10;592;4;-1;1;kW;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 203
+AGC150_GEN;34;Companhia · Q (TC/transdutor/PMS);mains_kvar;10;759;4;-1;1;kvar;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 325
+AGC150_GEN;35;Horímetro absoluto;hour_meter;10;554;40;-1;1;h;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 174
+AGC150_GEN;36;Horímetro relativo;relative_hours;10;556;40;-1;1;h;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 175
+AGC150_GEN;37;Tentativas de partida;starts;10;566;4;-1;1;;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 187
+AGC150_GEN;38;Rotação;rpm;10;576;4;-1;1;rpm;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 195
+AGC150_GEN;39;Manutenção 1;maintenance_1;10;569;4;-1;1;h;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 189
+AGC150_GEN;40;Manutenção 1 · dias;maintenance_days_1;10;570;4;-1;1;d;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 190
+AGC150_GEN;41;Serviço 1 · alarme;service_alarm_1;10;1015;4;0;1;;boolean;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 779
+AGC150_GEN;42;Manutenção 2;maintenance_2;10;571;4;-1;1;h;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 191
+AGC150_GEN;43;Manutenção 2 · dias;maintenance_days_2;10;572;4;-1;1;d;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 192
+AGC150_GEN;44;Serviço 2 · alarme;service_alarm_2;10;1015;4;1;1;;boolean;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 780
+AGC150_GEN;45;Temperatura motor · EIC;coolant;10;26001;4;-1;1;°C/F configurado;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 3422
+AGC150_GEN;46;Pressão óleo · EIC;oil_pressure;10;26002;4;-1;100;bar/psi configurado;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 3423
+AGC150_GEN;47;Validade pressão óleo;valid_oil;10;26900;4;13;1;;boolean;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 4341
+AGC150_GEN;48;Validade temperatura;valid_coolant;10;26900;4;14;1;;boolean;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 4342
+AGC150_GEN;49;Alimentação DC;battery;10;567;4;-1;10;V;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 188
+AGC150_GEN;50;Quantidade de alarmes;alarm_count;10;558;4;-1;1;;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 176
+AGC150_GEN;51;Alarmes não reconhecidos;alarm_unack;10;559;4;-1;1;;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 177
+AGC150_GEN;52;Alarmes ativos reconhecidos;alarm_active_ack;10;560;4;-1;1;;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 178
+AGC150_GEN;53;Estado nativo 1018;status_word;10;1018;4;-1;1;;word;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), registro 1018
+AGC150_GEN;54;Estado nativo 1019;mode_word;10;1019;4;-1;1;;word;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), registro 1019
+AGC150_GEN;55;Entrada 39;input_39;10;1142;4;0;1;;boolean;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 1411
+AGC150_GEN;56;Entrada 40;input_40;10;1142;4;1;1;;boolean;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 1412
+AGC150_GEN;57;Entrada 41;input_41;10;1142;4;2;1;;boolean;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 1413
+AGC150_GEN;58;Entrada 42;input_42;10;1142;4;3;1;;boolean;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 1414
+AGC150_GEN;59;Entrada 43;input_43;10;1142;4;4;1;;boolean;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 1415
+AGC150_GEN;60;Entrada 44;input_44;10;1142;4;5;1;;boolean;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 1416
+AGC150_GEN;61;Entrada 45;input_45;10;1142;4;6;1;;boolean;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 1417
+AGC150_GEN;62;Entrada 46;input_46;10;1142;4;7;1;;boolean;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 1418
+AGC150_GEN;63;Entrada 47;input_47;10;1142;4;11;1;;boolean;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 1421
+AGC150_GEN;64;Entrada 48;input_48;10;1142;4;12;1;;boolean;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 1422
+AGC150_GEN;65;Entrada 49;input_49;10;1142;4;13;1;;boolean;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 1423
+AGC150_GEN;66;Entrada 50;input_50;10;1142;4;14;1;;boolean;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 1424
+AGC150_GEN;67;Multifunção 20;analog_1;10;583;4;-1;1;configurado;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 197
+AGC150_GEN;68;Multifunção 21;analog_2;10;584;4;-1;1;configurado;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 198
+AGC150_GEN;69;Multifunção 22;analog_3;10;585;4;-1;1;configurado;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 199
+AGC150_GEN;70;Multifunção 23;analog_4;10;587;4;-1;1;configurado;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 200
+AGC150_GEN;71;Alarmes nativos 1000;alarm_word_1000;10;1000;4;-1;1;;word;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), registro 1000
+AGC150_GEN;72;Alarmes nativos 1001;alarm_word_1001;10;1001;4;-1;1;;word;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), registro 1001
+AGC150_GEN;73;Alarmes nativos 1002;alarm_word_1002;10;1002;4;-1;1;;word;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), registro 1002
+AGC150_GEN;74;Alarmes nativos 1003;alarm_word_1003;10;1003;4;-1;1;;word;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), registro 1003
+AGC150_GEN;75;Alarmes nativos 1004;alarm_word_1004;10;1004;4;-1;1;;word;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), registro 1004
+AGC150_GEN;76;Alarmes nativos 1005;alarm_word_1005;10;1005;4;-1;1;;word;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), registro 1005
+AGC150_GEN;77;Alarmes nativos 1006;alarm_word_1006;10;1006;4;-1;1;;word;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), registro 1006
+AGC150_GEN;78;Alarmes nativos 1007;alarm_word_1007;10;1007;4;-1;1;;word;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), registro 1007
+AGC150_GEN;79;Alarmes nativos 1010;alarm_word_1010;10;1010;4;-1;1;;word;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), registro 1010
+AGC150_GEN;80;Alarmes nativos 1011;alarm_word_1011;10;1011;4;-1;1;;word;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), registro 1011
+AGC150_GEN;81;Alarmes nativos 1013;alarm_word_1013;10;1013;4;-1;1;;word;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), registro 1013
+AGC150_GEN;82;Alarmes nativos 1014;alarm_word_1014;10;1014;4;-1;1;;word;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), registro 1014
+AGC150_GEN;83;Alarmes nativos 1015;alarm_word_1015;10;1015;4;-1;1;;word;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), registro 1015
+AGC150_GEN;84;Classes de falha;fail_class_word;10;1057;4;-1;1;;word;"agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), registro 1057; bits disponíveis por aplicação"
+AGC150_GEN_BUS;1;Gerador · tensão L1L2;gen_v_l1l2;10;501;4;-1;1;V;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 7
+AGC150_GEN_BUS;2;Gerador · tensão L2L3;gen_v_l2l3;10;502;4;-1;1;V;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 11
+AGC150_GEN_BUS;3;Gerador · tensão L3L1;gen_v_l3l1;10;503;4;-1;1;V;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 15
+AGC150_GEN_BUS;4;Gerador · tensão L1–N;gen_v_l1n;10;504;4;-1;1;V;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 19
+AGC150_GEN_BUS;5;Gerador · tensão L2–N;gen_v_l2n;10;505;4;-1;1;V;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 23
+AGC150_GEN_BUS;6;Gerador · tensão L3–N;gen_v_l3n;10;506;4;-1;1;V;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 27
+AGC150_GEN_BUS;7;Gerador · frequência;gen_frequency;10;507;4;-1;100;Hz;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 31
+AGC150_GEN_BUS;8;Gerador · corrente L1;gen_i_l1;10;513;4;-1;1;A;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 55
+AGC150_GEN_BUS;9;Gerador · corrente L2;gen_i_l2;10;514;4;-1;1;A;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 59
+AGC150_GEN_BUS;10;Gerador · corrente L3;gen_i_l3;10;515;4;-1;1;A;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 62
+AGC150_GEN_BUS;11;Gerador · potência ativa L1;gen_kw_l1;10;516;4;-1;1;kW;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 66
+AGC150_GEN_BUS;12;Gerador · potência ativa L2;gen_kw_l2;10;517;4;-1;1;kW;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 71
+AGC150_GEN_BUS;13;Gerador · potência ativa L3;gen_kw_l3;10;518;4;-1;1;kW;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 75
+AGC150_GEN_BUS;14;Gerador · potência ativa;gen_kw;10;519;4;-1;1;kW;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 79
+AGC150_GEN_BUS;15;Gerador · potência reativa L1;gen_kvar_l1;10;520;4;-1;1;kVAr;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 84
+AGC150_GEN_BUS;16;Gerador · potência reativa L2;gen_kvar_l2;10;521;4;-1;1;kVAr;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 87
+AGC150_GEN_BUS;17;Gerador · potência reativa L3;gen_kvar_l3;10;522;4;-1;1;kVAr;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 91
+AGC150_GEN_BUS;18;Gerador · potência reativa;gen_kvar;10;523;4;-1;1;kVAr;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 94
+AGC150_GEN_BUS;19;Gerador · potência aparente L1;gen_kva_l1;10;524;4;-1;1;kVA;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 99
+AGC150_GEN_BUS;20;Gerador · potência aparente L2;gen_kva_l2;10;525;4;-1;1;kVA;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 103
+AGC150_GEN_BUS;21;Gerador · potência aparente L3;gen_kva_l3;10;526;4;-1;1;kVA;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 108
+AGC150_GEN_BUS;22;Gerador · potência aparente;gen_kva;10;527;4;-1;1;kVA;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 111
+AGC150_GEN_BUS;23;Gerador · fator de potência;gen_fp;10;538;4;-1;100;PF;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 135
+AGC150_GEN_BUS;24;Gerador · energia ativa;energy_gen;10;536;40;-1;1;kWh;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 131
+AGC150_GEN_BUS;25;Gerador · energia reativa;reactive_energy_gen;10;528;40;-1;1;kVArh;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 115
+AGC150_GEN_BUS;26;Barramento · tensão L1L2;bus_v_l1l2;10;539;4;-1;1;V;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 139
+AGC150_GEN_BUS;27;Barramento · tensão L2L3;bus_v_l2l3;10;540;4;-1;1;V;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 141
+AGC150_GEN_BUS;28;Barramento · tensão L3L1;bus_v_l3l1;10;541;4;-1;1;V;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 143
+AGC150_GEN_BUS;29;Barramento · tensão L1–N;bus_v_l1n;10;542;4;-1;1;V;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 145
+AGC150_GEN_BUS;30;Barramento · tensão L2–N;bus_v_l2n;10;543;4;-1;1;V;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 147
+AGC150_GEN_BUS;31;Barramento · tensão L3–N;bus_v_l3n;10;544;4;-1;1;V;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 149
+AGC150_GEN_BUS;32;Barramento · frequência;bus_frequency;10;545;4;-1;100;Hz;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 151
+AGC150_GEN_BUS;33;Horímetro absoluto;hour_meter;10;554;40;-1;1;h;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 174
+AGC150_GEN_BUS;34;Horímetro relativo;relative_hours;10;556;40;-1;1;h;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 175
+AGC150_GEN_BUS;35;Tentativas de partida;starts;10;566;4;-1;1;;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 187
+AGC150_GEN_BUS;36;Rotação;rpm;10;576;4;-1;1;rpm;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 195
+AGC150_GEN_BUS;37;Manutenção 1;maintenance_1;10;569;4;-1;1;h;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 189
+AGC150_GEN_BUS;38;Manutenção 1 · dias;maintenance_days_1;10;570;4;-1;1;d;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 190
+AGC150_GEN_BUS;39;Serviço 1 · alarme;service_alarm_1;10;1015;4;0;1;;boolean;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 779
+AGC150_GEN_BUS;40;Manutenção 2;maintenance_2;10;571;4;-1;1;h;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 191
+AGC150_GEN_BUS;41;Manutenção 2 · dias;maintenance_days_2;10;572;4;-1;1;d;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 192
+AGC150_GEN_BUS;42;Serviço 2 · alarme;service_alarm_2;10;1015;4;1;1;;boolean;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 780
+AGC150_GEN_BUS;43;Temperatura motor · EIC;coolant;10;26001;4;-1;1;°C/F configurado;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 3422
+AGC150_GEN_BUS;44;Pressão óleo · EIC;oil_pressure;10;26002;4;-1;100;bar/psi configurado;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 3423
+AGC150_GEN_BUS;45;Validade pressão óleo;valid_oil;10;26900;4;13;1;;boolean;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 4341
+AGC150_GEN_BUS;46;Validade temperatura;valid_coolant;10;26900;4;14;1;;boolean;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 4342
+AGC150_GEN_BUS;47;Alimentação DC;battery;10;567;4;-1;10;V;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 188
+AGC150_GEN_BUS;48;Quantidade de alarmes;alarm_count;10;558;4;-1;1;;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 176
+AGC150_GEN_BUS;49;Alarmes não reconhecidos;alarm_unack;10;559;4;-1;1;;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 177
+AGC150_GEN_BUS;50;Alarmes ativos reconhecidos;alarm_active_ack;10;560;4;-1;1;;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 178
+AGC150_GEN_BUS;51;Estado nativo 1018;status_word;10;1018;4;-1;1;;word;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), registro 1018
+AGC150_GEN_BUS;52;Estado nativo 1019;mode_word;10;1019;4;-1;1;;word;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), registro 1019
+AGC150_GEN_BUS;53;Entrada 39;input_39;10;1142;4;0;1;;boolean;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 1411
+AGC150_GEN_BUS;54;Entrada 40;input_40;10;1142;4;1;1;;boolean;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 1412
+AGC150_GEN_BUS;55;Entrada 41;input_41;10;1142;4;2;1;;boolean;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 1413
+AGC150_GEN_BUS;56;Entrada 42;input_42;10;1142;4;3;1;;boolean;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 1414
+AGC150_GEN_BUS;57;Entrada 43;input_43;10;1142;4;4;1;;boolean;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 1415
+AGC150_GEN_BUS;58;Entrada 44;input_44;10;1142;4;5;1;;boolean;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 1416
+AGC150_GEN_BUS;59;Entrada 45;input_45;10;1142;4;6;1;;boolean;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 1417
+AGC150_GEN_BUS;60;Entrada 46;input_46;10;1142;4;7;1;;boolean;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 1418
+AGC150_GEN_BUS;61;Entrada 47;input_47;10;1142;4;11;1;;boolean;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 1421
+AGC150_GEN_BUS;62;Entrada 48;input_48;10;1142;4;12;1;;boolean;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 1422
+AGC150_GEN_BUS;63;Entrada 49;input_49;10;1142;4;13;1;;boolean;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 1423
+AGC150_GEN_BUS;64;Entrada 50;input_50;10;1142;4;14;1;;boolean;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 1424
+AGC150_GEN_BUS;65;Multifunção 20;analog_1;10;583;4;-1;1;configurado;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 197
+AGC150_GEN_BUS;66;Multifunção 21;analog_2;10;584;4;-1;1;configurado;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 198
+AGC150_GEN_BUS;67;Multifunção 22;analog_3;10;585;4;-1;1;configurado;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 199
+AGC150_GEN_BUS;68;Multifunção 23;analog_4;10;587;4;-1;1;configurado;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 200
+AGC150_GEN_BUS;69;Alarmes nativos 1000;alarm_word_1000;10;1000;4;-1;1;;word;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), registro 1000
+AGC150_GEN_BUS;70;Alarmes nativos 1001;alarm_word_1001;10;1001;4;-1;1;;word;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), registro 1001
+AGC150_GEN_BUS;71;Alarmes nativos 1002;alarm_word_1002;10;1002;4;-1;1;;word;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), registro 1002
+AGC150_GEN_BUS;72;Alarmes nativos 1003;alarm_word_1003;10;1003;4;-1;1;;word;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), registro 1003
+AGC150_GEN_BUS;73;Alarmes nativos 1004;alarm_word_1004;10;1004;4;-1;1;;word;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), registro 1004
+AGC150_GEN_BUS;74;Alarmes nativos 1005;alarm_word_1005;10;1005;4;-1;1;;word;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), registro 1005
+AGC150_GEN_BUS;75;Alarmes nativos 1006;alarm_word_1006;10;1006;4;-1;1;;word;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), registro 1006
+AGC150_GEN_BUS;76;Alarmes nativos 1007;alarm_word_1007;10;1007;4;-1;1;;word;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), registro 1007
+AGC150_GEN_BUS;77;Alarmes nativos 1010;alarm_word_1010;10;1010;4;-1;1;;word;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), registro 1010
+AGC150_GEN_BUS;78;Alarmes nativos 1011;alarm_word_1011;10;1011;4;-1;1;;word;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), registro 1011
+AGC150_GEN_BUS;79;Alarmes nativos 1013;alarm_word_1013;10;1013;4;-1;1;;word;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), registro 1013
+AGC150_GEN_BUS;80;Alarmes nativos 1014;alarm_word_1014;10;1014;4;-1;1;;word;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), registro 1014
+AGC150_GEN_BUS;81;Alarmes nativos 1015;alarm_word_1015;10;1015;4;-1;1;;word;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), registro 1015
+AGC150_GEN_BUS;82;Classes de falha;fail_class_word;10;1057;4;-1;1;;word;"agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), registro 1057; bits disponíveis por aplicação"
+AGC150_MAINS;1;Companhia · tensão L1L2;mains_v_l1l2;10;501;4;-1;1;V;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 8
+AGC150_MAINS;2;Companhia · tensão L2L3;mains_v_l2l3;10;502;4;-1;1;V;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 12
+AGC150_MAINS;3;Companhia · tensão L3L1;mains_v_l3l1;10;503;4;-1;1;V;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 16
+AGC150_MAINS;4;Companhia · tensão L1–N;mains_v_l1n;10;504;4;-1;1;V;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 20
+AGC150_MAINS;5;Companhia · tensão L2–N;mains_v_l2n;10;505;4;-1;1;V;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 24
+AGC150_MAINS;6;Companhia · tensão L3–N;mains_v_l3n;10;506;4;-1;1;V;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 28
+AGC150_MAINS;7;Companhia · frequência;mains_frequency;10;507;4;-1;100;Hz;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 32
+AGC150_MAINS;8;Companhia · corrente L1;mains_i_l1;10;513;4;-1;1;A;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 56
+AGC150_MAINS;9;Companhia · corrente L2;mains_i_l2;10;514;4;-1;1;A;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 60
+AGC150_MAINS;10;Companhia · corrente L3;mains_i_l3;10;515;4;-1;1;A;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 63
+AGC150_MAINS;11;Companhia · potência ativa L1;mains_kw_l1;10;516;4;-1;1;kW;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 67
+AGC150_MAINS;12;Companhia · potência ativa L2;mains_kw_l2;10;517;4;-1;1;kW;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 72
+AGC150_MAINS;13;Companhia · potência ativa L3;mains_kw_l3;10;518;4;-1;1;kW;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 76
+AGC150_MAINS;14;Companhia · potência ativa;mains_kw;10;519;4;-1;1;kW;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 80
+AGC150_MAINS;15;Companhia · potência reativa L1;mains_kvar_l1;10;520;4;-1;1;kVAr;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 83
+AGC150_MAINS;16;Companhia · potência reativa L2;mains_kvar_l2;10;521;4;-1;1;kVAr;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 88
+AGC150_MAINS;17;Companhia · potência reativa L3;mains_kvar_l3;10;522;4;-1;1;kVAr;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 92
+AGC150_MAINS;18;Companhia · potência reativa;mains_kvar;10;523;4;-1;1;kVAr;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 95
+AGC150_MAINS;19;Companhia · potência aparente L1;mains_kva_l1;10;524;4;-1;1;kVA;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 100
+AGC150_MAINS;20;Companhia · potência aparente L2;mains_kva_l2;10;525;4;-1;1;kVA;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 104
+AGC150_MAINS;21;Companhia · potência aparente L3;mains_kva_l3;10;526;4;-1;1;kVA;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 107
+AGC150_MAINS;22;Companhia · potência aparente;mains_kva;10;527;4;-1;1;kVA;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 112
+AGC150_MAINS;23;Companhia · fator de potência;mains_fp;10;538;4;-1;100;PF;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 136
+AGC150_MAINS;24;Companhia · energia ativa;energy_mains;10;536;40;-1;1;kWh;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 132
+AGC150_MAINS;25;Companhia · energia reativa;reactive_energy_mains;10;528;40;-1;1;kVArh;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 116
+AGC150_MAINS;26;Barramento · tensão L1L2;bus_v_l1l2;10;539;4;-1;1;V;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 139
+AGC150_MAINS;27;Barramento · tensão L2L3;bus_v_l2l3;10;540;4;-1;1;V;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 141
+AGC150_MAINS;28;Barramento · tensão L3L1;bus_v_l3l1;10;541;4;-1;1;V;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 143
+AGC150_MAINS;29;Barramento · tensão L1–N;bus_v_l1n;10;542;4;-1;1;V;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 145
+AGC150_MAINS;30;Barramento · tensão L2–N;bus_v_l2n;10;543;4;-1;1;V;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 147
+AGC150_MAINS;31;Barramento · tensão L3–N;bus_v_l3n;10;544;4;-1;1;V;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 149
+AGC150_MAINS;32;Barramento · frequência;bus_frequency;10;545;4;-1;100;Hz;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 151
+AGC150_MAINS;33;Alimentação DC;battery;10;567;4;-1;10;V;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 188
+AGC150_MAINS;34;Quantidade de alarmes;alarm_count;10;558;4;-1;1;;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 176
+AGC150_MAINS;35;Alarmes não reconhecidos;alarm_unack;10;559;4;-1;1;;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 177
+AGC150_MAINS;36;Alarmes ativos reconhecidos;alarm_active_ack;10;560;4;-1;1;;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 178
+AGC150_MAINS;37;Estado nativo 1018;status_word;10;1018;4;-1;1;;word;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), registro 1018
+AGC150_MAINS;38;Estado nativo 1019;mode_word;10;1019;4;-1;1;;word;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), registro 1019
+AGC150_MAINS;39;Entrada 39;input_39;10;1142;4;0;1;;boolean;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 1411
+AGC150_MAINS;40;Entrada 40;input_40;10;1142;4;1;1;;boolean;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 1412
+AGC150_MAINS;41;Entrada 41;input_41;10;1142;4;2;1;;boolean;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 1413
+AGC150_MAINS;42;Entrada 42;input_42;10;1142;4;3;1;;boolean;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 1414
+AGC150_MAINS;43;Entrada 43;input_43;10;1142;4;4;1;;boolean;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 1415
+AGC150_MAINS;44;Entrada 44;input_44;10;1142;4;5;1;;boolean;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 1416
+AGC150_MAINS;45;Entrada 45;input_45;10;1142;4;6;1;;boolean;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 1417
+AGC150_MAINS;46;Entrada 46;input_46;10;1142;4;7;1;;boolean;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 1418
+AGC150_MAINS;47;Entrada 47;input_47;10;1142;4;11;1;;boolean;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 1421
+AGC150_MAINS;48;Entrada 48;input_48;10;1142;4;12;1;;boolean;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 1422
+AGC150_MAINS;49;Entrada 49;input_49;10;1142;4;13;1;;boolean;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 1423
+AGC150_MAINS;50;Entrada 50;input_50;10;1142;4;14;1;;boolean;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 1424
+AGC150_MAINS;51;Multifunção 20;analog_1;10;583;4;-1;1;configurado;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 197
+AGC150_MAINS;52;Multifunção 21;analog_2;10;584;4;-1;1;configurado;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 198
+AGC150_MAINS;53;Multifunção 22;analog_3;10;585;4;-1;1;configurado;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 199
+AGC150_MAINS;54;Multifunção 23;analog_4;10;587;4;-1;1;configurado;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 200
+AGC150_MAINS;55;Alarmes nativos 1000;alarm_word_1000;10;1000;4;-1;1;;word;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), registro 1000
+AGC150_MAINS;56;Alarmes nativos 1001;alarm_word_1001;10;1001;4;-1;1;;word;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), registro 1001
+AGC150_MAINS;57;Alarmes nativos 1002;alarm_word_1002;10;1002;4;-1;1;;word;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), registro 1002
+AGC150_MAINS;58;Alarmes nativos 1003;alarm_word_1003;10;1003;4;-1;1;;word;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), registro 1003
+AGC150_MAINS;59;Alarmes nativos 1004;alarm_word_1004;10;1004;4;-1;1;;word;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), registro 1004
+AGC150_MAINS;60;Alarmes nativos 1005;alarm_word_1005;10;1005;4;-1;1;;word;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), registro 1005
+AGC150_MAINS;61;Alarmes nativos 1007;alarm_word_1007;10;1007;4;-1;1;;word;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), registro 1007
+AGC150_MAINS;62;Alarmes nativos 1010;alarm_word_1010;10;1010;4;-1;1;;word;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), registro 1010
+AGC150_MAINS;63;Alarmes nativos 1011;alarm_word_1011;10;1011;4;-1;1;;word;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), registro 1011
+AGC150_MAINS;64;Alarmes nativos 1013;alarm_word_1013;10;1013;4;-1;1;;word;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), registro 1013
+AGC150_MAINS;65;Alarmes nativos 1014;alarm_word_1014;10;1014;4;-1;1;;word;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), registro 1014
+AGC150_MAINS;66;Alarmes nativos 1015;alarm_word_1015;10;1015;4;-1;1;;word;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), registro 1015
+AGC150_MAINS;67;Classes de falha;fail_class_word;10;1057;4;-1;1;;word;"agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), registro 1057; bits disponíveis por aplicação"
+AGC150_ATS;1;Fonte S1 · tensão L1L2;s1_v_l1l2;10;501;4;-1;1;V;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 6
+AGC150_ATS;2;Fonte S1 · tensão L2L3;s1_v_l2l3;10;502;4;-1;1;V;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 10
+AGC150_ATS;3;Fonte S1 · tensão L3L1;s1_v_l3l1;10;503;4;-1;1;V;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 14
+AGC150_ATS;4;Fonte S1 · tensão L1–N;s1_v_l1n;10;504;4;-1;1;V;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 18
+AGC150_ATS;5;Fonte S1 · tensão L2–N;s1_v_l2n;10;505;4;-1;1;V;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 22
+AGC150_ATS;6;Fonte S1 · tensão L3–N;s1_v_l3n;10;506;4;-1;1;V;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 26
+AGC150_ATS;7;Fonte S1 · frequência;s1_frequency;10;507;4;-1;100;Hz;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 30
+AGC150_ATS;8;Fonte S1 · corrente L1;s1_i_l1;10;513;4;-1;1;A;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 54
+AGC150_ATS;9;Fonte S1 · corrente L2;s1_i_l2;10;514;4;-1;1;A;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 58
+AGC150_ATS;10;Fonte S1 · corrente L3;s1_i_l3;10;515;4;-1;1;A;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 64
+AGC150_ATS;11;Fonte S1 · potência ativa L1;s1_kw_l1;10;516;4;-1;1;kW;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 68
+AGC150_ATS;12;Fonte S1 · potência ativa L2;s1_kw_l2;10;517;4;-1;1;kW;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 70
+AGC150_ATS;13;Fonte S1 · potência ativa L3;s1_kw_l3;10;518;4;-1;1;kW;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 74
+AGC150_ATS;14;Fonte S1 · potência ativa;s1_kw;10;519;4;-1;1;kW;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 78
+AGC150_ATS;15;Fonte S1 · potência reativa L1;s1_kvar_l1;10;520;4;-1;1;kVAr;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 82
+AGC150_ATS;16;Fonte S1 · potência reativa L2;s1_kvar_l2;10;521;4;-1;1;kVAr;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 86
+AGC150_ATS;17;Fonte S1 · potência reativa L3;s1_kvar_l3;10;522;4;-1;1;kVAr;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 90
+AGC150_ATS;18;Fonte S1 · potência reativa;s1_kvar;10;523;4;-1;1;kVAr;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 96
+AGC150_ATS;19;Fonte S1 · potência aparente L1;s1_kva_l1;10;524;4;-1;1;kVA;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 98
+AGC150_ATS;20;Fonte S1 · potência aparente L2;s1_kva_l2;10;525;4;-1;1;kVA;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 102
+AGC150_ATS;21;Fonte S1 · potência aparente L3;s1_kva_l3;10;526;4;-1;1;kVA;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 106
+AGC150_ATS;22;Fonte S1 · potência aparente;s1_kva;10;527;4;-1;1;kVA;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 110
+AGC150_ATS;23;Fonte S1 · fator de potência;s1_fp;10;538;4;-1;100;PF;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 134
+AGC150_ATS;24;Fonte S1 · energia ativa;energy_s1;10;536;40;-1;1;kWh;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 130
+AGC150_ATS;25;Fonte S1 · energia reativa;reactive_energy_s1;10;528;40;-1;1;kVArh;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 114
+AGC150_ATS;26;Fonte S2 · tensão L1L2;s2_v_l1l2;10;539;4;-1;1;V;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 138
+AGC150_ATS;27;Fonte S2 · tensão L2L3;s2_v_l2l3;10;540;4;-1;1;V;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 140
+AGC150_ATS;28;Fonte S2 · tensão L3L1;s2_v_l3l1;10;541;4;-1;1;V;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 142
+AGC150_ATS;29;Fonte S2 · tensão L1–N;s2_v_l1n;10;542;4;-1;1;V;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 144
+AGC150_ATS;30;Fonte S2 · tensão L2–N;s2_v_l2n;10;543;4;-1;1;V;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 146
+AGC150_ATS;31;Fonte S2 · tensão L3–N;s2_v_l3n;10;544;4;-1;1;V;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 148
+AGC150_ATS;32;Fonte S2 · frequência;s2_frequency;10;545;4;-1;100;Hz;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 150
+AGC150_ATS;33;Alimentação DC;battery;10;567;4;-1;10;V;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 188
+AGC150_ATS;34;Quantidade de alarmes;alarm_count;10;558;4;-1;1;;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 176
+AGC150_ATS;35;Alarmes não reconhecidos;alarm_unack;10;559;4;-1;1;;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 177
+AGC150_ATS;36;Alarmes ativos reconhecidos;alarm_active_ack;10;560;4;-1;1;;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 178
+AGC150_ATS;37;Estado nativo 1018;status_word;10;1018;4;-1;1;;word;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), registro 1018
+AGC150_ATS;38;Estado nativo 1019;mode_word;10;1019;4;-1;1;;word;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), registro 1019
+AGC150_ATS;39;Modo manual;mode_manual;10;8;2;-1;1;;boolean;agc-150-modbus-server-tables-4189341212-uk.xlsx / Discrete input contact (02), endereço 8
+AGC150_ATS;40;Modo automático;mode_auto;10;9;2;-1;1;;boolean;agc-150-modbus-server-tables-4189341212-uk.xlsx / Discrete input contact (02), endereço 9
+AGC150_ATS;41;Entrada 39;input_39;10;1142;4;0;1;;boolean;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 1411
+AGC150_ATS;42;Entrada 40;input_40;10;1142;4;1;1;;boolean;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 1412
+AGC150_ATS;43;Entrada 41;input_41;10;1142;4;2;1;;boolean;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 1413
+AGC150_ATS;44;Entrada 42;input_42;10;1142;4;3;1;;boolean;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 1414
+AGC150_ATS;45;Entrada 43;input_43;10;1142;4;4;1;;boolean;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 1415
+AGC150_ATS;46;Entrada 44;input_44;10;1142;4;5;1;;boolean;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 1416
+AGC150_ATS;47;Entrada 45;input_45;10;1142;4;6;1;;boolean;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 1417
+AGC150_ATS;48;Entrada 46;input_46;10;1142;4;7;1;;boolean;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 1418
+AGC150_ATS;49;Entrada 47;input_47;10;1142;4;11;1;;boolean;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 1421
+AGC150_ATS;50;Entrada 48;input_48;10;1142;4;12;1;;boolean;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 1422
+AGC150_ATS;51;Entrada 49;input_49;10;1142;4;13;1;;boolean;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 1423
+AGC150_ATS;52;Entrada 50;input_50;10;1142;4;14;1;;boolean;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 1424
+AGC150_ATS;53;Multifunção 20;analog_1;10;583;4;-1;1;configurado;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 197
+AGC150_ATS;54;Multifunção 21;analog_2;10;584;4;-1;1;configurado;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 198
+AGC150_ATS;55;Multifunção 22;analog_3;10;585;4;-1;1;configurado;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 199
+AGC150_ATS;56;Multifunção 23;analog_4;10;587;4;-1;1;configurado;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 200
+AGC150_ATS;57;Alarmes nativos 1007;alarm_word_1007;10;1007;4;-1;1;;word;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), registro 1007
+AGC150_ATS;58;Alarmes nativos 1010;alarm_word_1010;10;1010;4;-1;1;;word;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), registro 1010
+AGC150_ATS;59;Alarmes nativos 1011;alarm_word_1011;10;1011;4;-1;1;;word;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), registro 1011
+AGC150_ATS;60;Alarmes nativos 1013;alarm_word_1013;10;1013;4;-1;1;;word;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), registro 1013
+AGC150_ATS;61;Alarmes nativos 1014;alarm_word_1014;10;1014;4;-1;1;;word;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), registro 1014
+AGC150_ATS;62;Alarmes nativos 1015;alarm_word_1015;10;1015;4;-1;1;;word;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), registro 1015
+AGC150_ATS;63;Classes de falha;fail_class_word;10;1057;4;-1;1;;word;"agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), registro 1057; bits disponíveis por aplicação"
+AGC150_ENG;1;Horímetro absoluto;hour_meter;10;554;40;-1;1;h;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 174
+AGC150_ENG;2;Horímetro relativo;relative_hours;10;556;40;-1;1;h;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 175
+AGC150_ENG;3;Tentativas de partida;starts;10;566;4;-1;1;;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 187
+AGC150_ENG;4;Rotação;rpm;10;576;4;-1;1;rpm;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 195
+AGC150_ENG;5;Manutenção 1;maintenance_1;10;569;4;-1;1;h;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 189
+AGC150_ENG;6;Manutenção 1 · dias;maintenance_days_1;10;570;4;-1;1;d;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 190
+AGC150_ENG;7;Serviço 1 · alarme;service_alarm_1;10;1015;4;0;1;;boolean;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 779
+AGC150_ENG;8;Manutenção 2;maintenance_2;10;571;4;-1;1;h;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 191
+AGC150_ENG;9;Manutenção 2 · dias;maintenance_days_2;10;572;4;-1;1;d;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 192
+AGC150_ENG;10;Serviço 2 · alarme;service_alarm_2;10;1015;4;1;1;;boolean;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 780
+AGC150_ENG;11;Temperatura motor · EIC;coolant;10;26001;4;-1;1;°C/F configurado;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 3422
+AGC150_ENG;12;Pressão óleo · EIC;oil_pressure;10;26002;4;-1;100;bar/psi configurado;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 3423
+AGC150_ENG;13;Validade pressão óleo;valid_oil;10;26900;4;13;1;;boolean;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 4341
+AGC150_ENG;14;Validade temperatura;valid_coolant;10;26900;4;14;1;;boolean;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 4342
+AGC150_ENG;15;Alimentação DC;battery;10;567;4;-1;10;V;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 188
+AGC150_ENG;16;Quantidade de alarmes;alarm_count;10;558;4;-1;1;;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 176
+AGC150_ENG;17;Alarmes não reconhecidos;alarm_unack;10;559;4;-1;1;;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 177
+AGC150_ENG;18;Alarmes ativos reconhecidos;alarm_active_ack;10;560;4;-1;1;;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 178
+AGC150_ENG;19;Estado nativo 1018;status_word;10;1018;4;-1;1;;word;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), registro 1018
+AGC150_ENG;20;Estado nativo 1019;mode_word;10;1019;4;-1;1;;word;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), registro 1019
+AGC150_ENG;21;Entrada 39;input_39;10;1142;4;0;1;;boolean;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 1411
+AGC150_ENG;22;Entrada 40;input_40;10;1142;4;1;1;;boolean;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 1412
+AGC150_ENG;23;Entrada 41;input_41;10;1142;4;2;1;;boolean;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 1413
+AGC150_ENG;24;Entrada 42;input_42;10;1142;4;3;1;;boolean;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 1414
+AGC150_ENG;25;Entrada 43;input_43;10;1142;4;4;1;;boolean;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 1415
+AGC150_ENG;26;Entrada 44;input_44;10;1142;4;5;1;;boolean;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 1416
+AGC150_ENG;27;Entrada 45;input_45;10;1142;4;6;1;;boolean;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 1417
+AGC150_ENG;28;Entrada 46;input_46;10;1142;4;7;1;;boolean;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 1418
+AGC150_ENG;29;Entrada 47;input_47;10;1142;4;11;1;;boolean;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 1421
+AGC150_ENG;30;Entrada 48;input_48;10;1142;4;12;1;;boolean;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 1422
+AGC150_ENG;31;Entrada 49;input_49;10;1142;4;13;1;;boolean;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 1423
+AGC150_ENG;32;Entrada 50;input_50;10;1142;4;14;1;;boolean;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 1424
+AGC150_ENG;33;Multifunção 20;analog_1;10;583;4;-1;1;configurado;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 197
+AGC150_ENG;34;Multifunção 21;analog_2;10;584;4;-1;1;configurado;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 198
+AGC150_ENG;35;Multifunção 22;analog_3;10;585;4;-1;1;configurado;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 199
+AGC150_ENG;36;Multifunção 23;analog_4;10;587;4;-1;1;configurado;integer;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), linha 200
+AGC150_ENG;37;Alarmes nativos 1007;alarm_word_1007;10;1007;4;-1;1;;word;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), registro 1007
+AGC150_ENG;38;Alarmes nativos 1010;alarm_word_1010;10;1010;4;-1;1;;word;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), registro 1010
+AGC150_ENG;39;Alarmes nativos 1011;alarm_word_1011;10;1011;4;-1;1;;word;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), registro 1011
+AGC150_ENG;40;Alarmes nativos 1013;alarm_word_1013;10;1013;4;-1;1;;word;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), registro 1013
+AGC150_ENG;41;Alarmes nativos 1014;alarm_word_1014;10;1014;4;-1;1;;word;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), registro 1014
+AGC150_ENG;42;Alarmes nativos 1015;alarm_word_1015;10;1015;4;-1;1;;word;agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), registro 1015
+AGC150_ENG;43;Classes de falha;fail_class_word;10;1057;4;-1;1;;word;"agc-150-modbus-server-tables-4189341212-uk.xlsx / Input register (04), registro 1057; bits disponíveis por aplicação"
+SGC420_MKII;1;Gerador · tensão L1–N;gen_v_l1n;10;1;4;-1;10;V;integer;sgc-420-mk-ii-modbus-tables-4189341402-uk.xlsx / Holding & Read, linha 3
+SGC420_MKII;2;Gerador · tensão L2–N;gen_v_l2n;10;2;4;-1;10;V;integer;sgc-420-mk-ii-modbus-tables-4189341402-uk.xlsx / Holding & Read, linha 4
+SGC420_MKII;3;Gerador · tensão L3–N;gen_v_l3n;10;3;4;-1;10;V;integer;sgc-420-mk-ii-modbus-tables-4189341402-uk.xlsx / Holding & Read, linha 5
+SGC420_MKII;4;Gerador · tensão L1L2;gen_v_l1l2;10;4;4;-1;10;V;integer;sgc-420-mk-ii-modbus-tables-4189341402-uk.xlsx / Holding & Read, linha 6
+SGC420_MKII;5;Gerador · tensão L2L3;gen_v_l2l3;10;5;4;-1;10;V;integer;sgc-420-mk-ii-modbus-tables-4189341402-uk.xlsx / Holding & Read, linha 7
+SGC420_MKII;6;Gerador · tensão L3L1;gen_v_l3l1;10;6;4;-1;10;V;integer;sgc-420-mk-ii-modbus-tables-4189341402-uk.xlsx / Holding & Read, linha 8
+SGC420_MKII;7;Gerador · frequência;gen_frequency;10;7;4;-1;10;Hz;integer;sgc-420-mk-ii-modbus-tables-4189341402-uk.xlsx / Holding & Read, linha 9
+SGC420_MKII;8;Gerador · fator de potência L1;gen_fp_l1;10;10;4;-1;100;-;integer;sgc-420-mk-ii-modbus-tables-4189341402-uk.xlsx / Holding & Read, linha 12
+SGC420_MKII;9;Gerador · fator de potência L2;gen_fp_l2;10;11;4;-1;100;-;integer;sgc-420-mk-ii-modbus-tables-4189341402-uk.xlsx / Holding & Read, linha 13
+SGC420_MKII;10;Gerador · fator de potência L3;gen_fp_l3;10;12;4;-1;100;-;integer;sgc-420-mk-ii-modbus-tables-4189341402-uk.xlsx / Holding & Read, linha 14
+SGC420_MKII;11;Gerador · fator de potência;gen_fp;10;13;4;-1;100;-;integer;sgc-420-mk-ii-modbus-tables-4189341402-uk.xlsx / Holding & Read, linha 15
+SGC420_MKII;12;Companhia · tensão L1–N;mains_v_l1n;10;14;4;-1;10;V;integer;sgc-420-mk-ii-modbus-tables-4189341402-uk.xlsx / Holding & Read, linha 16
+SGC420_MKII;13;Companhia · tensão L2–N;mains_v_l2n;10;15;4;-1;10;V;integer;sgc-420-mk-ii-modbus-tables-4189341402-uk.xlsx / Holding & Read, linha 17
+SGC420_MKII;14;Companhia · tensão L3–N;mains_v_l3n;10;16;4;-1;10;V;integer;sgc-420-mk-ii-modbus-tables-4189341402-uk.xlsx / Holding & Read, linha 18
+SGC420_MKII;15;Companhia · tensão L1L2;mains_v_l1l2;10;17;4;-1;10;V;integer;sgc-420-mk-ii-modbus-tables-4189341402-uk.xlsx / Holding & Read, linha 19
+SGC420_MKII;16;Companhia · tensão L2L3;mains_v_l2l3;10;18;4;-1;10;V;integer;sgc-420-mk-ii-modbus-tables-4189341402-uk.xlsx / Holding & Read, linha 20
+SGC420_MKII;17;Companhia · tensão L3L1;mains_v_l3l1;10;19;4;-1;10;V;integer;sgc-420-mk-ii-modbus-tables-4189341402-uk.xlsx / Holding & Read, linha 21
+SGC420_MKII;18;Companhia · frequência;mains_frequency;10;20;4;-1;10;Hz;integer;sgc-420-mk-ii-modbus-tables-4189341402-uk.xlsx / Holding & Read, linha 22
+SGC420_MKII;19;Carga · corrente L1;load_i_l1;10;23;4;-1;10;A;integer;sgc-420-mk-ii-modbus-tables-4189341402-uk.xlsx / Holding & Read, linha 25
+SGC420_MKII;20;Carga · corrente L2;load_i_l2;10;24;4;-1;10;A;integer;sgc-420-mk-ii-modbus-tables-4189341402-uk.xlsx / Holding & Read, linha 26
+SGC420_MKII;21;Carga · corrente L3;load_i_l3;10;25;4;-1;10;A;integer;sgc-420-mk-ii-modbus-tables-4189341402-uk.xlsx / Holding & Read, linha 27
+SGC420_MKII;22;Carga · potência ativa L1;load_kw_l1;10;26;4;-1;10;kW;integer;sgc-420-mk-ii-modbus-tables-4189341402-uk.xlsx / Holding & Read, linha 28
+SGC420_MKII;23;Carga · potência ativa L2;load_kw_l2;10;27;4;-1;10;kW;integer;sgc-420-mk-ii-modbus-tables-4189341402-uk.xlsx / Holding & Read, linha 29
+SGC420_MKII;24;Carga · potência ativa L3;load_kw_l3;10;28;4;-1;10;kW;integer;sgc-420-mk-ii-modbus-tables-4189341402-uk.xlsx / Holding & Read, linha 30
+SGC420_MKII;25;Carga · potência ativa;load_kw;10;29;4;-1;10;kW;integer;sgc-420-mk-ii-modbus-tables-4189341402-uk.xlsx / Holding & Read, linha 31
+SGC420_MKII;26;Carga · potência aparente L1;load_kva_l1;10;31;4;-1;10;kVA;integer;sgc-420-mk-ii-modbus-tables-4189341402-uk.xlsx / Holding & Read, linha 33
+SGC420_MKII;27;Carga · potência aparente L2;load_kva_l2;10;32;4;-1;10;kVA;integer;sgc-420-mk-ii-modbus-tables-4189341402-uk.xlsx / Holding & Read, linha 34
+SGC420_MKII;28;Carga · potência aparente L3;load_kva_l3;10;33;4;-1;10;kVA;integer;sgc-420-mk-ii-modbus-tables-4189341402-uk.xlsx / Holding & Read, linha 35
+SGC420_MKII;29;Carga · potência aparente;load_kva;10;34;4;-1;10;kVA;integer;sgc-420-mk-ii-modbus-tables-4189341402-uk.xlsx / Holding & Read, linha 36
+SGC420_MKII;30;Carga · potência reativa L1;load_kvar_l1;10;35;4;-1;10;kVAR;integer;sgc-420-mk-ii-modbus-tables-4189341402-uk.xlsx / Holding & Read, linha 37
+SGC420_MKII;31;Carga · potência reativa L2;load_kvar_l2;10;36;4;-1;10;kVAR;integer;sgc-420-mk-ii-modbus-tables-4189341402-uk.xlsx / Holding & Read, linha 38
+SGC420_MKII;32;Carga · potência reativa L3;load_kvar_l3;10;37;4;-1;10;kVAR;integer;sgc-420-mk-ii-modbus-tables-4189341402-uk.xlsx / Holding & Read, linha 39
+SGC420_MKII;33;Carga · potência reativa;load_kvar;10;38;4;-1;10;kVAR;integer;sgc-420-mk-ii-modbus-tables-4189341402-uk.xlsx / Holding & Read, linha 40
+SGC420_MKII;34;Gerador · energia ativa;energy_gen;10;39;40;-1;10;kWh;float32_cdab;sgc-420-mk-ii-modbus-tables-4189341402-uk.xlsx / Holding & Read, linha 41
+SGC420_MKII;35;Gerador · energia aparente;apparent_energy_gen;10;41;40;-1;10;kVAh;float32_cdab;sgc-420-mk-ii-modbus-tables-4189341402-uk.xlsx / Holding & Read, linha 42
+SGC420_MKII;36;Gerador · energia reativa;reactive_energy_gen;10;43;40;-1;10;kvarh;float32_cdab;sgc-420-mk-ii-modbus-tables-4189341402-uk.xlsx / Holding & Read, linha 43
+SGC420_MKII;37;Companhia · energia ativa;energy_mains;10;45;40;-1;10;kWh;float32_cdab;sgc-420-mk-ii-modbus-tables-4189341402-uk.xlsx / Holding & Read, linha 44
+SGC420_MKII;38;Companhia · energia aparente;apparent_energy_mains;10;47;40;-1;10;kVAh;float32_cdab;sgc-420-mk-ii-modbus-tables-4189341402-uk.xlsx / Holding & Read, linha 45
+SGC420_MKII;39;Companhia · energia reativa;reactive_energy_mains;10;49;40;-1;10;kvarh;float32_cdab;sgc-420-mk-ii-modbus-tables-4189341402-uk.xlsx / Holding & Read, linha 46
+SGC420_MKII;40;Pressão óleo;oil_pressure;10;51;4;-1;10;bar;integer;sgc-420-mk-ii-modbus-tables-4189341402-uk.xlsx / Holding & Read, linha 47
+SGC420_MKII;41;Temperatura motor;coolant;10;52;4;-1;10;°C;integer;sgc-420-mk-ii-modbus-tables-4189341402-uk.xlsx / Holding & Read, linha 48
+SGC420_MKII;42;Combustível;fuel;10;53;4;-1;1;%;integer;sgc-420-mk-ii-modbus-tables-4189341402-uk.xlsx / Holding & Read, linha 49
+SGC420_MKII;43;Combustível em litros;fuel_litres;10;54;4;-1;10;L;integer;sgc-420-mk-ii-modbus-tables-4189341402-uk.xlsx / Holding & Read, linha 50
+SGC420_MKII;44;Alternador carga;charge;10;55;4;-1;10;V;integer;sgc-420-mk-ii-modbus-tables-4189341402-uk.xlsx / Holding & Read, linha 51
+SGC420_MKII;45;Bateria;battery;10;56;4;-1;10;V;integer;sgc-420-mk-ii-modbus-tables-4189341402-uk.xlsx / Holding & Read, linha 52
+SGC420_MKII;46;Rotação;rpm;10;57;4;-1;1;RPM;integer;sgc-420-mk-ii-modbus-tables-4189341402-uk.xlsx / Holding & Read, linha 53
+SGC420_MKII;47;Partidas;starts;10;58;4;-1;1;-;integer;sgc-420-mk-ii-modbus-tables-4189341402-uk.xlsx / Holding & Read, linha 54
+SGC420_MKII;48;Horímetro · palavra alta;hours_hi;10;60;4;-1;1;-;integer;sgc-420-mk-ii-modbus-tables-4189341402-uk.xlsx / Holding & Read, linha 56
+SGC420_MKII;49;Horímetro · horas;hours_lo;10;61;4;-1;1;hr;integer;sgc-420-mk-ii-modbus-tables-4189341402-uk.xlsx / Holding & Read, linha 57
+SGC420_MKII;50;Horímetro · minutos;hours_minutes;10;62;4;-1;1;min;integer;sgc-420-mk-ii-modbus-tables-4189341402-uk.xlsx / Holding & Read, linha 58
+SGC420_MKII;51;Companhia · horas;mains_hours;10;63;4;-1;1;hr;integer;sgc-420-mk-ii-modbus-tables-4189341402-uk.xlsx / Holding & Read, linha 59
+SGC420_MKII;52;Companhia · minutos;mains_minutes;10;64;4;-1;1;min;integer;sgc-420-mk-ii-modbus-tables-4189341402-uk.xlsx / Holding & Read, linha 60
+SGC420_MKII;53;Auxiliar S1;analog_65;10;65;4;-1;10;-;integer;sgc-420-mk-ii-modbus-tables-4189341402-uk.xlsx / Holding & Read, linha 61
+SGC420_MKII;54;Auxiliar S2;analog_66;10;66;4;-1;10;-;integer;sgc-420-mk-ii-modbus-tables-4189341402-uk.xlsx / Holding & Read, linha 62
+SGC420_MKII;55;Auxiliar S3;analog_67;10;67;4;-1;10;-;integer;sgc-420-mk-ii-modbus-tables-4189341402-uk.xlsx / Holding & Read, linha 63
+SGC420_MKII;56;Auxiliar S4;analog_68;10;68;4;-1;10;-;integer;sgc-420-mk-ii-modbus-tables-4189341402-uk.xlsx / Holding & Read, linha 64
+SGC420_MKII;57;Sensor de óleo;analog_96;10;96;4;-1;10;-;integer;sgc-420-mk-ii-modbus-tables-4189341402-uk.xlsx / Holding & Read, linha 437
+SGC420_MKII;58;Sensor combustível;analog_97;10;97;4;-1;10;-;integer;sgc-420-mk-ii-modbus-tables-4189341402-uk.xlsx / Holding & Read, linha 438
+SGC420_MKII;59;Sensor temperatura;analog_98;10;98;4;-1;10;-;integer;sgc-420-mk-ii-modbus-tables-4189341402-uk.xlsx / Holding & Read, linha 439
+SGC420_MKII;60;Sensor do abrigo;analog_99;10;99;4;-1;10;-;integer;sgc-420-mk-ii-modbus-tables-4189341402-uk.xlsx / Holding & Read, linha 440
+SGC420_MKII;61;Alarmes nativos 72;alarm_word_72;10;72;4;-1;1;;word;sgc-420-mk-ii-modbus-tables-4189341402-uk.xlsx / Holding & Read, registro 72, nibbles de quatro bits
+SGC420_MKII;62;Alarmes nativos 73;alarm_word_73;10;73;4;-1;1;;word;sgc-420-mk-ii-modbus-tables-4189341402-uk.xlsx / Holding & Read, registro 73, nibbles de quatro bits
+SGC420_MKII;63;Alarmes nativos 74;alarm_word_74;10;74;4;-1;1;;word;sgc-420-mk-ii-modbus-tables-4189341402-uk.xlsx / Holding & Read, registro 74, nibbles de quatro bits
+SGC420_MKII;64;Alarmes nativos 75;alarm_word_75;10;75;4;-1;1;;word;sgc-420-mk-ii-modbus-tables-4189341402-uk.xlsx / Holding & Read, registro 75, nibbles de quatro bits
+SGC420_MKII;65;Alarmes nativos 76;alarm_word_76;10;76;4;-1;1;;word;sgc-420-mk-ii-modbus-tables-4189341402-uk.xlsx / Holding & Read, registro 76, nibbles de quatro bits
+SGC420_MKII;66;Alarmes nativos 77;alarm_word_77;10;77;4;-1;1;;word;sgc-420-mk-ii-modbus-tables-4189341402-uk.xlsx / Holding & Read, registro 77, nibbles de quatro bits
+SGC420_MKII;67;Alarmes nativos 78;alarm_word_78;10;78;4;-1;1;;word;sgc-420-mk-ii-modbus-tables-4189341402-uk.xlsx / Holding & Read, registro 78, nibbles de quatro bits
+SGC420_MKII;68;Alarmes nativos 79;alarm_word_79;10;79;4;-1;1;;word;sgc-420-mk-ii-modbus-tables-4189341402-uk.xlsx / Holding & Read, registro 79, nibbles de quatro bits
+SGC420_MKII;69;Alarmes nativos 80;alarm_word_80;10;80;4;-1;1;;word;sgc-420-mk-ii-modbus-tables-4189341402-uk.xlsx / Holding & Read, registro 80, nibbles de quatro bits
+SGC420_MKII;70;Alarmes nativos 81;alarm_word_81;10;81;4;-1;1;;word;sgc-420-mk-ii-modbus-tables-4189341402-uk.xlsx / Holding & Read, registro 81, nibbles de quatro bits
+SGC420_MKII;71;Alarmes nativos 82;alarm_word_82;10;82;4;-1;1;;word;sgc-420-mk-ii-modbus-tables-4189341402-uk.xlsx / Holding & Read, registro 82, nibbles de quatro bits
+SGC420_MKII;72;Alarmes nativos 83;alarm_word_83;10;83;4;-1;1;;word;sgc-420-mk-ii-modbus-tables-4189341402-uk.xlsx / Holding & Read, registro 83, nibbles de quatro bits
+SGC420_MKII;73;Alarmes nativos 84;alarm_word_84;10;84;4;-1;1;;word;sgc-420-mk-ii-modbus-tables-4189341402-uk.xlsx / Holding & Read, registro 84, nibbles de quatro bits
+SGC420_MKII;74;Alarmes nativos 85;alarm_word_85;10;85;4;-1;1;;word;sgc-420-mk-ii-modbus-tables-4189341402-uk.xlsx / Holding & Read, registro 85, nibbles de quatro bits
+SGC420_MKII;75;Alarmes nativos 86;alarm_word_86;10;86;4;-1;1;;word;sgc-420-mk-ii-modbus-tables-4189341402-uk.xlsx / Holding & Read, registro 86, nibbles de quatro bits
+SGC420_MKII;76;Alarmes nativos 87;alarm_word_87;10;87;4;-1;1;;word;sgc-420-mk-ii-modbus-tables-4189341402-uk.xlsx / Holding & Read, registro 87, nibbles de quatro bits
+SGC420_MKII;77;Alarmes nativos 88;alarm_word_88;10;88;4;-1;1;;word;sgc-420-mk-ii-modbus-tables-4189341402-uk.xlsx / Holding & Read, registro 88, nibbles de quatro bits
+SGC420_MKII;78;Alarmes nativos 158;alarm_word_158;10;158;4;-1;1;;word;sgc-420-mk-ii-modbus-tables-4189341402-uk.xlsx / Holding & Read, registro 158, nibbles de quatro bits
+SGC420_MKII;79;Diagnóstico 89;input_word;10;89;4;-1;1;;word;sgc-420-mk-ii-modbus-tables-4189341402-uk.xlsx / Holding & Read, registro 89
+SGC420_MKII;80;Diagnóstico 90;output_word;10;90;4;-1;1;;word;sgc-420-mk-ii-modbus-tables-4189341402-uk.xlsx / Holding & Read, registro 90
+SGC420_MKII;81;Diagnóstico 91;status_word;10;91;4;-1;1;;word;sgc-420-mk-ii-modbus-tables-4189341402-uk.xlsx / Holding & Read, registro 91
+CGC412;1;Gerador · L1L2;gen_v_l1l2;10;501;4;-1;1;V;integer;DEIF 4189340865A / Option H2, p.16
+CGC412;2;Gerador · L2L3;gen_v_l2l3;10;502;4;-1;1;V;integer;DEIF 4189340865A / Option H2, p.16
+CGC412;3;Gerador · L3L1;gen_v_l3l1;10;503;4;-1;1;V;integer;DEIF 4189340865A / Option H2, p.16
+CGC412;4;Gerador · L1N;gen_v_l1n;10;504;4;-1;1;V;integer;DEIF 4189340865A / Option H2, p.16
+CGC412;5;Gerador · L2N;gen_v_l2n;10;505;4;-1;1;V;integer;DEIF 4189340865A / Option H2, p.16
+CGC412;6;Gerador · L3N;gen_v_l3n;10;506;4;-1;1;V;integer;DEIF 4189340865A / Option H2, p.16
+CGC412;7;Frequência gerador;gen_frequency;10;507;4;-1;100;Hz;integer;DEIF 4189340865A / Option H2, p.16
+CGC412;8;Corrente L1;gen_i_l1;10;513;4;-1;1;A;integer;DEIF 4189340865A / Option H2, p.16
+CGC412;9;Corrente L2;gen_i_l2;10;514;4;-1;1;A;integer;DEIF 4189340865A / Option H2, p.16
+CGC412;10;Corrente L3;gen_i_l3;10;515;4;-1;1;A;integer;DEIF 4189340865A / Option H2, p.16
+CGC412;11;kW L1;gen_kw_l1;10;516;4;-1;1;kW;integer;DEIF 4189340865A / Option H2, p.16
+CGC412;12;kW L2;gen_kw_l2;10;517;4;-1;1;kW;integer;DEIF 4189340865A / Option H2, p.16
+CGC412;13;kW L3;gen_kw_l3;10;518;4;-1;1;kW;integer;DEIF 4189340865A / Option H2, p.16
+CGC412;14;kW total;gen_kw;10;519;4;-1;1;kW;integer;DEIF 4189340865A / Option H2, p.16
+CGC412;15;kvar L1;gen_kvar_l1;10;520;4;-1;1;kvar;integer;DEIF 4189340865A / Option H2, p.16
+CGC412;16;kvar L2;gen_kvar_l2;10;521;4;-1;1;kvar;integer;DEIF 4189340865A / Option H2, p.16
+CGC412;17;kvar L3;gen_kvar_l3;10;522;4;-1;1;kvar;integer;DEIF 4189340865A / Option H2, p.16
+CGC412;18;kvar total;gen_kvar;10;523;4;-1;1;kvar;integer;DEIF 4189340865A / Option H2, p.16
+CGC412;19;kVA L1;gen_kva_l1;10;524;4;-1;1;kVA;integer;DEIF 4189340865A / Option H2, p.16
+CGC412;20;kVA L2;gen_kva_l2;10;525;4;-1;1;kVA;integer;DEIF 4189340865A / Option H2, p.16
+CGC412;21;kVA L3;gen_kva_l3;10;526;4;-1;1;kVA;integer;DEIF 4189340865A / Option H2, p.16
+CGC412;22;kVA total;gen_kva;10;527;4;-1;1;kVA;integer;DEIF 4189340865A / Option H2, p.16
+CGC412;23;Fator de potência;gen_fp;10;538;4;-1;100;;integer;DEIF 4189340865A / Option H2, p.17
+CGC412;24;Energia gerador;energy_gen;10;536;40;-1;1;kWh;integer;DEIF 4189340865A / Option H2, p.17
+CGC412;25;Energia reativa gerador;reactive_energy_gen;10;528;40;-1;1;kvarh;integer;DEIF 4189340865A / Option H2, p.16
+CGC412;26;Horímetro absoluto;hour_meter;10;554;40;-1;1;h;integer;DEIF 4189340865A / Option H2, p.17
+CGC412;27;Horímetro relativo;relative_hours;10;556;40;-1;1;h;integer;DEIF 4189340865A / Option H2, p.17
+CGC412;28;Tentativas de partida;starts;10;566;4;-1;1;;integer;DEIF 4189340865A / Option H2, p.17
+CGC412;29;Alimentação DC;battery;10;567;4;-1;10;V;integer;DEIF 4189340865A / Option H2, p.17
+CGC412;30;Rotação;rpm;10;576;4;-1;1;rpm;integer;DEIF 4189340865A / Option H2, p.18
+CGC412;31;Manutenção 1;maintenance_1;10;569;4;-1;1;h;integer;DEIF 4189340865A / Option H2, p.17
+CGC412;32;Manutenção 1 · dias;maintenance_days_1;10;570;4;-1;1;d;integer;DEIF 4189340865A / Option H2, p.18
+CGC412;33;Manutenção 2;maintenance_2;10;571;4;-1;1;h;integer;DEIF 4189340865A / Option H2, p.18
+CGC412;34;Manutenção 2 · dias;maintenance_days_2;10;572;4;-1;1;d;integer;DEIF 4189340865A / Option H2, p.18
+CGC412;35;alarm_count;alarm_count;10;558;4;-1;1;;integer;DEIF 4189340865A / Option H2, p.17
+CGC412;36;alarm_unack;alarm_unack;10;559;4;-1;1;;integer;DEIF 4189340865A / Option H2, p.17
+CGC412;37;alarm_active_ack;alarm_active_ack;10;560;4;-1;1;;integer;DEIF 4189340865A / Option H2, p.17
+CGC412;38;Estado 1018;status_word;10;1018;4;-1;1;;word;DEIF 4189340865A / Option H2, p.26
+CGC412;39;Estado 1019;mode_word;10;1019;4;-1;1;;word;DEIF 4189340865A / Option H2, p.26
+CGC412;40;Estado 1015;service_word;10;1015;4;-1;1;;word;DEIF 4189340865A / Option H2, p.25
+CGC412;41;Multifunção 6;analog_1;10;583;4;-1;1;configurado;integer;DEIF 4189340865A / Option H2, p.18
+CGC412;42;Multifunção 7;analog_2;10;584;4;-1;1;configurado;integer;DEIF 4189340865A / Option H2, p.18
+CGC412;43;Multifunção 8;analog_3;10;585;4;-1;1;configurado;integer;DEIF 4189340865A / Option H2, p.18
+CGC412;44;Entrada 10;input_10;10;22500;2;-1;1;;boolean;DEIF 4189340865A / Option H2, p.38
+CGC412;45;Entrada 11;input_11;10;22501;2;-1;1;;boolean;DEIF 4189340865A / Option H2, p.38
+CGC412;46;Entrada 12;input_12;10;22502;2;-1;1;;boolean;DEIF 4189340865A / Option H2, p.38
+CGC412;47;Entrada 13;input_13;10;22503;2;-1;1;;boolean;DEIF 4189340865A / Option H2, p.38
+CGC412;48;Entrada 14;input_14;10;22504;2;-1;1;;boolean;DEIF 4189340865A / Option H2, p.38
+CGC412;49;Entrada 15;input_15;10;22505;2;-1;1;;boolean;DEIF 4189340865A / Option H2, p.38
+CGC412;50;Entrada 20;input_20;10;22516;2;-1;1;;boolean;DEIF 4189340865A / Option H2, p.38
+CGC412;51;Entrada 8;input_8;10;22591;2;-1;1;;boolean;DEIF 4189340865A / Option H2, p.38
+CGC412;52;Entrada 7;input_7;10;22592;2;-1;1;;boolean;DEIF 4189340865A / Option H2, p.38
+CGC412;53;Entrada 6;input_6;10;22593;2;-1;1;;boolean;DEIF 4189340865A / Option H2, p.38
+CGC413;1;Gerador · L1L2;gen_v_l1l2;10;501;4;-1;1;V;integer;DEIF 4189340865A / Option H2, p.16
+CGC413;2;Gerador · L2L3;gen_v_l2l3;10;502;4;-1;1;V;integer;DEIF 4189340865A / Option H2, p.16
+CGC413;3;Gerador · L3L1;gen_v_l3l1;10;503;4;-1;1;V;integer;DEIF 4189340865A / Option H2, p.16
+CGC413;4;Gerador · L1N;gen_v_l1n;10;504;4;-1;1;V;integer;DEIF 4189340865A / Option H2, p.16
+CGC413;5;Gerador · L2N;gen_v_l2n;10;505;4;-1;1;V;integer;DEIF 4189340865A / Option H2, p.16
+CGC413;6;Gerador · L3N;gen_v_l3n;10;506;4;-1;1;V;integer;DEIF 4189340865A / Option H2, p.16
+CGC413;7;Frequência gerador;gen_frequency;10;507;4;-1;100;Hz;integer;DEIF 4189340865A / Option H2, p.16
+CGC413;8;Corrente L1;gen_i_l1;10;513;4;-1;1;A;integer;DEIF 4189340865A / Option H2, p.16
+CGC413;9;Corrente L2;gen_i_l2;10;514;4;-1;1;A;integer;DEIF 4189340865A / Option H2, p.16
+CGC413;10;Corrente L3;gen_i_l3;10;515;4;-1;1;A;integer;DEIF 4189340865A / Option H2, p.16
+CGC413;11;kW L1;gen_kw_l1;10;516;4;-1;1;kW;integer;DEIF 4189340865A / Option H2, p.16
+CGC413;12;kW L2;gen_kw_l2;10;517;4;-1;1;kW;integer;DEIF 4189340865A / Option H2, p.16
+CGC413;13;kW L3;gen_kw_l3;10;518;4;-1;1;kW;integer;DEIF 4189340865A / Option H2, p.16
+CGC413;14;kW total;gen_kw;10;519;4;-1;1;kW;integer;DEIF 4189340865A / Option H2, p.16
+CGC413;15;kvar L1;gen_kvar_l1;10;520;4;-1;1;kvar;integer;DEIF 4189340865A / Option H2, p.16
+CGC413;16;kvar L2;gen_kvar_l2;10;521;4;-1;1;kvar;integer;DEIF 4189340865A / Option H2, p.16
+CGC413;17;kvar L3;gen_kvar_l3;10;522;4;-1;1;kvar;integer;DEIF 4189340865A / Option H2, p.16
+CGC413;18;kvar total;gen_kvar;10;523;4;-1;1;kvar;integer;DEIF 4189340865A / Option H2, p.16
+CGC413;19;kVA L1;gen_kva_l1;10;524;4;-1;1;kVA;integer;DEIF 4189340865A / Option H2, p.16
+CGC413;20;kVA L2;gen_kva_l2;10;525;4;-1;1;kVA;integer;DEIF 4189340865A / Option H2, p.16
+CGC413;21;kVA L3;gen_kva_l3;10;526;4;-1;1;kVA;integer;DEIF 4189340865A / Option H2, p.16
+CGC413;22;kVA total;gen_kva;10;527;4;-1;1;kVA;integer;DEIF 4189340865A / Option H2, p.16
+CGC413;23;Fator de potência;gen_fp;10;538;4;-1;100;;integer;DEIF 4189340865A / Option H2, p.17
+CGC413;24;Energia gerador;energy_gen;10;536;40;-1;1;kWh;integer;DEIF 4189340865A / Option H2, p.17
+CGC413;25;Energia reativa gerador;reactive_energy_gen;10;528;40;-1;1;kvarh;integer;DEIF 4189340865A / Option H2, p.16
+CGC413;26;Companhia / BB · L1L2;mains_v_l1l2;10;539;4;-1;1;V;integer;DEIF 4189340865A / Option H2, p.17
+CGC413;27;Companhia / BB · L2L3;mains_v_l2l3;10;540;4;-1;1;V;integer;DEIF 4189340865A / Option H2, p.17
+CGC413;28;Companhia / BB · L3L1;mains_v_l3l1;10;541;4;-1;1;V;integer;DEIF 4189340865A / Option H2, p.17
+CGC413;29;Companhia / BB · L1N;mains_v_l1n;10;542;4;-1;1;V;integer;DEIF 4189340865A / Option H2, p.17
+CGC413;30;Companhia / BB · L2N;mains_v_l2n;10;543;4;-1;1;V;integer;DEIF 4189340865A / Option H2, p.17
+CGC413;31;Companhia / BB · L3N;mains_v_l3n;10;544;4;-1;1;V;integer;DEIF 4189340865A / Option H2, p.17
+CGC413;32;Frequência companhia / BB;mains_frequency;10;545;4;-1;100;Hz;integer;DEIF 4189340865A / Option H2, p.17
+CGC413;33;Horímetro absoluto;hour_meter;10;554;40;-1;1;h;integer;DEIF 4189340865A / Option H2, p.17
+CGC413;34;Horímetro relativo;relative_hours;10;556;40;-1;1;h;integer;DEIF 4189340865A / Option H2, p.17
+CGC413;35;Tentativas de partida;starts;10;566;4;-1;1;;integer;DEIF 4189340865A / Option H2, p.17
+CGC413;36;Alimentação DC;battery;10;567;4;-1;10;V;integer;DEIF 4189340865A / Option H2, p.17
+CGC413;37;Rotação;rpm;10;576;4;-1;1;rpm;integer;DEIF 4189340865A / Option H2, p.18
+CGC413;38;Manutenção 1;maintenance_1;10;569;4;-1;1;h;integer;DEIF 4189340865A / Option H2, p.17
+CGC413;39;Manutenção 1 · dias;maintenance_days_1;10;570;4;-1;1;d;integer;DEIF 4189340865A / Option H2, p.18
+CGC413;40;Manutenção 2;maintenance_2;10;571;4;-1;1;h;integer;DEIF 4189340865A / Option H2, p.18
+CGC413;41;Manutenção 2 · dias;maintenance_days_2;10;572;4;-1;1;d;integer;DEIF 4189340865A / Option H2, p.18
+CGC413;42;alarm_count;alarm_count;10;558;4;-1;1;;integer;DEIF 4189340865A / Option H2, p.17
+CGC413;43;alarm_unack;alarm_unack;10;559;4;-1;1;;integer;DEIF 4189340865A / Option H2, p.17
+CGC413;44;alarm_active_ack;alarm_active_ack;10;560;4;-1;1;;integer;DEIF 4189340865A / Option H2, p.17
+CGC413;45;Estado 1018;status_word;10;1018;4;-1;1;;word;DEIF 4189340865A / Option H2, p.26
+CGC413;46;Estado 1019;mode_word;10;1019;4;-1;1;;word;DEIF 4189340865A / Option H2, p.26
+CGC413;47;Estado 1015;service_word;10;1015;4;-1;1;;word;DEIF 4189340865A / Option H2, p.25
+CGC413;48;Multifunção 6;analog_1;10;583;4;-1;1;configurado;integer;DEIF 4189340865A / Option H2, p.18
+CGC413;49;Multifunção 7;analog_2;10;584;4;-1;1;configurado;integer;DEIF 4189340865A / Option H2, p.18
+CGC413;50;Multifunção 8;analog_3;10;585;4;-1;1;configurado;integer;DEIF 4189340865A / Option H2, p.18
+CGC413;51;Multifunção 58;analog_4;10;588;4;-1;1;configurado;integer;DEIF 4189340865A / Option H2, p.18
+CGC413;52;Multifunção 59;analog_5;10;589;4;-1;1;configurado;integer;DEIF 4189340865A / Option H2, p.18
+CGC413;53;Entrada 10;input_10;10;22500;2;-1;1;;boolean;DEIF 4189340865A / Option H2, p.38
+CGC413;54;Entrada 11;input_11;10;22501;2;-1;1;;boolean;DEIF 4189340865A / Option H2, p.38
+CGC413;55;Entrada 12;input_12;10;22502;2;-1;1;;boolean;DEIF 4189340865A / Option H2, p.38
+CGC413;56;Entrada 13;input_13;10;22503;2;-1;1;;boolean;DEIF 4189340865A / Option H2, p.38
+CGC413;57;Entrada 14;input_14;10;22504;2;-1;1;;boolean;DEIF 4189340865A / Option H2, p.38
+CGC413;58;Entrada 15;input_15;10;22505;2;-1;1;;boolean;DEIF 4189340865A / Option H2, p.38
+CGC413;59;Entrada 20;input_20;10;22516;2;-1;1;;boolean;DEIF 4189340865A / Option H2, p.38
+CGC413;60;Entrada 8;input_8;10;22591;2;-1;1;;boolean;DEIF 4189340865A / Option H2, p.38
+CGC413;61;Entrada 7;input_7;10;22592;2;-1;1;;boolean;DEIF 4189340865A / Option H2, p.38
+CGC413;62;Entrada 6;input_6;10;22593;2;-1;1;;boolean;DEIF 4189340865A / Option H2, p.38
+CGC413;63;Entrada 56;input_56;10;22506;2;-1;1;;boolean;DEIF 4189340865A / Option H2, p.38
+CGC413;64;Entrada 57;input_57;10;22507;2;-1;1;;boolean;DEIF 4189340865A / Option H2, p.38
+CGC413;65;Entrada 59;input_59;10;22581;2;-1;1;;boolean;DEIF 4189340865A / Option H2, p.38
+CGC413;66;Entrada 58;input_58;10;22582;2;-1;1;;boolean;DEIF 4189340865A / Option H2, p.38
