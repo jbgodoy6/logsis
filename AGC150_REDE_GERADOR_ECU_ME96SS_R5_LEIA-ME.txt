@@ -1,0 +1,25 @@
+AGC150 REDE + GERADOR ECU / MITSUBISHI ME96SS — R5
+
+Mapa novo AGC150_GEN_ECU: MDB1–59. Medidor independente: MDB60–72.
+Instale este BIN com este JSON. O histórico gravado no mapa anterior tem
+posições diferentes: selecione apenas dados coletados após instalar o R5.
+O JSON tem UID próprio. Configure Tabela SQL e datasource no Grafana.
+AGC150 Slave 1; Mitsubishi Slave 2. Comunicação geral preservada do BIN
+anterior. São dois instrumentos na mesma comunicação; não há ligação do
+Mitsubishi ao desenho elétrico do AGC150.
+
+Modos lidos: BLOCK, MANUAL sem regulação, SEMI-AUTO, AUTO e TESTE.
+ECU: óleo, temperatura, combustível/alimentação e rail, consumo, níveis,
+carga, admissão e escape; valores dependem do suporte da ECU e firmware.
+Pressão e temperatura seguem as unidades configuradas no controlador.
+Estouro/indisponível = traço. Motor parado exige estado nativo válido.
+Warning amarelo, trip laranja, shutdown vermelho; manutenção tem indicação
+separada. Horas e energia de geração são calculadas para o período filtrado.
+
+Mitsubishi: tensão /10, FP /1000, corrente e potências /1.
+Energia: HIGHER × 10000 + LOWER, mantendo a composição anterior ajustada
+à ordem de grandeza do visor. Exemplo 584 e 868 = 5840868 kWh.
+A confirmação documental/por leitura simultânea dessa composição permanece
+pendente. MM_Base_Energia e divisores são configuráveis no dashboard.
+Nenhum comando de manobra ou mudança de modo é enviado pelo Grafana.
+Studio e perfis convencionais não foram alterados.

@@ -1,0 +1,73 @@
+﻿MDB;Equipamento;Nome;Slave;FNC;Endereco;Bit;Divisor
+1;AGC150 ECU;Gerador · tensão L1L2;1;4;501;-1;1
+2;AGC150 ECU;Gerador · tensão L2L3;1;4;502;-1;1
+3;AGC150 ECU;Gerador · tensão L3L1;1;4;503;-1;1
+4;AGC150 ECU;Gerador · tensão L1–N;1;4;504;-1;1
+5;AGC150 ECU;Gerador · tensão L2–N;1;4;505;-1;1
+6;AGC150 ECU;Gerador · tensão L3–N;1;4;506;-1;1
+7;AGC150 ECU;Gerador · frequência;1;4;507;-1;100
+8;AGC150 ECU;Gerador · corrente L1;1;4;513;-1;1
+9;AGC150 ECU;Gerador · corrente L2;1;4;514;-1;1
+10;AGC150 ECU;Gerador · corrente L3;1;4;515;-1;1
+11;AGC150 ECU;Gerador · potência ativa;1;4;519;-1;1
+12;AGC150 ECU;Gerador · potência reativa;1;4;523;-1;1
+13;AGC150 ECU;Gerador · potência aparente;1;4;527;-1;1
+14;AGC150 ECU;Gerador · fator de potência;1;4;538;-1;100
+15;AGC150 ECU;Gerador · energia ativa;1;40;536;-1;1
+16;AGC150 ECU;Companhia · tensão L1L2;1;4;539;-1;1
+17;AGC150 ECU;Companhia · tensão L2L3;1;4;540;-1;1
+18;AGC150 ECU;Companhia · tensão L3L1;1;4;541;-1;1
+19;AGC150 ECU;Companhia · tensão L1–N;1;4;542;-1;1
+20;AGC150 ECU;Companhia · tensão L2–N;1;4;543;-1;1
+21;AGC150 ECU;Companhia · tensão L3–N;1;4;544;-1;1
+22;AGC150 ECU;Companhia · frequência;1;4;545;-1;100
+23;AGC150 ECU;Horímetro absoluto;1;40;554;-1;1
+24;AGC150 ECU;Tentativas de partida;1;4;566;-1;1
+25;AGC150 ECU;Rotação;1;4;576;-1;1
+26;AGC150 ECU;Manutenção 1;1;4;569;-1;1
+27;AGC150 ECU;Manutenção 2;1;4;571;-1;1
+28;AGC150 ECU;Alimentação DC;1;4;567;-1;10
+29;AGC150 ECU;Quantidade de alarmes;1;4;558;-1;1
+30;AGC150 ECU;Estado nativo 1018;1;4;1018;-1;1
+31;AGC150 ECU;Estado nativo 1019;1;4;1019;-1;1
+32;AGC150 ECU;Multifunção 20;1;4;583;-1;1
+33;AGC150 ECU;Multifunção 21;1;4;584;-1;1
+34;AGC150 ECU;Multifunção 22;1;4;585;-1;1
+35;AGC150 ECU;Multifunção 23;1;4;587;-1;1
+36;AGC150 ECU;Alarmes nativos 1015;1;4;1015;-1;1
+37;AGC150 ECU;Classes de falha;1;4;1057;-1;1
+38;AGC150 ECU;Entradas digitais - bits;1;4;1142;-1;1
+39;AGC150 ECU;Validade ECU grupo 1;1;4;26900;-1;1
+40;AGC150 ECU;Validade ECU grupo 2;1;4;26901;-1;1
+41;AGC150 ECU;Temperatura motor;1;4;26001;-1;1
+42;AGC150 ECU;Pressão óleo;1;4;26002;-1;100
+43;AGC150 ECU;Pressão alimentação combustível;1;4;26022;-1;100
+44;AGC150 ECU;Pressão rail combustível;1;4;620;-1;1
+45;AGC150 ECU;Consumo combustível;1;4;26009;-1;10
+46;AGC150 ECU;Temperatura combustível;1;4;26005;-1;1
+47;AGC150 ECU;Temperatura óleo;1;4;26004;-1;10
+48;AGC150 ECU;Nível arrefecimento;1;4;26008;-1;10
+49;AGC150 ECU;Carga motor;1;4;26015;-1;1
+50;AGC150 ECU;Temperatura escape;1;4;26017;-1;10
+51;AGC150 ECU;Pressão admissão;1;4;26006;-1;100
+52;AGC150 ECU;Temperatura admissão;1;4;26007;-1;1
+53;AGC150 ECU;Nível óleo;1;4;26023;-1;10
+54;AGC150 ECU;Água no combustível;1;4;26026;-1;1
+55;AGC150 ECU;Modo BLOCK;1;4;1019;0;1
+56;AGC150 ECU;Modo MANUAL - sem regulação;1;4;1019;1;1
+57;AGC150 ECU;Modo SEMI-AUTO - MANUAL no protocolo;1;4;1019;2;1
+58;AGC150 ECU;Modo AUTO;1;4;1019;3;1
+59;AGC150 ECU;Modo TESTE;1;4;1019;4;1
+60;ME96SS independente;ME96SS · Corrente R;2;3;768;-1;1
+61;ME96SS independente;ME96SS · Corrente S;2;3;769;-1;1
+62;ME96SS independente;ME96SS · Corrente T;2;3;770;-1;1
+63;ME96SS independente;ME96SS · Corrente total;2;3;772;-1;1
+64;ME96SS independente;ME96SS · Tensão R–S;2;3;778;-1;10
+65;ME96SS independente;ME96SS · Tensão S–T;2;3;779;-1;10
+66;ME96SS independente;ME96SS · Tensão R–T;2;3;780;-1;10
+67;ME96SS independente;ME96SS · Fator de potência;2;3;789;-1;1000
+68;ME96SS independente;ME96SS · Potência ativa;2;3;794;-1;1
+69;ME96SS independente;ME96SS · Potência reativa;2;3;802;-1;1
+70;ME96SS independente;ME96SS · Potência aparente;2;3;806;-1;1
+71;ME96SS independente;ME96SS · Energia LOWER;2;3;1280;-1;1
+72;ME96SS independente;ME96SS · Energia HIGHER;2;3;1281;-1;1

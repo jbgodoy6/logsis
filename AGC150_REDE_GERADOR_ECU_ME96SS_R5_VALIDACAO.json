@@ -1,0 +1,21 @@
+{
+  "result": "passed",
+  "agcProfile": "AGC150_GEN_ECU",
+  "agcSlots": "1-59",
+  "meterSlots": "60-72",
+  "queriesExecuted": 35,
+  "fiveModes": true,
+  "switchesAndCommonOutput": true,
+  "ecuValidityAndSentinels": true,
+  "zeroRemainsZero": true,
+  "independentMeter": true,
+  "periodBaseline": true,
+  "timezone": "America/Sao_Paulo",
+  "grafanaLocalImport": true,
+  "hardwareTest": false,
+  "meterEnergyCompositionSimultaneousConfirmation": false,
+  "binSha256": "0c24de63410bdea5f08cdcb16b1e25e76180dcf79ddc2dbae581660ecec0110d",
+  "grafanaFileUpload": true,
+  "desktopMobileUI": true,
+  "clamavInfectedFiles": 0
+}
