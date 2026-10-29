@@ -1,0 +1,21 @@
+{
+  "result": "passed",
+  "queriesExecuted": 35,
+  "sparsePackets1610And1615": true,
+  "independentFieldTimestamps": true,
+  "missingNullPreserves": true,
+  "zeroUpdates": true,
+  "newInvalidDoesNotResurrectOld": true,
+  "ecuValidityAsynchronous": true,
+  "historicalValidityNoFutureLookahead": true,
+  "meterWordsSeparatePackets": true,
+  "filterBothBoundaries": true,
+  "emptyWindow": true,
+  "periodCounters": true,
+  "fiveModesAndAlarmColors": true,
+  "variablesHidden": true,
+  "grafanaLocalImport": true,
+  "hardwareTest": false,
+  "grafanaFileUpload": true,
+  "desktopMobileUI": true
+}
