@@ -21,7 +21,7 @@ async function main() {
       if (r.resourceType() === 'script') scripts.push(r.url());
     });
     const admin = password(), personal = password();
-    const ownerKey = crypto.createPrivateKey({key:fs.readFileSync(process.env.DMAX_TEST_PRIVATE_KEY),passphrase:process.env.DMAX_TEST_KEY_PASSWORD});
+    const ownerKey = process.env.DMAX_TEST_ROOT_PHRASE ? null : crypto.createPrivateKey({key:fs.readFileSync(process.env.DMAX_TEST_PRIVATE_KEY),passphrase:process.env.DMAX_TEST_KEY_PASSWORD});
     const form = action => page.locator('form').filter({has:page.locator('input[name=_action][value="' + action + '"]')});
     const fill = (action,name,value) => form(action).locator('[name="' + name + '"]').fill(value);
     const submit = async action => {
@@ -55,13 +55,19 @@ async function main() {
     await submit('settings');
     assert.equal(Number(await form('settings').locator('[name=limit_kw]').inputValue()),900);
     await submit('logout');
-    await page.goto(base + '/?recovery=1');
-    await submit('recovery_challenge');
-    const challenge = await page.locator('textarea[name=recovery_challenge]').inputValue();
-    const encoded = challenge.split('.')[1];
-    const signature = crypto.sign(null,Buffer.concat([Buffer.from('EnergyCube D-Max root recovery v1\0'),Buffer.from(encoded,'base64url')]),ownerKey).toString('base64url');
-    await fill('recovery_authorize','authorization','DMAX-R1.' + encoded + '.' + signature);
-    await submit('recovery_authorize');
+    if (process.env.DMAX_TEST_ROOT_PHRASE) {
+      await fill('login','username','root');
+      await fill('login','password',process.env.DMAX_TEST_ROOT_PHRASE);
+      await submit('login');
+    } else {
+      await page.goto(base + '/?recovery=1');
+      await submit('recovery_challenge');
+      const challenge = await page.locator('textarea[name=recovery_challenge]').inputValue();
+      const encoded = challenge.split('.')[1];
+      const signature = crypto.sign(null,Buffer.concat([Buffer.from('EnergyCube D-Max root recovery v1\0'),Buffer.from(encoded,'base64url')]),ownerKey).toString('base64url');
+      await fill('recovery_authorize','authorization','DMAX-R1.' + encoded + '.' + signature);
+      await submit('recovery_authorize');
+    }
     assert.ok((await page.locator('body').innerText()).includes('Raiz'));
 
 

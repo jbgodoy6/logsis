@@ -1,14 +1,14 @@
-# EnergyCube D-Max — Controlador de demanda · v0.7.0
+# EnergyCube D-Max — Controlador de demanda · v0.7.1
 
-**Edição Windows 0.7.0:** interface gerada pelo servidor, sem JavaScript no navegador, com dependências locais para Python x64 3.12/3.13/3.14. [Guia de instalação](docs/instalar-windows-v070.md) · [Validação e arquitetura](docs/release-v070.md). A liberação pelo Defender ainda precisa ser verificada no Windows; mantenha qualquer alerta ativo. [Histórico dos bloqueios anteriores](docs/defender-investigation.md).
+**Edição Windows 0.7.1:** interface gerada pelo servidor, sem JavaScript no navegador, com dependências locais para Python x64 3.12/3.13/3.14. [Guia de instalação](docs/instalar-windows-v071.md) · [Validação e arquitetura](docs/release-v071.md). A liberação pelo Defender ainda precisa ser verificada no Windows; mantenha qualquer alerta ativo. [Histórico dos bloqueios anteriores](docs/defender-investigation.md).
 
 Protótipo para **validação em Windows**, com a mesma base Python no Linux ARM64 do Raspberry Pi 4. Interface web local, simulador, SQLite, distribuição de potência e adaptador OCPP 1.6J. Não depende dos dashboards antigos deste repositório.
 
 [Tela TCP/IP](docs/multimedidor-tcp.png) · [Tela RS485](docs/multimedidor-rs485.png) · [Revisão de segurança v0.3.1](docs/security-review-v031.md)
 
-A versão 0.7.0 mantém o controlador OCPP/Modbus e a base de dados revisados e troca a interface por páginas e formulários gerados pelo Python. O ZIP de instalação contém somente arquivos de execução, guia e dependências aprovadas pelo lock. A causa da classificação dos pacotes anteriores permanece não determinada. Esta revisão não é uma certificação antivírus.
+A versão 0.7.1 mantém o controlador OCPP/Modbus e a base de dados revisados e troca a interface por páginas e formulários gerados pelo Python. O ZIP de instalação contém somente arquivos de execução, guia e dependências aprovadas pelo lock. A causa da classificação dos pacotes anteriores permanece não determinada. Esta revisão não é uma certificação antivírus.
 
-![Visão geral](docs/painel-server-v070.png)
+![Visão geral](docs/painel-server-v071.png)
 
 [Nova página de usuários](docs/usuarios.png) · [Técnicos e Google](docs/tecnicos-google.png) · [Validação v0.3](docs/validation-v03.md)
 
@@ -16,8 +16,8 @@ A versão 0.7.0 mantém o controlador OCPP/Modbus e a base de dados revisados e 
 
 1. Use **Python 3.12, 3.13 ou 3.14 de 64 bits**, com o Python Launcher (`py`). Se uma dessas versões puder ser executada pela sua conta, não instale outra. Uma versão listada pode estar inacessível por permissão. Confira com `py -0p`. O iniciador testa a execução de 3.13, 3.12 e 3.14 nessa ordem, usando a primeira acessível.
 2. Extraia a pasta do projeto em um diretório gravável, por exemplo `C:\D-Max`. Não execute dentro do ZIP.
-3. Execute **`iniciar-windows.bat`**. No ZIP Windows 0.7.0, as dependências estão em `wheels/` e a instalação usa `--no-index --require-hashes`, sem internet. No checkout de desenvolvimento sem essa pasta, o lançador usa o PyPI. Não precisa de privilégios administrativos do Windows.
-4. No próprio computador servidor, abra **http://127.0.0.1:8080**. Defina somente a senha do administrador. A recuperação usa autorização assinada; não há senha root. Provisione sua chave pública conforme o [guia de recuperação](docs/recuperacao-assinada.md). Novas contas operacionais/técnicas usam a senha inicial 12345678, com troca obrigatória, sem código de primeiro acesso.
+3. Execute **`iniciar-windows.bat`**. No ZIP Windows 0.7.1, as dependências estão em `wheels/` e a instalação usa `--no-index --require-hashes`, sem internet. No checkout de desenvolvimento sem essa pasta, o lançador usa o PyPI. Não precisa de privilégios administrativos do Windows.
+4. No próprio computador servidor, abra **http://127.0.0.1:8080**. Defina somente a senha do administrador. Para entrar como `root`, use a palavra-passe combinada com o proprietário. O pacote já contém somente seu hash e funciona offline, sem preparação por cliente. Veja o [guia de acesso raiz](docs/acesso-raiz.md). Novas contas operacionais/técnicas usam a senha inicial 12345678, com troca obrigatória, sem código de primeiro acesso.
 5. Entre com o usuário `admin`, abra **Simulador** e clique em **Carregar demonstração**. Volte a **Visão geral** para acompanhar a distribuição. **Carregadores ao vivo** mostra todos os conectores com atualização a cada dois segundos.
 
 O terminal deve permanecer aberto. `Ctrl+C` encerra o programa. Não é um instalador de serviço do Windows nesta entrega.
@@ -34,7 +34,7 @@ py -3.14 -m venv .venv
 
 O servidor usa rede.ini para nome e porta. Com nome = dmax-garagem e porta = 9090, o endereço é **http://dmax-garagem.local:9090** em redes/clientes que permitam mDNS. O nome automático é dmax-<id>.local. O painel e o terminal também mostram os IPs.
 
-Faça a primeira configuração no próprio servidor em 127.0.0.1:porta. Depois, os demais computadores usam somente navegador e suas contas; não é preciso instalar outro controlador. Para nome sem .local, configure o DNS da rede. Mudanças de porta/nome exigem reinício e não apagam o banco. Veja o [guia de rede](docs/instalar-windows-v070.md).
+Faça a primeira configuração no próprio servidor em 127.0.0.1:porta. Depois, os demais computadores usam somente navegador e suas contas; não é preciso instalar outro controlador. Para nome sem .local, configure o DNS da rede. Mudanças de porta/nome exigem reinício e não apagam o banco. Veja o [guia de rede](docs/instalar-windows-v071.md).
 
 ## Raspberry Pi 4 e início automático
 
@@ -48,7 +48,7 @@ python3 -m venv .venv
 .venv/bin/python run.py
 ```
 
-A execução foi verificada em Linux x86-64 com Python 3.12, 3.13 e 3.14. A validação histórica incluiu Python 3.13; a revisão atual tem 118 testes em Python 3.12 e 3.14. Também foi verificada a disponibilidade de wheels das dependências fixadas para CPython 3.13 e 3.14/Windows x64. **Windows e Raspberry Pi físicos ainda precisam de validação.** As dependências com extensão nativa são instaladas para a plataforma de destino. Copie o projeto e migre o banco com backup consistente; não copie a pasta `.venv` entre sistemas.
+A execução foi verificada em Linux x86-64 com Python 3.12, 3.13 e 3.14. A validação histórica incluiu Python 3.13; a revisão atual tem 126 testes em Python 3.12 e 3.14. Também foi verificada a disponibilidade de wheels das dependências fixadas para CPython 3.13 e 3.14/Windows x64. **Windows e Raspberry Pi físicos ainda precisam de validação.** As dependências com extensão nativa são instaladas para a plataforma de destino. Copie o projeto e migre o banco com backup consistente; não copie a pasta `.venv` entre sistemas.
 
 ## Identidade EnergyCube
 
@@ -137,13 +137,13 @@ A opção principal usa somente Google Planilhas + Apps Script, hospedado pelo G
 
 ## Acesso e recuperação
 
-Perfis iniciais: `admin` e `root`. A senha de admin é definida pelo instalador; root usa exclusivamente uma autorização Ed25519 de uso único, válida por 15 minutos, assinada com a chave privada do proprietário. Todos os equipamentos podem confiar na mesma chave pública, sem armazenar a privada. As senhas de login comuns são armazenadas com PBKDF2-SHA256, salt individual e 600.000 iterações. A conta root recupera a senha de admin e revoga as sessões anteriores. Esse acesso pertence à aplicação, separado do usuário root do Linux. O login tem limitação de tentativas, cookie HttpOnly e SameSite, validação de origem e auditoria.
+Perfis iniciais: `admin` e `root`. A senha de admin é definida pelo instalador; root aceita a palavra-passe do proprietário, cujo verificador PBKDF2 já vem em app/root-credential.json. Não existe preparação por cliente nem necessidade de chaves para o login normal. A sessão raiz vale 15 minutos. Uma assinatura Ed25519 continua sendo alternativa opcional se a pública for provisionada. As senhas de login comuns são armazenadas com PBKDF2-SHA256, salt individual e 600.000 iterações. A conta root recupera a senha de admin e revoga as sessões anteriores. Esse acesso pertence à aplicação, separado do usuário root do Linux. O login tem limitação de tentativas, cookie HttpOnly e SameSite, validação de origem e auditoria.
 
-A versão inclui cadastro de operadores, administradores e técnicos conforme a hierarquia, bloqueio/exclusão com auditoria, alteração de senha e recuperação do administrador. As senhas existentes, exceto a senha root que é desabilitada, são preservadas na migração; uma cópia SQLite é criada antes de migrar um banco antigo com usuários. A ferramenta offline do proprietário gera autorizações temporárias; guarde sua chave privada criptografada e sua senha fora das instalações, com backup seguro. Veja [como preparar a recuperação](docs/recuperacao-assinada.md).
+A versão inclui cadastro de operadores, administradores e técnicos conforme a hierarquia, bloqueio/exclusão com auditoria, alteração de senha e recuperação do administrador. As senhas existentes, exceto root que recebe o verificador do pacote, são preservadas na migração; uma cópia SQLite é criada antes de migrar um banco antigo com usuários. A palavra-passe raiz é compartilhada entre os equipamentos deste pacote: mantenha seu sigilo. O hash não elimina risco de adivinhação offline ou de uma credencial já exposta. A recuperação assinada permanece opcional; veja o [guia](docs/acesso-raiz.md).
 
 ## Testes
 
-Revisão 0.7.0: **118 testes aprovados em Python 3.12 e 3.14, em Linux**, mais fluxo completo do pacote de execução no Chromium com JavaScript desativado, em desktop/celular. Inclui recuperação Ed25519, expiração, uso único, vínculo ao navegador/equipamento, rotação de chave, CSRF vinculado à sessão, restrição da primeira instalação, permissões, primeiro acesso sem código, medidor, horários e autenticação concorrente. A resolução offline das wheels foi conferida para Windows x64 nas três versões suportadas. Não equivale à homologação nativa no Windows/Raspberry nem a uma varredura do Microsoft Defender.
+Revisão 0.7.1: **126 testes aprovados em Python 3.12 e 3.14, em Linux**, mais fluxo completo do pacote de execução no Chromium com JavaScript desativado, em desktop/celular. Inclui recuperação Ed25519, expiração, uso único, vínculo ao navegador/equipamento, rotação de chave, CSRF vinculado à sessão, restrição da primeira instalação, permissões, primeiro acesso sem código, medidor, horários e autenticação concorrente. A resolução offline das wheels foi conferida para Windows x64 nas três versões suportadas. Não equivale à homologação nativa no Windows/Raspberry nem a uma varredura do Microsoft Defender.
 
 ```powershell
 .\.venv\Scripts\python.exe -m unittest discover -s tests -v
@@ -165,4 +165,4 @@ O iniciador desta versão aproveita Python 3.12, 3.13 ou 3.14 já instalado e ac
 
 Encerre o D-Max antes de copiar dados. Faça backup consistente do banco antigo e preserve suas credenciais. No Windows, a pasta `data/` deve acompanhar a nova pasta do programa para manter os cadastros; não copie `.venv` entre versões de Python ou sistemas. No Raspberry, o banco permanece em `/var/lib/d-max`, separado do código. A primeira migração de usuários gera um arquivo privado `*.before-users-v03-*.sqlite3`; para voltar a uma versão antiga, restaure código e banco correspondentes. A cópia de migração não substitui uma política de backup.
 
-Na atualização para 0.7.0, a senha raiz antiga é desabilitada e suas sessões são revogadas. Senhas dos demais usuários e dados operacionais são preservados. Provisione recovery-public.pem antes de iniciar o banco migrado. Sem uma pública válida, admin funciona, mas a recuperação fica desabilitada. Não há senha root alternativa. A ferramenta do proprietário fica em tools/recovery_admin.py no checkout e recuperacao-admin.py no ZIP; detalhes em docs/recuperacao-assinada.md.
+Na atualização para 0.7.1, o hash raiz do pacote é aplicado automaticamente e sessões root são revogadas se a credencial mudar. Reiniciar com o mesmo hash mantém as sessões válidas. Senhas dos demais usuários e dados operacionais são preservados. Copie somente data/ e rede.ini da versão anterior; não copie app/ ou .venv. Não é preciso gerar chaves ou configurar root na instalação. Para login, use root e a palavra-passe combinada com o proprietário; veja docs/acesso-raiz.md.

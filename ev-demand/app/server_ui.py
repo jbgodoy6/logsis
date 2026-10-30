@@ -17,7 +17,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 
 from .meter import MEASUREMENTS, FORMATS
 
-VERSION = '0.7.0'
+VERSION = '0.7.1'
 PAGES = {
     'overview': 'Visão geral', 'chargers': 'Carregadores', 'vehicles': 'Veículos',
     'schedule': 'Horários', 'history': 'Histórico', 'meter': 'Multimedidor',
@@ -163,9 +163,10 @@ def install(app):
                 else:
                     content = self.form('login',
                         field('Usuário', 'username', 'admin', autocomplete='username', required='', maxlength=40)
-                        + field('Senha', 'password', kind='password', autocomplete='current-password', required='', maxlength=200),
+                        + field('Senha / palavra-passe', 'password', kind='password', autocomplete='current-password', required='', maxlength=200),
                         'Entrar no controlador')
-                    content += '<p><a href="/?recovery=1">Recuperar acesso / acesso raiz</a></p>'
+                    content += '<p class="hint">Para acesso raiz, use root e a palavra-passe do proprietário.</p>' if app.state.root_password_enabled else ''
+                    content += '<p><a href="/?recovery=1">Recuperação alternativa por assinatura</a></p>'
                     title = 'Bem-vindo de volta'
                     if self.request.query_params.get('recovery') == '1' or recovery_data is not None:
                         info = await self.api('GET', '/api/recovery')
@@ -251,7 +252,7 @@ def install(app):
 
         def password_form(self):
             if self.user and self.user['name'] == 'root':
-                return '<p>A conta raiz usa autorização assinada, válida por 15 minutos. Ela não possui senha de login.</p>'
+                return '<p>O acesso raiz é definido pelo proprietário no pacote e não pode ser alterado por esta instalação. A sessão vale por 15 minutos.</p>'
             return self.form('password',
                 field('Senha atual', 'current_password', kind='password', required='', maxlength=200, autocomplete='current-password')
                 + field('Nova senha', 'new_password', kind='password', minlength=8, maxlength=200, required='', autocomplete='new-password')

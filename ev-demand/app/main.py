@@ -24,6 +24,7 @@ from .access import Access, TECHNICAL, MANAGERS
 from .directory import directory_loop, synchronize, validate_config
 from .security import AttemptLimiter, same_origin, valid_host
 from .recovery import Recovery, TTL as RECOVERY_TTL
+from .root_auth import load_root_hash
 
 
 class Model(BaseModel):
@@ -193,11 +194,18 @@ class DirectoryConfig(Model):
     device_token: str | None = Field(default=None, min_length=32, max_length=512)
 
 
-def create_app(database=None, background=True, recovery_public_key=None):
+def create_app(database=None, background=True, recovery_public_key=None, root_password_hash=None):
     web_ui = os.getenv('DMAX_WEB_UI', 'server')
     store = Store(database)
     engine = Engine(store)
-    access = Access(store)
+    root_hash_error = False
+    if root_password_hash is None:
+        try:
+            root_password_hash = load_root_hash()
+        except (ValueError, OSError):
+            root_password_hash = ''
+            root_hash_error = True
+    access = Access(store, root_password_hash=root_password_hash)
     recovery = Recovery(store, recovery_public_key)
     recovery_issues = AttemptLimiter()
     recovery_attempts = AttemptLimiter()
@@ -236,10 +244,12 @@ def create_app(database=None, background=True, recovery_public_key=None):
             await asyncio.to_thread(network.close)
         store.db.close()
 
-    app = FastAPI(title='EnergyCube D-Max · Controle de demanda', version='0.7.0', lifespan=lifespan,
+    app = FastAPI(title='EnergyCube D-Max · Controle de demanda', version='0.7.1', lifespan=lifespan,
                   docs_url=None, redoc_url=None, openapi_url=None)
     app.state.store, app.state.engine, app.state.access = store, engine, access
     app.state.recovery = recovery
+    app.state.root_password_enabled = bool(root_password_hash)
+    app.state.root_hash_error = root_hash_error
 
     def get_user(token):
         return access.session(token)
@@ -307,7 +317,7 @@ def create_app(database=None, background=True, recovery_public_key=None):
         if not test_client and (address not in ('127.0.0.1', '::1') or hostname not in ('localhost', '127.0.0.1', '::1')):
             raise HTTPException(403, 'Primeira configuração deve ser feita no próprio servidor, usando localhost ou 127.0.0.1')
         with store.db:
-            store.db.execute('INSERT INTO users(name,password,role,id,full_name) VALUES (?,?,?,?,?)', ('root', '', 'root', secrets.token_hex(16), 'Raiz'))
+            store.db.execute('INSERT INTO users(name,password,role,id,full_name) VALUES (?,?,?,?,?)', ('root', root_password_hash, 'root', secrets.token_hex(16), 'Raiz'))
             store.db.execute('INSERT INTO users(name,password,role,id,full_name) VALUES (?,?,?,?,?)', ('admin', password_hash(data.admin_password), 'admin', secrets.token_hex(16), 'Administrador'))
         store.record('setup', {'note': 'Credenciais iniciais configuradas; valores não registrados'})
         return {'ok': True}
@@ -319,7 +329,7 @@ def create_app(database=None, background=True, recovery_public_key=None):
             raise HTTPException(429, 'Muitas tentativas. Aguarde cinco minutos.')
         name = data.username.strip().lower()
         row = access.by_name(name)
-        if name == 'root':
+        if name == 'root' and not root_password_hash:
             raise HTTPException(401, 'Acesso raiz exige autorização de recuperação; não aceita senha')
         if access.config()['enabled'] and (not row or row['role'] == 'technician'):
             try:
@@ -339,7 +349,7 @@ def create_app(database=None, background=True, recovery_public_key=None):
         if not access.usable(latest) or any(latest[k] != row[k] for k in ('epoch','password')):
             raise HTTPException(401, 'Acesso alterado durante a autenticação. Faça login novamente.')
         row = latest
-        return open_session(row, response, request)
+        return open_session(row, response, request, lifetime=RECOVERY_TTL if row['role'] == 'root' else 28800)
 
     def open_session(row, response, request, lifetime=28800):
         token = secrets.token_urlsafe(32)

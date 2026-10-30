@@ -30,7 +30,13 @@ def main(argv=None):
     except (ValueError, OSError) as exc:
         parser.error(str(exc))
     app = create_app()
-    print('D-Max · ' + app.state.recovery.status, flush=True)
+    print('D-Max · Acesso raiz por palavra-passe ' + ('habilitado' if app.state.root_password_enabled else 'desabilitado'), flush=True)
+    if app.state.root_hash_error:
+        print('D-Max · Configuração raiz inválida; restaure app/root-credential.json do pacote oficial', flush=True)
+    if app.state.root_password_enabled and app.state.recovery.key is None:
+        print('D-Max · Recuperação alternativa por assinatura não configurada (opcional)', flush=True)
+    else:
+        print('D-Max · ' + app.state.recovery.status, flush=True)
     identity = app.state.store.entities('system')[0]['controller_id']
     lan = LAN(config, identity, tls=bool(args.tls_cert))
     app.state.web_network = lan

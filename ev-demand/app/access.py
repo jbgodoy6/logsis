@@ -51,7 +51,9 @@ def valid_hash(value):
 
 
 class Access:
-    def __init__(self, store):
+    def __init__(self, store, root_password_hash=''):
+        if root_password_hash and not valid_hash(root_password_hash):
+            raise ValueError('Verificador raiz inválido')
         self.store, self.db = store, store.db
         columns = {r['name'] for r in self.db.execute('PRAGMA table_info(users)')}
         if 'id' not in columns and self.db.execute('SELECT COUNT(*) FROM users').fetchone()[0]:
@@ -89,14 +91,14 @@ class Access:
         self.db.execute('INSERT OR IGNORE INTO directory_config VALUES (1,?)', (json.dumps(DIRECTORY_DEFAULTS),))
         self.db.commit()
         recovery = self.by_name('root')
-        if recovery and (bool(recovery['password'])
+        if recovery and (recovery['password'] != root_password_hash
                          or recovery['role'] != 'root' or not self.usable(recovery)
                          or recovery['must_change'] or recovery['expires_at'] is not None):
             with self.db:
                 self.db.execute("UPDATE users SET password=?,role='root',active=1,deleted=0,expires_at=NULL,must_change=0,activation_hash=NULL,source='local',credential_version=credential_version+1 WHERE name='root'",
-                                ('',))
+                                (root_password_hash,))
                 self.revoke('root')
-            self.store.record('root_recovery_migrated', {'note': 'Recuperação por assinatura aplicada; senha raiz desabilitada e sessões anteriores revogadas'})
+            self.store.record('root_recovery_migrated', {'note': 'Política de acesso raiz atualizada; sessões anteriores revogadas'})
         self.status = {'message': 'Não configurada', 'last_success': None, 'last_attempt': None, 'next_attempt': None}
         self.lock = None  # Bound lazily to the serving event loop.
         self.wakeup = None
@@ -250,7 +252,7 @@ class Access:
     def change_password(self, actor, current, new):
         row = self.by_id(actor['id'])
         if row['name'] == 'root':
-            raise ValueError('A conta raiz usa autorização por assinatura e não possui senha de login')
+            raise ValueError('A credencial raiz é definida pelo proprietário no pacote; não pode ser alterada por esta instalação')
         if not password_matches(current, row['password']):
             raise ValueError('Senha atual incorreta')
         if len(new) < 8 or len(new) > 200 or new == INITIAL_PASSWORD or new == current:

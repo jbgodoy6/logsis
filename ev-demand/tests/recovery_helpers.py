@@ -9,6 +9,7 @@ PUBLIC = PRIVATE.public_key().public_bytes(serialization.Encoding.PEM, serializa
 
 
 def create_test_app(*args, **kwargs):
+    kwargs.setdefault('root_password_hash', '')
     return create_app(*args, **kwargs, recovery_public_key=PUBLIC)
 
 
