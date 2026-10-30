@@ -113,3 +113,58 @@ O bloqueio continua sem esclarecimento e não se declara falso positivo nem paco
 aprovado. Para uma classificação conclusiva, permanece indicado o portal oficial da
 Microsoft citado acima. Nenhuma amostra do projeto foi enviada a terceiros; somente
 nomes/versões de dependências foram consultados no PyPI para hashes e avisos públicos.
+
+## Comparação com a última execução relatada — 30/10/2026
+
+Na conversa, após receber a 0.6.0, o usuário relatou que o controlador mostrava seu
+endereço automático dmax-….local:8080. Isso indica execução naquele momento e torna
+a 0.6.0 uma referência de comparação mais próxima que a 0.5.0. Não demonstra que a
+0.6.0 seria aceita hoje pelas definições atuais do Defender.
+
+Foram comparados os conteúdos reais dos ZIPs 0.5.0, 0.6.0 e 0.6.1, incluindo CRC,
+manifestos completos, nomes, tamanhos e hashes. Todos os arquivos estão cobertos
+pelos manifestos; não há links simbólicos nem entradas extras fora dos manifestos.
+
+| Item | 0.5.0 | 0.6.0 | 0.6.1 |
+| --- | --- | --- | --- |
+| Arquivos | 62 | 68 | 68 |
+| Wheels | 40 | 44 | 44 |
+| Interface de execução | Python sem JavaScript | Igual | Igual |
+| Descoberta mDNS | Ausente | Introduzida | Idêntica à 0.6.0 |
+| Recuperação root | Senha definida na instalação | Senha definida na instalação | Senha fixa compartilhada |
+
+De 0.5.0 para 0.6.0 foram adicionados network.py, rede.ini, ifaddr e três wheels
+Zeroconf para as versões de Python suportadas. O iniciador passou a encaminhar as
+opções de linha de comando e o ponto de entrada passou a ler a configuração LAN.
+Não foram reintroduzidos o JavaScript/HTML antigos no pacote de execução.
+
+De 0.6.0 para 0.6.1 não foi adicionado nem removido arquivo. São byte a byte iguais:
+iniciar-windows.bat, run.py, rede.ini, requirements.lock, todas as 44 wheels,
+network.py, OCPP, Modbus, distribuição de demanda, sincronização Google, CSS e logos.
+Mudaram três módulos Python (access.py, main.py, server_ui.py), o guia e o manifesto.
+Os três módulos mudam a recuperação root, o formulário inicial e os números de versão.
+
+### Achado de segurança independente da classificação antivírus
+
+Foi reproduzida a inicialização de cada versão com um banco SQLite em memória e
+contas root/admin previamente cadastradas. Na 0.6.0 a senha pessoal root permanece;
+na 0.6.1 ela é substituída pela credencial fixa. Nas duas versões, o hash da conta
+admin é preservado. Não foi necessário conectar à rede nem usar contas reais.
+
+Essa mudança é uma regressão de segurança: uma credencial pública comum a todas as
+instalações concede acesso raiz ao aplicativo, inclusive pela LAN quando habilitada.
+A 0.6.1 também impede mudar essa credencial. Esse comportamento foi implementado por
+pedido explícito, mas o pedido não elimina o risco. A remoção do campo raiz no primeiro
+acesso não exige tecnicamente uma senha universal: uma alternativa seria gerar uma
+credencial de recuperação exclusiva por equipamento e apresentá-la localmente uma vez,
+mantendo apenas o cadastro da senha admin no formulário inicial.
+
+Não há evidência para afirmar que esse comportamento causou o alerta do Defender.
+Também não há evidência para culpar as bibliotecas de rede que já estavam na execução
+0.6.0 relatada. Essa comparação localiza as mudanças entre artefatos, não substitui a
+classificação do antivírus e não permite prometer que um novo pacote será aceito.
+
+Não houve alteração de código de execução, troca de senha solicitada pelo usuário ou
+publicação de outro ZIP durante esta comparação.
+Evidências: [comparação dos ZIPs](security/artifact-regression-v050-v061.json) e
+[teste isolado da recuperação](security/recovery-comparison-v060-v061.json).

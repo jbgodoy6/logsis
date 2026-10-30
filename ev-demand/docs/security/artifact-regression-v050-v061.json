@@ -1,0 +1,110 @@
+{
+  "0.5.0": {
+    "archive_sha256": "263281f074e719aec6011b9701bb13c15dea09c7c4ab0bfa5bbda5d6f48284ee",
+    "size_bytes": 12567837,
+    "files": 62,
+    "wheels": 40,
+    "unlisted_files": [],
+    "symlinks": []
+  },
+  "0.6.0": {
+    "archive_sha256": "845dc8fea3fcedfe3c50430afa3b8c3812a32c909b4355cb4014a5fae9d088fd",
+    "size_bytes": 15796273,
+    "files": 68,
+    "wheels": 44,
+    "unlisted_files": [],
+    "symlinks": []
+  },
+  "0.6.1": {
+    "archive_sha256": "6a6e2b0a2e968aee6e0501bc58cef6e8dbc65f57311e324eb5e7a50092692c68",
+    "size_bytes": 15796753,
+    "files": 68,
+    "wheels": 44,
+    "unlisted_files": [],
+    "symlinks": []
+  },
+  "0.5.0->0.6.0": {
+    "added": [
+      "D-Max/app/network.py",
+      "D-Max/rede.ini",
+      "D-Max/wheels/ifaddr-0.2.0-py3-none-any.whl",
+      "D-Max/wheels/zeroconf-0.151.5-cp312-cp312-win_amd64.whl",
+      "D-Max/wheels/zeroconf-0.151.5-cp313-cp313-win_amd64.whl",
+      "D-Max/wheels/zeroconf-0.151.5-cp314-cp314-win_amd64.whl"
+    ],
+    "removed": [],
+    "changed": [
+      {
+        "name": "D-Max/LEIA-ME.txt",
+        "before_sha256": "917ee13c204ccc1db40c9d95fb45e6c9c36b261b7a4ad7961b42695f9183991c",
+        "after_sha256": "aa78def647f81709ce990a6d9b34c63fc908ec952a30c5d224449cdf6f6ee3e6"
+      },
+      {
+        "name": "D-Max/SHA256SUMS.txt",
+        "before_sha256": "037e59c2c20666fb3e9d54c9c8d9c46b45e944bd07dc299edadd57a5785b01ae",
+        "after_sha256": "4340eaf8ddbbd488068e705e4040f54dd6b2383adcadfbda1c23d893b8fbb2ef"
+      },
+      {
+        "name": "D-Max/app/access.py",
+        "before_sha256": "7ed8bd2d134beb0756be87b57a64cb4a5eefa75e3f811478d79cce0329224d92",
+        "after_sha256": "76fff81e03091e03015be77787e6e6a8130f1c386f9c8858cc225cf04a7e9411"
+      },
+      {
+        "name": "D-Max/app/main.py",
+        "before_sha256": "6dd6593c6d1c230b798f40a02a0241b86aa5493f8832f3f72e0588866e19f461",
+        "after_sha256": "8e8f5ceba374344486d3cac1dc4fdd154463efc987559c963d75ca032b0946eb"
+      },
+      {
+        "name": "D-Max/app/server_ui.py",
+        "before_sha256": "a3c2096209be174b69854b41bcc29c249548759706323bd3f7b95d1f11e8395e",
+        "after_sha256": "6b3fdef48518b88408feece97831ed4cd9057bc55a9fb27a9680512704374dd0"
+      },
+      {
+        "name": "D-Max/iniciar-windows.bat",
+        "before_sha256": "1d0ad0f310e186cb964147311bc8ff24e86246d9e23d358994892150726a90c2",
+        "after_sha256": "ef65e3f647c95e1261ab5f8cdcc71acf494ffe1b258bd27e52369495eba837dd"
+      },
+      {
+        "name": "D-Max/requirements.lock",
+        "before_sha256": "13b75483d73bcfd045f84314467e032c980d5903a32da821d3e2b1194de9ad7b",
+        "after_sha256": "21cbbc3b0e3b502194ee45f21b935fb652e9a0dd2019a2634e4844d9a6d7ab3c"
+      },
+      {
+        "name": "D-Max/run.py",
+        "before_sha256": "305a1c4dc617095e65429ab882bd8d4a438099a7209102a093cc05b75f36d45c",
+        "after_sha256": "f9cf278690bfbb8b71ec084ac60920fd575a173fa939f849de72f9773305c355"
+      }
+    ]
+  },
+  "0.6.0->0.6.1": {
+    "added": [],
+    "removed": [],
+    "changed": [
+      {
+        "name": "D-Max/LEIA-ME.txt",
+        "before_sha256": "aa78def647f81709ce990a6d9b34c63fc908ec952a30c5d224449cdf6f6ee3e6",
+        "after_sha256": "0efa42c84869e28a618d8b4f785fd1b67892a685d8c6be5a8358d6734383efe9"
+      },
+      {
+        "name": "D-Max/SHA256SUMS.txt",
+        "before_sha256": "4340eaf8ddbbd488068e705e4040f54dd6b2383adcadfbda1c23d893b8fbb2ef",
+        "after_sha256": "1fd6ed326a4282facccedfd1939743c25af077a22d6e89850ef992af3fd3186a"
+      },
+      {
+        "name": "D-Max/app/access.py",
+        "before_sha256": "76fff81e03091e03015be77787e6e6a8130f1c386f9c8858cc225cf04a7e9411",
+        "after_sha256": "f8d65555ff81bb597b0edccc06b76238b724363ee4408d34655600e43210ed61"
+      },
+      {
+        "name": "D-Max/app/main.py",
+        "before_sha256": "8e8f5ceba374344486d3cac1dc4fdd154463efc987559c963d75ca032b0946eb",
+        "after_sha256": "9da1b96eef78104668c6c2f6171565ac00388b63f592412ddb61d1d62fa971d1"
+      },
+      {
+        "name": "D-Max/app/server_ui.py",
+        "before_sha256": "6b3fdef48518b88408feece97831ed4cd9057bc55a9fb27a9680512704374dd0",
+        "after_sha256": "593644358e3b2efc5865098a8bdd561cdeca26650fa1f80fe690efc81fe3cc11"
+      }
+    ]
+  }
+}

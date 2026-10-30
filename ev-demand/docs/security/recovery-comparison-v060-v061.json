@@ -1,0 +1,12 @@
+{
+  "0.6.0": {
+    "personal_root_preserved": true,
+    "shared_recovery_accepted": false,
+    "admin_hash_preserved": true
+  },
+  "0.6.1": {
+    "personal_root_preserved": false,
+    "shared_recovery_accepted": true,
+    "admin_hash_preserved": true
+  }
+}
