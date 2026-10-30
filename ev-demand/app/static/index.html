@@ -64,10 +64,6 @@
                   <input name="password" type="password" autocomplete="current-password">
                 </label>
               </div>
-              <label id="activation-field">
-                Código de ativação · primeiro acesso
-                <input name="activation_code" autocomplete="off" placeholder="Se fornecido pelo responsável">
-              </label>
               <div id="setup-fields" hidden>
                 <label>
                   Senha raiz de recuperação
@@ -196,7 +192,7 @@
                     Administrador
                   </b>
                   <small>
-                    EnergyCube D-Max · v0.4.0
+                    EnergyCube D-Max · v0.6.0
                   </small>
                 </div>
                 <button id="change-own-password" class="icon-button" aria-label="Alterar minha senha">
@@ -1006,7 +1002,7 @@
                 </div>
               </article>
               <div class="notice space-top">
-                Novas contas usam senha inicial 12345678 e código individual de ativação. A troca da senha é obrigatória antes de operar. Somente o raiz gerencia técnicos.
+                Novas contas usam senha inicial 12345678. A troca da senha é obrigatória antes de operar. Somente o raiz gerencia técnicos.
               </div>
             </section>
             <section id="view-directory" class="view" hidden>
@@ -1089,7 +1085,7 @@
                 Controle local de energia
               </span>
               <span>
-                v0.4.0 · Validação e comissionamento
+                v0.6.0 · Validação e comissionamento
               </span>
             </footer>
           </main>
@@ -1104,20 +1100,6 @@
           </div>
           <form id="editor-form">
           </form>
-        </dialog>
-        <dialog id="activation-dialog">
-          <h2>
-            Ativação individual
-          </h2>
-          <p class="hint">
-            Entregue este código ao usuário por um canal seguro. Ele será exibido somente agora. A senha inicial é 12345678 e deve ser trocada no primeiro acesso.
-          </p>
-          <input id="activation-code" readonly aria-label="Código de ativação">
-          <div class="dialog-actions">
-            <button id="close-activation" class="primary">
-              Guardei o código
-            </button>
-          </div>
         </dialog>
         <div id="toast" class="toast" role="status" hidden>
         </div>

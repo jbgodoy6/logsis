@@ -108,6 +108,17 @@ class ServerUITests(unittest.TestCase):
         self.assertTrue(self.client.get('/api/setup').json()['required'])
         local.close()
 
+    def test_lan_browser_uses_same_accounts_without_installing_another_controller(self):
+        self.setup_login()
+        remote = TestClient(self.app, client=('192.0.2.25', 1234), base_url='http://dmax-garagem.local:9090')
+        form = Forms(remote.get('/').text).find('login')
+        self.assertNotIn('activation_code', form)
+        form.update(username='root', password='fixture-ui-root')
+        response = remote.post('/ui/post', data=form)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(remote.get('/api/me').json()['role'], 'root')
+        remote.close()
+
     def test_admin_operational_limit_and_tampered_technical_fields(self):
         self.setup_login('admin')
         response = self.submit('settings', '/ui/settings', limit_kw='800')
@@ -119,21 +130,14 @@ class ServerUITests(unittest.TestCase):
         self.assertEqual(self.client.get('/ui/meter').status_code, 403)
         self.assertEqual(self.client.get('/ui/directory').status_code, 403)
 
-    def test_account_activation_password_change_and_operator_restrictions(self):
+    def test_account_first_password_change_without_code_and_operator_restrictions(self):
         self.setup_login()
         response = self.submit('user', '/ui/users', name='ui.operator', full_name='Operador UI', role='operator')
         self.assertEqual(response.status_code, 200, response.text)
-        class Activation(HTMLParser):
-            def handle_starttag(self, tag, attrs):
-                attrs = dict(attrs)
-                if attrs.get('name') == 'activation_result':
-                    self.code = attrs['value']
-        parser = Activation(); parser.feed(response.text)
-        code = parser.code
-        self.assertTrue(code)
-        self.assertNotIn(code, self.client.get('/ui/users').text)
+        self.assertNotIn('activation_result', response.text)
+        self.assertNotIn('Código de ativação', response.text)
         self.submit('logout')
-        response = self.submit('login', username='ui.operator', password='12345678', activation_code=code)
+        response = self.submit('login', username='ui.operator', password='12345678')
         self.assertIn('Troque a senha inicial', response.text)
         self.assertEqual(self.client.get('/api/state').status_code, 403)
         response = self.submit('password', current_password='12345678',

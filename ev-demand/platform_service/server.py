@@ -69,12 +69,12 @@ def create_platform(database=None, sheet=None, device_tokens=None):
                             source,must_change,activation_hash,credential_version,meta_version) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,1)''',
                             (row['name'],draft['password'],'technician',row['id'],row['full_name'],int(row['active']),
                              int(row['deleted']),row['expires_at'],'directory',int(draft['must_change']),
-                             draft.get('activation_hash'),draft['credential_version']))
+                             None,draft['credential_version']))
                         continue
                     store.db.execute('''INSERT INTO users(name,password,role,id,full_name,active,deleted,expires_at,
                         source,must_change,activation_hash,meta_version) VALUES (?,?,?,?,?,?,?,?,?,1,?,1)''',
                         (row['name'],password_hash(INITIAL_PASSWORD),'technician',row['id'],row['full_name'],
-                         int(row['active']),int(row['deleted']),row['expires_at'],'directory',password_hash(secrets.token_urlsafe(24))))
+                         int(row['active']),int(row['deleted']),row['expires_at'],'directory',None))
                 else:
                     changed = any(old[k] != row[k] for k in ('full_name','active','deleted','expires_at'))
                     if changed:

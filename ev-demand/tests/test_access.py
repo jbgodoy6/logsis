@@ -44,14 +44,14 @@ class PermissionsTests(unittest.TestCase):
         return r.json()
 
     def activate(self,user):
-        self.assertEqual(self.login(user['name'],'12345678',user['activation_code']).status_code,200)
+        self.assertEqual(self.login(user['name'],'12345678').status_code,200)
         self.assertEqual(self.c.post('/api/change-password',json={'current_password':'12345678','new_password':'fixture-personal-password'}).status_code,200)
         self.assertEqual(self.login(user['name'],'fixture-personal-password').status_code,200)
 
-    def test_first_access_requires_individual_activation_and_password_change(self):
+    def test_first_access_needs_only_password_and_forces_change(self):
         u=self.create('operador.um','operator')
-        self.assertEqual(self.login(u['name'],'12345678').status_code,401)
-        self.assertEqual(self.login(u['name'],'12345678',u['activation_code']).status_code,200)
+        self.assertNotIn('activation_code',u)
+        self.assertEqual(self.login(u['name'],'12345678').status_code,200)
         self.assertTrue(self.c.get('/api/me').json()['must_change'])
         self.assertEqual(self.c.get('/api/state').status_code,403)
         self.assertEqual(self.c.post('/api/change-password',json={'current_password':'12345678','new_password':'12345678'}).status_code,422)
@@ -59,6 +59,35 @@ class PermissionsTests(unittest.TestCase):
         self.assertEqual(self.c.get('/api/me').status_code,401)
         self.assertEqual(self.login(u['name'],'fixture-personal-password').status_code,200)
         self.assertEqual(self.c.get('/api/state').status_code,200)
+
+    def test_existing_activation_hash_no_longer_blocks_login_or_changes_personal_password(self):
+        user=self.create('legacy.operator','operator')
+        access=self.app.state.access
+        with access.db:
+            access.db.execute('UPDATE users SET activation_hash=? WHERE id=?',(HASH,user['id']))
+        self.assertEqual(self.login(user['name'],'12345678').status_code,200)
+        self.assertTrue(self.c.get('/api/me').json()['must_change'])
+        self.assertEqual(self.c.post('/api/change-password',json={'current_password':'12345678','new_password':'fixture-personal-new'}).status_code,200)
+        self.assertEqual(self.login(user['name'],'fixture-personal-new').status_code,200)
+
+    def test_global_new_technician_logs_in_without_root_activation(self):
+        access=self.app.state.access
+        from app.access import INITIAL_PASSWORD
+        access.apply_snapshot([global_record(password=password_hash(INITIAL_PASSWORD),activation_hash=HASH,must_change=True)])
+        self.assertIsNone(access.by_name('tecnico.global')['activation_hash'])
+        self.assertEqual(self.login('tecnico.global',INITIAL_PASSWORD).status_code,200)
+        self.assertTrue(self.c.get('/api/me').json()['must_change'])
+
+    def test_reset_returns_initial_password_flow_without_code_and_revokes_session(self):
+        user=self.create('reset.operator','operator');self.activate(user)
+        token=self.c.cookies.get('ev_session')
+        self.login('root','fixture-root')
+        response=self.c.post('/api/users/'+user['id']+'/reset',json={})
+        self.assertEqual(response.status_code,200)
+        self.assertNotIn('activation_code',response.json())
+        self.assertIsNone(self.app.state.access.session(token))
+        self.assertEqual(self.login(user['name'],'12345678').status_code,200)
+        self.assertTrue(self.c.get('/api/me').json()['must_change'])
 
     def test_operator_cannot_manage_users_meter_or_peak_schedule(self):
         u=self.create('operador.dois','operator');self.activate(u)
@@ -135,10 +164,10 @@ class PermissionsTests(unittest.TestCase):
     def test_public_users_and_audit_never_contain_hashes_or_activation_codes(self):
         u=self.create('operador.quatro','operator')
         text=self.c.get('/api/users').text
-        self.assertNotIn(u['activation_code'],text)
+        self.assertNotIn('activation_code',text)
         self.assertNotIn('pbkdf2_sha256',text)
         import json
-        self.assertNotIn(u['activation_code'],json.dumps(self.app.state.store.pending()))
+        self.assertNotIn('activation_code',json.dumps(self.app.state.store.pending()))
 
     def test_root_promotion_to_technician_is_queued_globally(self):
         u=self.create('operador.cinco','operator')
@@ -210,8 +239,7 @@ class SynchronizationTests(unittest.IsolatedAsyncioTestCase):
             with patch.dict(os.environ,{'DMAX_DIRECTORY_TOKEN':'fixture-device-token'}):
                 self.assertTrue(await synchronize(self.access,client))
                 actor={'role':'root','name':'root','id':'fixture-root-id'}
-                code=self.access.reset_activation(actor,'TEC-001')['activation_code']
-                self.assertTrue(code)
+                self.assertTrue(self.access.reset_password(actor,'TEC-001')['must_change'])
                 self.assertTrue(await synchronize(self.access,client))
                 row=self.access.by_id('TEC-001')
                 self.access.change_password(self.access.public(row),'12345678','fixture-new-password')
@@ -240,7 +268,7 @@ class SynchronizationTests(unittest.IsolatedAsyncioTestCase):
     async def test_pending_upload_failure_does_not_prevent_remote_block(self):
         self.access.apply_snapshot([global_record()])
         root={'role':'root','name':'root','id':'fixture-root-id'}
-        self.access.reset_activation(root,'TEC-001')
+        self.access.reset_password(root,'TEC-001')
         def response(request):
             if request.method=='POST':return httpx.Response(503,json={'detail':'write unavailable'})
             return httpx.Response(200,json={'complete':True,'technicians':[global_record(active=False)]})

@@ -90,8 +90,6 @@ async function showAuth() {
   managedUsers = [];
   meterTestResult = null;
   closeEditor();
-  $('#activation-dialog').close();
-  $('#activation-code').value = '';
   $$('input[type=password]').forEach((input) => { input.value = ''; });
   $('#auth-form').hidden = false;
   $('#first-change-form').hidden = true;
@@ -100,12 +98,10 @@ async function showAuth() {
   const status = await request('/setup');
   if (current !== generation) return;
   setupRequired = status.required;
-  $('#activation-field').hidden = setupRequired;
   $('#setup-fields').hidden = !setupRequired;
   $('#login-fields').hidden = setupRequired;
   for (const input of $$('#login-fields input')) input.disabled = setupRequired;
   for (const input of $$('#setup-fields input')) input.disabled = !setupRequired;
-  $('#auth-form [name=activation_code]').disabled = setupRequired;
   text('#auth-title', setupRequired ? 'Prepare seu controlador' : 'Bem-vindo de volta');
   text('#auth-description', setupRequired
     ? 'Defina as credenciais da primeira instalação.'
@@ -611,11 +607,6 @@ function applyPermissions() {
   $('#recovery-panel').hidden = account.role !== 'root';
 }
 
-function showActivation(code) {
-  $('#activation-code').value = code;
-  $('#activation-dialog').showModal();
-}
-
 function untilInput(value) {
   if (!value) return '';
   const date = new Date(value * 1000);
@@ -639,7 +630,7 @@ async function loadUsers() {
       sources[user.source] || user.source,
       user.role === 'root' ? 'Recuperação' : [
         button('Editar', {'data-edit-user': user.id}), ' ',
-        button('Renovar ativação', {'data-reset-user': user.id}),
+        button('Redefinir senha inicial', {'data-reset-user': user.id}),
       ],
     ]))
     : empty('Nenhuma conta gerenciável', 'Cadastre o primeiro usuário do seu perfil de gestão.'));
@@ -657,7 +648,7 @@ function editUser(id) {
     field('Validade · deixe vazio para não expirar', 'expires_at', untilInput(user.expires_at), 'datetime-local'),
     check('Operador autorizado a liberar emergência', 'can_emergency', user.can_emergency),
     old ? [check('Conta ativa', 'active', user.active), check('Excluir acesso e preservar auditoria', 'deleted', user.deleted)] : null,
-    hint('Técnicos são globais e entram na fila de sincronização. A senha inicial é 12345678, com ativação individual e troca obrigatória.'),
+    hint('Técnicos são globais e entram na fila de sincronização. A senha inicial é 12345678, com troca obrigatória.'),
   ], async (form) => {
     const data = {
       full_name: form.get('full_name'), role: form.get('role'), can_emergency: form.has('can_emergency'),
@@ -702,7 +693,7 @@ function bindEvents() {
         await api('/setup', {root_password: form.get('root_password'), admin_password: form.get('admin_password')});
         await api('/login', {username: 'admin', password: form.get('admin_password')});
       } else {
-        await api('/login', {username: form.get('username'), password: form.get('password'), activation_code: form.get('activation_code') || ''});
+        await api('/login', {username: form.get('username'), password: form.get('password')});
       }
       event.target.reset();
       await enter();
@@ -732,8 +723,7 @@ function bindEvents() {
         closeEditor();
         await load();
         if (current !== generation || !account) return;
-        if (result?.activation_code) showActivation(result.activation_code);
-        else notify('Alteração aplicada no controlador.');
+        notify('Alteração aplicada no controlador.');
       } finally {
         submit.disabled = false;
       }
@@ -745,11 +735,6 @@ function bindEvents() {
   $('#add-user').addEventListener('click', () => editUser());
   $('#refresh-users').addEventListener('click', () => perform(loadUsers));
   $('#refresh-history').addEventListener('click', () => perform(loadHistory));
-  $('#close-activation').addEventListener('click', () => {
-    $('#activation-code').value = '';
-    $('#activation-dialog').close();
-  });
-  $('#activation-dialog').addEventListener('close', () => { $('#activation-code').value = ''; });
   document.addEventListener('click', (event) => {
     const node = event.target.closest('button');
     if (!node || !account || !state) return;
@@ -772,7 +757,7 @@ function bindEvents() {
       const current = generation;
       const data = await api(userPath(node.dataset.resetUser) + '/reset', {});
       if (current !== generation || !account) return;
-      showActivation(data.activation_code);
+      notify('Senha inicial redefinida. A troca será obrigatória no próximo acesso.');
       await loadUsers();
     });
   });

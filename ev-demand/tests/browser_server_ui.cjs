@@ -30,7 +30,7 @@ async function main() {
     const capture = async name => {
       if (process.env.DMAX_CAPTURE_DIR) {
         fs.mkdirSync(process.env.DMAX_CAPTURE_DIR,{recursive:true});
-        await page.screenshot({path:path.join(process.env.DMAX_CAPTURE_DIR,name),fullPage:true});
+        await page.screenshot({path:path.join(process.env.DMAX_CAPTURE_DIR,name.replace('v050',process.env.DMAX_CAPTURE_TAG || 'v050')),fullPage:true});
       }
     };
     await page.goto(base);
@@ -106,10 +106,8 @@ async function main() {
     await fill('user','name','server.operator');
     await fill('user','full_name','Operador de validação');
     await submit('user');
-    const code = await page.locator('[name=activation_result]').inputValue();
-    assert.ok(code.length >= 12);
-    await page.getByRole('link',{name:'Fechar código',exact:true}).click();
     assert.equal(await page.locator('[name=activation_result]').count(),0);
+    assert.equal(await page.locator('[name=activation_code]').count(),0);
 
     await go('directory');
     const key = crypto.randomBytes(32).toString('hex');
@@ -124,7 +122,6 @@ async function main() {
     await submit('logout');
     await fill('login','username','server.operator');
     await fill('login','password','12345678');
-    await fill('login','activation_code',code);
     await submit('login');
     assert.equal(await page.locator('nav').count(),0);
     await fill('password','current_password','12345678');

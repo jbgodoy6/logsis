@@ -48,15 +48,18 @@ A chave é salva no banco local protegido e não é devolvida pela API ou regist
 
 Há um [CSV de modelo](../platform_service/tecnicos-modelo.csv) para referência. Não adicione coluna de senha. Contas de administrador e operador são locais; a planilha é o cadastro global de técnicos.
 
-## 5. Primeiro acesso e senha
+## 5. Primeiro acesso e senha — D-Max 0.6.0
 
-1. Adicione o técnico na planilha e sincronize um D-Max.
-2. No D-Max, como raiz, abra **Usuários → Renovar ativação** para aquele técnico.
-3. Guarde o código individual exibido e use **Sincronizar agora** para enviá-lo ao Google antes de utilizá-lo em outro equipamento.
-4. Entregue ao técnico seu login, a senha inicial **12345678** e o código de ativação por um canal seguro.
-5. No primeiro acesso, o técnico informa os três dados e define uma senha pessoal. Antes dessa troca, não acessa painel, comandos ou configuração.
+1. Adicione o técnico na planilha e sincronize o D-Max.
+2. O técnico entra com seu login e a senha inicial **12345678**, sem código de ativação.
+3. No primeiro acesso, define uma senha pessoal. Antes da troca, não acessa painel ou comandos.
+4. Sincronize o equipamento onde a senha foi alterada para enviar o hash ao Google. Os demais D-Max recebem a alteração em suas consultas.
 
-A senha alterada é transmitida como hash, não como texto legível. A sincronização de nome/situação/validade não restaura a senha padrão. Um técnico novo vindo da planilha não pode operar apenas conhecendo a senha padrão: o raiz precisa emitir sua ativação individual.
+A senha alterada é transmitida como hash, não como texto legível. Mudanças de nome, situação ou validade não restauram a senha inicial. Em **Usuários → Redefinir senha inicial**, um gestor autorizado pode restaurar 12345678; isso encerra sessões e exige uma nova troca.
+
+Contas existentes mantêm suas senhas e validade. A versão 0.6.0 deixa de exigir códigos antigos sem redefinir senhas pessoais. Atualize o código no mesmo projeto Apps Script e publique uma nova versão na implantação existente, preservando as propriedades, a URL e as chaves dos equipamentos.
+
+**A chave do equipamento continua obrigatória.** Ela autoriza a sincronização do servidor D-Max e é diferente do antigo código de primeiro acesso de usuário. Navegadores de outros computadores que acessam o mesmo servidor não precisam de outra chave ou instalação.
 
 ## 6. Offline e desligamentos
 

@@ -60,10 +60,6 @@ function equal_(a,b) {
   let mismatch=0;for(let i=0;i<a.length;i++)mismatch|=a.charCodeAt(i)^b.charCodeAt(i);return mismatch===0;
 }
 function validHash_(hash) {return typeof hash==='string'&&/^pbkdf2_sha256\$600000\$[0-9a-f]{32}\$[0-9a-f]{64}$/.test(hash);}
-function inaccessibleActivation_() {
-  // A random digest with no known PBKDF2 preimage. Root must issue an individual code.
-  return 'pbkdf2_sha256$600000$'+Utilities.getUuid().replace(/-/g,'')+'$'+sha_(Utilities.getUuid()+Utilities.getUuid());
-}
 function error_(code,message) {const e=new Error(message);e.code=code;throw e;}
 function json_(value) {return ContentService.createTextOutput(JSON.stringify(value)).setMimeType(ContentService.MimeType.JSON);}
 
@@ -133,14 +129,14 @@ function refresh_(props) {
     const pending=all['pending.'+meta.id]?JSON.parse(all['pending.'+meta.id]):null;
     let old=all['user.'+meta.id]?JSON.parse(all['user.'+meta.id]):null;
     if(!old)old={id:meta.id,name:meta.name,password:pending&&pending.name===meta.name?pending.password:DMAX_DEFAULT_HASH,
-      activation_hash:pending&&pending.name===meta.name?pending.activation_hash:inaccessibleActivation_(),
+      activation_hash:null,
       must_change:pending&&pending.name===meta.name?Boolean(pending.must_change):true,
       credential_version:pending&&pending.name===meta.name?pending.credential_version:1,meta_version:0};
     const digest=sha_(JSON.stringify([meta.full_name,meta.active,meta.deleted,meta.expires_at]));
     const changed=old.meta_digest!==digest;
     const record=Object.assign({},old,{full_name:meta.full_name,active:meta.active,deleted:meta.deleted,expires_at:meta.expires_at,
-      meta_digest:digest,meta_version:old.meta_version+(changed?1:0)});
-    if(changed)props.setProperty('user.'+meta.id,JSON.stringify(record));
+      meta_digest:digest,meta_version:old.meta_version+(changed?1:0),activation_hash:null});
+    if(changed||old.activation_hash!==null)props.setProperty('user.'+meta.id,JSON.stringify(record));
     if(pending)props.deleteProperty('pending.'+meta.id);
     records.push(record);seen[meta.id]=true;
   });
@@ -185,7 +181,7 @@ function update_(props,r) {
     state.source.sheet.getRange(index,1,1,5).setValues([safe]);
   }
   let record=old?Object.assign({},old):{id:r.id,name:r.name,full_name:r.full_name,active:Boolean(r.active),deleted:Boolean(r.deleted),expires_at:r.expires_at,meta_version:0};
-  if(register||r.operations.includes('credential'))Object.assign(record,{password:r.password,activation_hash:r.activation_hash,must_change:Boolean(r.must_change),credential_version:r.credential_version});
+  if(register||r.operations.includes('credential'))Object.assign(record,{password:r.password,activation_hash:null,must_change:Boolean(r.must_change),credential_version:r.credential_version});
   props.setProperty('user.'+r.id,JSON.stringify(record));props.deleteProperty('pending.'+r.id);
   return {ok:true,acknowledged_id:r.id};
 }

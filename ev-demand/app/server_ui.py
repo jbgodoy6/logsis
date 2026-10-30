@@ -17,7 +17,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 
 from .meter import MEASUREMENTS, FORMATS
 
-VERSION = '0.5.0'
+VERSION = '0.6.0'
 PAGES = {
     'overview': 'Visão geral', 'chargers': 'Carregadores', 'vehicles': 'Veículos',
     'schedule': 'Horários', 'history': 'Histórico', 'meter': 'Multimedidor',
@@ -149,7 +149,7 @@ def install(app):
                     '<link rel="stylesheet" href="/static/server.css">'
                     '</head><body>' + content + '</body></html>')
 
-        async def render(self, page='overview', message='', activation='', diagnostic=None, status=200):
+        async def render(self, page='overview', message='', diagnostic=None, status=200):
             if page not in PAGES:
                 return self.finish(HTMLResponse('Página não encontrada', status_code=404))
             note = '<div class="notice" role="status">' + esc(message) + '</div>' if message else ''
@@ -164,8 +164,7 @@ def install(app):
                 else:
                     content = self.form('login',
                         field('Usuário', 'username', 'admin', autocomplete='username', required='', maxlength=40)
-                        + field('Senha', 'password', kind='password', autocomplete='current-password', required='', maxlength=200)
-                        + field('Código de ativação · primeiro acesso', 'activation_code', autocomplete='off', maxlength=200),
+                        + field('Senha', 'password', kind='password', autocomplete='current-password', required='', maxlength=200),
                         'Entrar no controlador')
                     title = 'Bem-vindo de volta'
                 auth = ('<div class="auth-screen"><div class="auth-art"><div class="brand">'
@@ -207,11 +206,15 @@ def install(app):
                            '<div class="charger-grid">' + ''.join(self.card(p, controls=False) for p in self.state['ports']) + '</div>')
             else:
                 content = panel('Minha senha', self.password_form())
-            if activation:
-                content = panel('Ativação individual',
-                    '<p>Entregue este código por um canal seguro. A senha inicial é 12345678; a troca é obrigatória.</p>'
-                    + field('Código · mostrado somente nesta resposta', 'activation_result', activation, readonly='', autocomplete='off')
-                    + link('users', 'Fechar código')) + content
+            network = getattr(app.state, 'web_network', None)
+            if network is not None and page in ('settings', 'overview'):
+                details = network.public()
+                urls = ([details['url']] if details['announced'] else []) + details['ip_urls']
+                if not urls:
+                    urls = [('https' if self.request.url.scheme == 'https' else 'http') + '://127.0.0.1:' + str(details['port'])]
+                content += panel('Acesso pela rede local', '<p>' + esc(details['status']) + '</p>'
+                    + ''.join('<p><a href="' + esc(url) + '">' + esc(url) + '</a></p>' for url in urls)
+                    + '<p class="hint">Nome e porta: edite rede.ini no servidor e reinicie o D-Max. O nome sem .local depende do DNS da rede.</p>')
             nav = ''.join('<a class="nav' + (' active' if key == page else '') + '" href="/ui/' + key + '">' + esc(title) + '</a>'
                           for key, title in PAGES.items() if allowed.get(key, True))
             body = ('<div id="shell"><aside class="sidebar"><a class="brand" href="/">'
@@ -222,7 +225,7 @@ def install(app):
                     '<main><header><div><div class="eyebrow">' + esc(self.state['settings']['site_name']) + '</div>'
                     '<h1>' + esc(PAGES[page]) + '</h1></div><a class="secondary" href="/ui/' + page + '">Atualizar</a></header>'
                     + note + content + '<footer>EnergyCube D-Max · v' + VERSION + ' · Controle local</footer></main></div>')
-            refresh = page in ('overview', 'monitor') and status == 200 and not activation
+            refresh = page in ('overview', 'monitor') and status == 200
             return self.finish(HTMLResponse(self.document(body, PAGES[page], refresh), status_code=status))
 
         @property
@@ -449,7 +452,7 @@ def install(app):
         async def users(self):
             users = (await self.api('GET', '/api/users'))['users']
             rows = [[esc(u['full_name']), esc(u['name']), esc(ROLES[u['role']]), 'Excluído' if u['deleted'] else 'Ativo' if u['active'] else 'Bloqueado',
-                     link('users', 'Editar', edit=u['id']) + self.form('reset_user', submit='Renovar ativação', page='users', id=u['id']) if u['role'] != 'root' else 'Recuperação']
+                     link('users', 'Editar', edit=u['id']) + self.form('reset_user', submit='Redefinir senha inicial', page='users', id=u['id']) if u['role'] != 'root' else 'Recuperação']
                     for u in users]
             content = panel('Contas gerenciáveis', table(['Nome', 'Login', 'Perfil', 'Situação', ''], rows))
             old = next((u for u in users if u['id'] == self.request.query_params.get('edit') and u['role'] != 'root'), None)
@@ -462,7 +465,8 @@ def install(app):
             fields += checkbox('Operador pode liberar emergência', 'can_emergency', u['can_emergency'])
             if old:
                 fields += checkbox('Conta ativa', 'active', u['active']) + checkbox('Excluir acesso e preservar auditoria', 'deleted', u['deleted'])
-            return content + panel('Editar conta' if old else 'Adicionar usuário', self.form('user', fields, page='users'))
+            guidance = '<p class="hint">Novas contas cadastradas aqui entram com a senha inicial 12345678 e devem trocá-la antes de operar. Não há código de primeiro acesso.</p>'
+            return content + panel('Editar conta' if old else 'Adicionar usuário', guidance + self.form('user', fields, page='users'))
 
         async def directory(self):
             data = await self.api('GET', '/api/directory')
@@ -511,12 +515,12 @@ def install(app):
             if page not in PAGES or not console.valid_token(action, value('_csrf')):
                 raise UIError('Formulário expirado ou inválido. Atualize a página e tente novamente.', 403)
             api = console.api
-            activation, diagnostic = '', None
+            diagnostic = None
             if action == 'setup':
                 await api('POST', '/api/setup', {k: value(k) for k in ('root_password', 'admin_password')})
                 return await console.render('overview', 'Instalação configurada. Entre com admin ou root.')
             elif action == 'login':
-                await api('POST', '/api/login', {k: value(k) for k in ('username', 'password', 'activation_code')})
+                await api('POST', '/api/login', {k: value(k) for k in ('username', 'password')})
             elif action == 'logout':
                 await api('POST', '/api/logout', {})
             elif action == 'password':
@@ -613,7 +617,6 @@ def install(app):
                         else:
                             data['name'] = value('name')
                             result = await api('POST', '/api/users', data)
-                    activation = result.get('activation_code', '')
                 elif action == 'recover':
                     await api('POST', '/api/recover-admin', dict(username='admin', password=value('password')))
                 elif action == 'directory':
@@ -625,8 +628,8 @@ def install(app):
                     await api('POST', '/api/directory/sync', {})
                 else:
                     raise UIError('Operação desconhecida')
-            if activation or diagnostic is not None:
-                return await console.render(page, 'Operação concluída.', activation=activation, diagnostic=diagnostic)
+            if diagnostic is not None:
+                return await console.render(page, 'Operação concluída.', diagnostic=diagnostic)
             return console.finish(RedirectResponse('/ui/' + page + '?notice=saved', status_code=303))
         except UIError as exc:
             if exc.status == 401:

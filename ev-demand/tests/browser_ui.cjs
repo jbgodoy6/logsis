@@ -37,10 +37,9 @@ async function main() {
       await page.locator('[data-view=' + name + ']').click();
       await page.waitForSelector('#view-' + name + ':not([hidden])');
     };
-    const login = async (name, secret, activation = '') => {
+    const login = async (name, secret) => {
       await page.locator('#auth-form [name=username]').fill(name);
       await page.locator('#auth-form [name=password]').fill(secret);
-      await page.locator('#auth-form [name=activation_code]').fill(activation);
       await page.locator('#auth-submit').click();
     };
     const saveEditor = async () => {
@@ -122,12 +121,8 @@ async function main() {
     await field('name').fill('dom.operator');
     await field('full_name').fill(literalName);
     await saveEditor();
-    await page.waitForSelector('#activation-dialog[open]');
-    const code = await page.locator('#activation-code').inputValue();
-    assert.ok(code.length >= 12);
-    assert.equal(await page.locator('#user-list [data-probe]').count(), 0);
-    await page.locator('#close-activation').click();
-    assert.equal(await page.locator('#activation-code').inputValue(), '');
+    assert.equal(await page.locator('[name=activation_code]').count(),0);
+    assert.equal(await page.locator('#user-list [data-probe]').count(),0);
 
     await navigate('directory');
     await page.waitForSelector('#directory-status table');
@@ -174,7 +169,7 @@ async function main() {
 
     await page.locator('#logout').click();
     await page.waitForSelector('#auth:not([hidden])');
-    await login('dom.operator', '12345678', code);
+    await login('dom.operator', '12345678');
     await page.waitForSelector('#first-change-form:not([hidden])');
     await page.locator('#first-change-form [name=current_password]').fill('12345678');
     await page.locator('#first-change-form [name=new_password]').fill(secrets.operator);

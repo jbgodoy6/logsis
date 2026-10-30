@@ -28,8 +28,8 @@ if errorlevel 1 (
   copy /y requirements.lock .venv\installed.lock >nul
 )
 echo.
-echo Abra http://127.0.0.1:8080 no navegador. Ctrl+C encerra o controlador.
-.venv\Scripts\python.exe run.py
+echo Nome, porta e enderecos serao mostrados abaixo. Ctrl+C encerra o controlador.
+.venv\Scripts\python.exe run.py %*
 if errorlevel 1 goto :failure
 exit /b 0
 :failure

@@ -3,7 +3,6 @@ from datetime import datetime, timezone
 import hashlib
 import json
 import re
-import secrets
 import time
 import uuid
 
@@ -168,21 +167,22 @@ class Access:
         if self.by_name(name):
             raise ValueError('Login já existe, inclusive em conta desativada')
         identifier = uuid.uuid4().hex
-        code = secrets.token_urlsafe(12)
         source = 'local_pending' if role == 'technician' else 'local'
         with self.db:
             self.db.execute('''INSERT INTO users (name,password,role,id,full_name,expires_at,source,must_change,activation_hash,can_emergency)
                 VALUES (?,?,?,?,?,?,?,1,?,?)''', (name, password_hash(INITIAL_PASSWORD), role, identifier, full_name,
-                expiry(expires_at), source, password_hash(code), int(can_emergency)))
+                expiry(expires_at), source, None, int(can_emergency)))
             if role == 'technician':
                 self.queue(identifier, 'register', self.directory_record(self.by_id(identifier)))
         self.store.record('user_created', {'actor': actor['name'], 'user_id': identifier, 'login': name, 'role': role})
-        return self.public(self.by_id(identifier)) | {'activation_code': code}
+        return self.public(self.by_id(identifier))
 
     @staticmethod
     def directory_record(row):
-        return {k: row[k] for k in ('id', 'name', 'full_name', 'active', 'deleted', 'expires_at', 'password',
+        data = {k: row[k] for k in ('id', 'name', 'full_name', 'active', 'deleted', 'expires_at', 'password',
                                     'activation_hash', 'must_change', 'credential_version', 'meta_version')}
+        data['activation_hash'] = None
+        return data
 
     def queue(self, identifier, kind, payload):
         # This protected local table is deliberately separate from telemetry/audit.
@@ -223,21 +223,20 @@ class Access:
                                           'deleted': bool(updated['deleted']), 'role': updated['role']})
         return self.public(updated)
 
-    def reset_activation(self, actor, identifier):
+    def reset_password(self, actor, identifier):
         target = self.by_id(identifier)
         if not target:
             raise ValueError('Conta não encontrada')
         self.authorize_management(actor, target['role'], target)
-        code = secrets.token_urlsafe(12)
         with self.db:
             self.db.execute('UPDATE users SET password=?,activation_hash=?,must_change=1,credential_version=credential_version+1 WHERE id=?',
-                            (password_hash(INITIAL_PASSWORD), password_hash(code), identifier))
+                            (password_hash(INITIAL_PASSWORD), None, identifier))
             self.revoke(target['name'])
             if target['role'] == 'technician':
                 pending = self.db.execute('SELECT kind FROM directory_pending WHERE user_id=?', (identifier,)).fetchone()
                 self.queue(identifier, 'register' if pending and pending['kind'] == 'register' else 'credential', self.directory_record(self.by_id(identifier)) | {'base_version': target['credential_version']})
-        self.store.record('activation_reset', {'actor': actor['name'], 'user_id': identifier})
-        return {'activation_code': code}
+        self.store.record('password_reset', {'actor': actor['name'], 'user_id': identifier})
+        return {'ok': True, 'must_change': True}
 
     def change_password(self, actor, current, new):
         row = self.by_id(actor['id'])
@@ -265,6 +264,8 @@ class Access:
             if not re.fullmatch('[A-Za-z0-9_-]{1,100}', r.get('id', '')):
                 raise ValueError('ID global inválido')
             r['name'] = username(r['name'])
+            # Retained wire field for compatibility; no account requires a code.
+            r['activation_hash'] = None
             if r['name'] in ('root', 'admin') or r['id'] in seen_ids or r['name'] in seen_names:
                 raise ValueError('ID/login global duplicado ou reservado')
             r['expires_at'] = expiry(r.get('expires_at'))

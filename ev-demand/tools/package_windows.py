@@ -10,11 +10,11 @@ import re
 import zipfile
 
 
-VERSION = '0.5.0'
+VERSION = '0.6.0'
 STATIC = ('style.css', 'energycube.css', 'server.css', 'd-max-logo.png', 'energycube-logo.png')
 PYTHON = (
     '__init__.py', 'access.py', 'control.py', 'directory.py', 'engine.py', 'main.py',
-    'meter.py', 'ocpp_server.py', 'security.py', 'server_ui.py', 'services.py', 'store.py',
+    'meter.py', 'network.py', 'ocpp_server.py', 'security.py', 'server_ui.py', 'services.py', 'store.py',
 )
 
 
@@ -33,9 +33,9 @@ def package(root, wheels, output):
         include(root / 'app' / name, 'app/' + name)
     for name in STATIC:
         include(root / 'app/static' / name, 'app/static/' + name)
-    for name in ('run.py', 'iniciar-windows.bat', 'requirements.lock'):
+    for name in ('run.py', 'iniciar-windows.bat', 'requirements.lock', 'rede.ini'):
         include(root / name, name)
-    include(root / 'docs/instalar-windows-v050.md', 'LEIA-ME.txt')
+    include(root / 'docs/instalar-windows-v060.md', 'LEIA-ME.txt')
     allowed_hashes = set(re.findall(r'--hash=sha256:([0-9a-f]{64})', (root / 'requirements.lock').read_text()))
     supplied = sorted(wheels.glob('*.whl'))
     if not supplied:

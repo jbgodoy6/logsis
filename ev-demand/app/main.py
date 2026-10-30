@@ -32,7 +32,7 @@ class Model(BaseModel):
 class Login(Model):
     username: str = Field(min_length=1, max_length=40)
     password: str = Field(min_length=1, max_length=200)
-    activation_code: str = Field(default='', max_length=200)
+    activation_code: str = Field(default='', max_length=200)  # Ignored; old-client compatibility.
 
 
 class Setup(Model):
@@ -211,6 +211,12 @@ def create_app(database=None, background=True):
         if background:
             tasks = [asyncio.create_task(engine.run()), asyncio.create_task(meter_loop(engine)),
                      asyncio.create_task(cloud_loop(engine)), asyncio.create_task(directory_loop(access))]
+        network = getattr(app.state, 'web_network', None)
+        if background and network is not None:
+            await asyncio.to_thread(network.start)
+            print('D-Max · ' + network.status, flush=True)
+            for url in network.public()['ip_urls']:
+                print('Acesso por IP: ' + url, flush=True)
         yield
         for task in tasks:
             task.cancel()
@@ -218,9 +224,11 @@ def create_app(database=None, background=True):
             with suppress(asyncio.CancelledError):
                 await task
         engine.flush()
+        if background and network is not None:
+            await asyncio.to_thread(network.close)
         store.db.close()
 
-    app = FastAPI(title='EnergyCube D-Max · Controle de demanda', version='0.5.0', lifespan=lifespan,
+    app = FastAPI(title='EnergyCube D-Max · Controle de demanda', version='0.6.0', lifespan=lifespan,
                   docs_url=None, redoc_url=None, openapi_url=None)
     app.state.store, app.state.engine, app.state.access = store, engine, access
 
@@ -315,15 +323,9 @@ def create_app(database=None, background=True):
             raise HTTPException(429, 'Autenticação ocupada. Tente novamente em instantes.')
         if not verified:
             raise HTTPException(401, 'Usuário, senha, situação ou validade inválidos')
-        if row['activation_hash']:
-            activated = await verify_password(data.activation_code, row['activation_hash'])
-            if activated is None:
-                raise HTTPException(429, 'Autenticação ocupada. Tente novamente em instantes.')
-            if not activated:
-                raise HTTPException(401, 'Informe o código de ativação recebido do responsável')
         # An account can be revoked while PBKDF2 runs in the worker thread.
         latest = access.by_id(row['id'])
-        if not access.usable(latest) or any(latest[k] != row[k] for k in ('epoch','password','activation_hash')):
+        if not access.usable(latest) or any(latest[k] != row[k] for k in ('epoch','password')):
             raise HTTPException(401, 'Acesso alterado durante a autenticação. Faça login novamente.')
         row = latest
         token = secrets.token_urlsafe(32)
@@ -394,7 +396,7 @@ def create_app(database=None, background=True):
     @app.post('/api/users/{identifier}/reset')
     async def reset_user(identifier: str, u=Depends(administrator)):
         try:
-            return access.reset_activation(u, identifier)
+            return access.reset_password(u, identifier)
         except (ValueError, PermissionError) as exc:
             raise access_error(exc)
 

@@ -26,7 +26,7 @@ vm.createContext(context);vm.runInContext(source,context);
 const call=(action,record,key='fixture-device-key')=>JSON.parse(context.doPost({postData:{contents:JSON.stringify({action,record,controller_id:'controller',key})}}).text);
 assert.equal(call('snapshot',null,'wrong').code,401);
 let snapshot=call('snapshot');assert.equal(snapshot.complete,true);assert.equal(snapshot.technicians[0].must_change,true);
-let original=snapshot.technicians[0];
+let original=snapshot.technicians[0];assert.equal(original.activation_hash,null);
 const changed={...original,operations:['credential'],base_version:original.credential_version,credential_version:2,
  password:'pbkdf2_sha256$600000$'+'a'.repeat(32)+'$'+'b'.repeat(64),activation_hash:null,must_change:false};
 assert.equal(call('update',changed).acknowledged_id,'TEC-1');
