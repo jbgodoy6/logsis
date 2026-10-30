@@ -57,3 +57,59 @@ Foi novamente conferido o ZIP original 0.4.0, de SHA-256 `c06b797679f7eb401078fd
 Foi preparada uma instalação isolada em `/tmp` do ClamAV 1.4.6, obtido dos pacotes oficiais Debian (`deb.debian.org`). Não foi feita instalação no sistema nem enviado conteúdo do projeto a terceiros. A atualização pelo FreshClam falhou ao acessar `https://database.clamav.net/daily.cvd`; a consulta adicional ao servidor também encontrou falha de proxy. **Sem definições válidas, não foi executada uma varredura antivírus independente e não existe resultado de detecção a relatar.**
 
 Nenhum arquivo de execução foi alterado nem novo ZIP foi publicado nessa etapa. Antes de comparar novas classificações no computador afetado, é pertinente atualizar o Defender pela função oficial `Update-MpSignature`, mantendo a proteção ativa e respeitando a política de TI. Se a mesma amostra continuar bloqueada, permanece necessária a análise da detecção pelo fabricante.
+
+## Revisão da versão 0.6.1 — 30/10/2026
+
+O usuário informou um novo bloqueio ao tentar instalar a 0.6.1 e solicitou revisão
+sem fornecer o nome da detecção ou os recursos afetados. O alerta desta versão
+permanece sem classificação identificada. Os nomes Ulthar/Wacatac acima são evidências
+das versões antigas; não foram atribuídos automaticamente ao novo bloqueio.
+
+### Integridade e origem
+
+- ZIP analisado: `D-Max-v0.6.1-Windows.zip`, SHA-256
+  `6a6e2b0a2e968aee6e0501bc58cef6e8dbc65f57311e324eb5e7a50092692c68`.
+- Os 68 arquivos passaram pela verificação de integridade do ZIP e do manifesto;
+  os arquivos de app/ correspondem byte a byte ao checkout publicado.
+- Comparando com 0.6.0, não há entradas adicionadas ou removidas. Mudaram somente
+  app/access.py, app/main.py, app/server_ui.py, LEIA-ME.txt e o manifesto SHA256SUMS.txt.
+- As 44 wheels são idênticas às da 0.6.0. Os hashes de todas foram conferidos
+  novamente com os metadados oficiais HTTPS do PyPI, em 32 pacotes/versões.
+  Os manifests RECORD também foram conferidos: 2.332 entradas com hashes e tamanhos
+  válidos. Isso verifica integridade/origem, sem certificar segurança dos fornecedores.
+- Não há arquivos JavaScript, HTML, PowerShell, VBS ou executáveis EXE soltos no
+  pacote. Wheels oficiais podem conter módulos nativos, necessários às dependências.
+
+### Revisão do comportamento
+
+Foram reexaminados o lançador Windows, o ponto de entrada, a descoberta mDNS,
+o cadastro/autenticação, a migração de recuperação e os destinos de sincronização.
+A pesquisa estática nos módulos distribuídos não encontrou eval/exec, subprocessos
+ou comandos de sistema Python. O BAT cria o ambiente Python, instala dependências
+com hashes e inicia run.py. Não altera o Defender, firewall, registro ou serviços.
+
+A sincronização envia dados somente aos serviços configurados; a interface nativa
+chama a API internamente por transporte ASGI. As mudanças 0.6.1 retiram o campo raiz
+da instalação e adotam a senha fixa explicitamente solicitada. Esta credencial
+comum permite acesso raiz a quem a conhece; o salt do hash local não elimina esse
+risco. Não se atribui a ela a detecção do Defender sem evidência.
+
+A nova execução do pip-audit sobre o lock não encontrou vulnerabilidades conhecidas.
+O Bandit registrou oito alertas: cinco baixos (incluindo as duas senhas predefinidas)
+e três médios relativos à escuta em 0.0.0.0 para o acesso LAN solicitado. Não houve
+alertas altos. Esses resultados são análise de código, não análise antivírus.
+Relatórios: [dependências](security/dependencies-v061.json),
+[Bandit](security/bandit-v061.json), [origem das wheels](security/wheels-pypi-v061.json).
+
+### Resultado e limite
+
+Não foi encontrado comportamento malicioso nos trechos examinados nem alteração
+concreta fundamentada para resolver a nova classificação. Nenhum arquivo de execução
+foi alterado ou novo pacote publicado nesta revisão. Os 101 testes funcionais da
+0.6.1 permanecem os da validação de lançamento; não foram apresentados como teste
+antivírus. Não existe resultado de varredura Microsoft Defender neste ambiente Linux.
+
+O bloqueio continua sem esclarecimento e não se declara falso positivo nem pacote
+aprovado. Para uma classificação conclusiva, permanece indicado o portal oficial da
+Microsoft citado acima. Nenhuma amostra do projeto foi enviada a terceiros; somente
+nomes/versões de dependências foram consultados no PyPI para hashes e avisos públicos.
