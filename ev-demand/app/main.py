@@ -25,6 +25,7 @@ from .directory import directory_loop, synchronize, validate_config
 from .security import AttemptLimiter, same_origin, valid_host
 from .recovery import Recovery, TTL as RECOVERY_TTL
 from .root_auth import load_root_hash
+from .supervision import Notifier, supervise
 
 
 class Model(BaseModel):
@@ -233,18 +234,25 @@ def create_app(database=None, background=True, recovery_public_key=None, root_pa
             print('D-Max · ' + network.status, flush=True)
             for url in network.public()['ip_urls']:
                 print('Acesso por IP: ' + url, flush=True)
-        yield
-        for task in tasks:
-            task.cancel()
-        for task in tasks:
-            with suppress(asyncio.CancelledError):
-                await task
-        engine.flush()
-        if background and network is not None:
-            await asyncio.to_thread(network.close)
-        store.db.close()
+        notifier = Notifier.from_environment() if background else None
+        if notifier is not None:
+            tasks.append(asyncio.create_task(supervise(engine, tuple(tasks), notifier)))
+        try:
+            yield
+        finally:
+            if notifier is not None:
+                notifier.send('STOPPING=1')
+            for task in tasks:
+                task.cancel()
+            for task in tasks:
+                with suppress(asyncio.CancelledError):
+                    await task
+            engine.flush()
+            if background and network is not None:
+                await asyncio.to_thread(network.close)
+            store.db.close()
 
-    app = FastAPI(title='EnergyCube D-Max · Controle de demanda', version='0.7.1', lifespan=lifespan,
+    app = FastAPI(title='EnergyCube D-Max · Controle de demanda', version='0.7.2', lifespan=lifespan,
                   docs_url=None, redoc_url=None, openapi_url=None)
     app.state.store, app.state.engine, app.state.access = store, engine, access
     app.state.recovery = recovery

@@ -1,8 +1,10 @@
-# EnergyCube D-Max — Controlador de demanda · v0.7.1
+# EnergyCube D-Max — Controlador de demanda · v0.7.2
+
+**Raspberry Pi 4 · 0.7.2:** pacote Linux ARM64 com dependências offline para Python 3.11–3.14, servidor OCPP 1.6J, início automático, watchdog do processo, preparação do watchdog físico e desinstalador. [Instalar no Raspberry](docs/raspberry.md) · [OCPP e multimedidor](docs/raspberry-ocpp.md) · [Validação](docs/release-v072-raspberry.md). São 136 testes em Python 3.11 e 3.13 no Linux x86-64; boot/watchdog físico ainda exigem validação no Raspberry real. O Windows publicado continua na 0.7.1.
 
 **Edição Windows 0.7.1:** interface gerada pelo servidor, sem JavaScript no navegador, com dependências locais para Python x64 3.12/3.13/3.14. [Guia de instalação](docs/instalar-windows-v071.md) · [Validação e arquitetura](docs/release-v071.md). A liberação pelo Defender ainda precisa ser verificada no Windows; mantenha qualquer alerta ativo. [Histórico dos bloqueios anteriores](docs/defender-investigation.md).
 
-Protótipo para **validação em Windows**, com a mesma base Python no Linux ARM64 do Raspberry Pi 4. Interface web local, simulador, SQLite, distribuição de potência e adaptador OCPP 1.6J. Não depende dos dashboards antigos deste repositório.
+Protótipo para **validação em Windows e no Raspberry Pi 4**, com a mesma base Python e pacotes próprios para cada plataforma. Interface web local, simulador, SQLite, distribuição de potência e adaptador OCPP 1.6J. Não depende dos dashboards antigos deste repositório.
 
 [Tela TCP/IP](docs/multimedidor-tcp.png) · [Tela RS485](docs/multimedidor-rs485.png) · [Revisão de segurança v0.3.1](docs/security-review-v031.md)
 
@@ -48,7 +50,7 @@ python3 -m venv .venv
 .venv/bin/python run.py
 ```
 
-A execução foi verificada em Linux x86-64 com Python 3.12, 3.13 e 3.14. A validação histórica incluiu Python 3.13; a revisão atual tem 126 testes em Python 3.12 e 3.14. Também foi verificada a disponibilidade de wheels das dependências fixadas para CPython 3.13 e 3.14/Windows x64. **Windows e Raspberry Pi físicos ainda precisam de validação.** As dependências com extensão nativa são instaladas para a plataforma de destino. Copie o projeto e migre o banco com backup consistente; não copie a pasta `.venv` entre sistemas.
+A edição Windows 0.7.1 teve 126 testes executados em Python 3.12 e 3.14 no Linux x86-64. A edição Raspberry 0.7.2 tem 136 testes em Python 3.11 e 3.13, também no Linux x86-64. Também foi verificada a disponibilidade de wheels das dependências fixadas para CPython 3.13 e 3.14/Windows x64. **Windows e Raspberry Pi físicos ainda precisam de validação.** As dependências com extensão nativa são instaladas para a plataforma de destino. Copie o projeto e migre o banco com backup consistente; não copie a pasta `.venv` entre sistemas.
 
 ## Identidade EnergyCube
 
@@ -142,6 +144,8 @@ Perfis iniciais: `admin` e `root`. A senha de admin é definida pelo instalador;
 A versão inclui cadastro de operadores, administradores e técnicos conforme a hierarquia, bloqueio/exclusão com auditoria, alteração de senha e recuperação do administrador. As senhas existentes, exceto root que recebe o verificador do pacote, são preservadas na migração; uma cópia SQLite é criada antes de migrar um banco antigo com usuários. A palavra-passe raiz é compartilhada entre os equipamentos deste pacote: mantenha seu sigilo. O hash não elimina risco de adivinhação offline ou de uma credencial já exposta. A recuperação assinada permanece opcional; veja o [guia](docs/acesso-raiz.md).
 
 ## Testes
+
+Raspberry 0.7.2: **136 testes aprovados em Python 3.11 e 3.13**, com a distribuição ARM64 em DMAX_PI_PACKAGE. Inclui ciclo dos scripts em sistema de arquivos temporário (UID/systemd/pip simulados), backup/importação e supervisão real por socket Unix. A resolução das wheels ARM64 foi conferida nas quatro versões suportadas. Veja o relatório específico; não equivale à execução ARM nativa.
 
 Revisão 0.7.1: **126 testes aprovados em Python 3.12 e 3.14, em Linux**, mais fluxo completo do pacote de execução no Chromium com JavaScript desativado, em desktop/celular. Inclui recuperação Ed25519, expiração, uso único, vínculo ao navegador/equipamento, rotação de chave, CSRF vinculado à sessão, restrição da primeira instalação, permissões, primeiro acesso sem código, medidor, horários e autenticação concorrente. A resolução offline das wheels foi conferida para Windows x64 nas três versões suportadas. Não equivale à homologação nativa no Windows/Raspberry nem a uma varredura do Microsoft Defender.
 

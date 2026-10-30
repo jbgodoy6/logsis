@@ -21,6 +21,7 @@ class Engine:
         self.bucket_minute = int(time.time() // 60)
         self.last_tick = time.time()
         self.fault = ''
+        self.control_progress_at = time.monotonic()
         self.refresh()
         # Never restore stale telemetry or authorization after reboot.
         for session in self.store.entities('session'):
@@ -244,10 +245,12 @@ class Engine:
         reductions = [self.set_limit(p, p['target_kw']) for p in self.ports.values() if p['limit_kw'] > p['target_kw'] + 0.01]
         if reductions:
             await asyncio.gather(*reductions)
+        self.control_progress_at = time.monotonic()
         initial_profiles = [self.set_limit(p, min(p['limit_kw'], p['target_kw'])) for p in self.ports.values()
                             if p['connected'] and not p['profile_initialized'] and p['charger'] in self.connections]
         if initial_profiles:
             await asyncio.gather(*initial_profiles)
+        self.control_progress_at = time.monotonic()
         ready = fresh and admission_ready(list(self.ports.values()), targets, now, settings['freshness_s'])
         ready = ready and self.meter['at'] >= max((p['reduction_at'] for p in self.ports.values()), default=0)
         # Reserve increases against measured site headroom, shared chargers and circuits.
@@ -304,12 +307,14 @@ class Engine:
                 p['status'] = 'Confirmando redução dos demais'
             else:
                 p['status'] = 'Preparando recarga'
+            self.control_progress_at = time.monotonic()
         self.trace.append({'ts': now, 'total': self.meter['total_kw'], 'ev': measured_ev, 'limit': settings['limit_kw']})
         self.trace = self.trace[-180:]
         if int(now // 60) != self.bucket_minute:
             self.flush()
         self.summary = {'budget_kw': budget, 'other_kw': other, 'ev_kw': measured_ev,
                         'blocked': blocked, 'meter_fresh': fresh, 'total_kw': self.meter['total_kw']}
+        self.control_progress_at = time.monotonic()
 
     def snapshot(self):
         chargers = [{k: v for k, v in c.items() if k != 'password_hash'} for c in self.store.entities('charger')]

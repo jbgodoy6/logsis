@@ -1,12 +1,13 @@
+# Managed by EnergyCube D-Max installer.
 [Unit]
 Description=EnergyCube D-Max demand controller
 Wants=network-online.target
 After=network-online.target
-StartLimitIntervalSec=60
-StartLimitBurst=10
+StartLimitIntervalSec=0
 
 [Service]
-Type=simple
+Type=notify
+NotifyAccess=main
 User=dmax
 Group=dmax
 SupplementaryGroups=dialout
@@ -15,10 +16,13 @@ Environment=PYTHONUNBUFFERED=1
 Environment=PYTHONDONTWRITEBYTECODE=1
 Environment=EV_DB_PATH=/var/lib/d-max/controller.sqlite3
 EnvironmentFile=/etc/d-max/d-max.env
-ExecStart=/opt/d-max/.venv/bin/python /opt/d-max/run.py
+ExecStart=/opt/d-max/.venv/bin/python /opt/d-max/run.py --config /etc/d-max/rede.ini
 Restart=always
-RestartSec=5
+RestartSec=10
+WatchdogSec=120
+TimeoutStartSec=60
 TimeoutStopSec=30
+LimitCORE=0
 UMask=0027
 NoNewPrivileges=true
 ProtectSystem=strict
