@@ -63,14 +63,16 @@ class ServerUITests(unittest.TestCase):
         return self.client.post('/ui/post', data=form)
 
     def setup_login(self, user='root'):
-        response = self.submit('setup', root_password='fixture-ui-root', admin_password='fixture-ui-admin')
+        response = self.submit('setup', admin_password='fixture-ui-admin')
         self.assertEqual(response.status_code, 200, response.text)
-        response = self.submit('login', username=user, password='fixture-ui-' + user)
+        response = self.submit('login', username=user, password='31011986' if user == 'root' else 'fixture-ui-' + user)
         self.assertEqual(response.status_code, 200, response.text)
 
     def test_native_setup_login_has_no_scripts_and_strict_policy(self):
         page = self.client.get('/')
         self.assertEqual(page.status_code, 200)
+        self.assertNotIn('name="root_password"', page.text)
+        self.assertNotIn('31011986', page.text)
         self.assertNotIn('<script', page.text.lower())
         self.assertIn("script-src 'none'", page.headers['content-security-policy'])
         self.assertIn('httponly', page.headers['set-cookie'].lower())
@@ -95,7 +97,7 @@ class ServerUITests(unittest.TestCase):
     def test_remote_initial_setup_stays_forbidden_through_ui(self):
         remote = TestClient(self.app, client=('198.51.100.23', 1234))
         form = Forms(remote.get('/').text).find('setup')
-        form.update(root_password='fixture-root', admin_password='fixture-admin')
+        form.update(root_password='31011986', admin_password='fixture-admin')
         self.assertEqual(remote.post('/ui/post', data=form).status_code, 403)
         self.assertTrue(self.client.get('/api/setup').json()['required'])
         remote.close()
@@ -103,7 +105,7 @@ class ServerUITests(unittest.TestCase):
     def test_initial_setup_rejects_foreign_host_even_from_loopback(self):
         local = TestClient(self.app, client=('127.0.0.1', 1234), base_url='http://untrusted.invalid')
         form = Forms(local.get('/').text).find('setup')
-        form.update(root_password='fixture-root', admin_password='fixture-admin')
+        form.update(root_password='31011986', admin_password='fixture-admin')
         self.assertEqual(local.post('/ui/post', data=form).status_code, 403)
         self.assertTrue(self.client.get('/api/setup').json()['required'])
         local.close()
@@ -113,7 +115,7 @@ class ServerUITests(unittest.TestCase):
         remote = TestClient(self.app, client=('192.0.2.25', 1234), base_url='http://dmax-garagem.local:9090')
         form = Forms(remote.get('/').text).find('login')
         self.assertNotIn('activation_code', form)
-        form.update(username='root', password='fixture-ui-root')
+        form.update(username='root', password='31011986')
         response = remote.post('/ui/post', data=form)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(remote.get('/api/me').json()['role'], 'root')
@@ -211,7 +213,7 @@ class ServerUITests(unittest.TestCase):
                 self.assertEqual(first.post('/ui/post', data=form).status_code, 401)
             self.assertEqual(first.post('/ui/post', data=form).status_code, 429)
             form = Forms(second.get('/').text).find('login')
-            form.update(username='root', password='fixture-ui-root')
+            form.update(username='root', password='31011986')
             self.assertEqual(second.post('/ui/post', data=form).status_code, 200)
         finally:
             first.close(); second.close()

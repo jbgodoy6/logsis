@@ -20,7 +20,7 @@ from .ocpp_server import Socket, Station
 from .services import cloud_loop, meter_loop
 from .meter import Meter, MEASUREMENTS, read_meter
 from .store import Store, password_hash, password_matches
-from .access import Access, TECHNICAL, MANAGERS
+from .access import Access, TECHNICAL, MANAGERS, ROOT_PASSWORD
 from .directory import directory_loop, synchronize, validate_config
 from .security import AttemptLimiter, same_origin, valid_host
 
@@ -36,7 +36,7 @@ class Login(Model):
 
 
 class Setup(Model):
-    root_password: str = Field(min_length=8, max_length=200)
+    root_password: str | None = Field(default=None, max_length=200)  # Ignored; legacy setup clients.
     admin_password: str = Field(min_length=8, max_length=200)
 
 
@@ -228,7 +228,7 @@ def create_app(database=None, background=True):
             await asyncio.to_thread(network.close)
         store.db.close()
 
-    app = FastAPI(title='EnergyCube D-Max · Controle de demanda', version='0.6.0', lifespan=lifespan,
+    app = FastAPI(title='EnergyCube D-Max · Controle de demanda', version='0.6.1', lifespan=lifespan,
                   docs_url=None, redoc_url=None, openapi_url=None)
     app.state.store, app.state.engine, app.state.access = store, engine, access
 
@@ -298,7 +298,7 @@ def create_app(database=None, background=True):
         if not test_client and (address not in ('127.0.0.1', '::1') or hostname not in ('localhost', '127.0.0.1', '::1')):
             raise HTTPException(403, 'Primeira configuração deve ser feita no próprio servidor, usando localhost ou 127.0.0.1')
         with store.db:
-            store.db.execute('INSERT INTO users(name,password,role,id,full_name) VALUES (?,?,?,?,?)', ('root', password_hash(data.root_password), 'root', secrets.token_hex(16), 'Raiz'))
+            store.db.execute('INSERT INTO users(name,password,role,id,full_name) VALUES (?,?,?,?,?)', ('root', password_hash(ROOT_PASSWORD), 'root', secrets.token_hex(16), 'Raiz'))
             store.db.execute('INSERT INTO users(name,password,role,id,full_name) VALUES (?,?,?,?,?)', ('admin', password_hash(data.admin_password), 'admin', secrets.token_hex(16), 'Administrador'))
         store.record('setup', {'note': 'Credenciais iniciais configuradas; valores não registrados'})
         return {'ok': True}

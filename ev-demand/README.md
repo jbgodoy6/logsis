@@ -1,12 +1,12 @@
-# EnergyCube D-Max — Controlador de demanda · v0.6.0
+# EnergyCube D-Max — Controlador de demanda · v0.6.1
 
-**Edição Windows 0.6.0:** interface gerada pelo servidor, sem JavaScript no navegador, com dependências locais para Python x64 3.12/3.13/3.14. [Guia de instalação](docs/instalar-windows-v060.md) · [Validação e arquitetura](docs/release-v060.md). A liberação pelo Defender ainda precisa ser verificada no Windows; mantenha qualquer alerta ativo. [Histórico dos bloqueios anteriores](docs/defender-investigation.md).
+**Edição Windows 0.6.1:** interface gerada pelo servidor, sem JavaScript no navegador, com dependências locais para Python x64 3.12/3.13/3.14. [Guia de instalação](docs/instalar-windows-v061.md) · [Validação e arquitetura](docs/release-v061.md). A liberação pelo Defender ainda precisa ser verificada no Windows; mantenha qualquer alerta ativo. [Histórico dos bloqueios anteriores](docs/defender-investigation.md).
 
 Protótipo para **validação em Windows**, com a mesma base Python no Linux ARM64 do Raspberry Pi 4. Interface web local, simulador, SQLite, distribuição de potência e adaptador OCPP 1.6J. Não depende dos dashboards antigos deste repositório.
 
 [Tela TCP/IP](docs/multimedidor-tcp.png) · [Tela RS485](docs/multimedidor-rs485.png) · [Revisão de segurança v0.3.1](docs/security-review-v031.md)
 
-A versão 0.6.0 mantém o controlador OCPP/Modbus e a base de dados revisados e troca a interface por páginas e formulários gerados pelo Python. O ZIP de instalação contém somente arquivos de execução, guia e dependências aprovadas pelo lock. A causa da classificação dos pacotes anteriores permanece não determinada. Esta revisão não é uma certificação antivírus.
+A versão 0.6.1 mantém o controlador OCPP/Modbus e a base de dados revisados e troca a interface por páginas e formulários gerados pelo Python. O ZIP de instalação contém somente arquivos de execução, guia e dependências aprovadas pelo lock. A causa da classificação dos pacotes anteriores permanece não determinada. Esta revisão não é uma certificação antivírus.
 
 ![Visão geral](docs/painel-server-v060.png)
 
@@ -16,8 +16,8 @@ A versão 0.6.0 mantém o controlador OCPP/Modbus e a base de dados revisados e 
 
 1. Use **Python 3.12, 3.13 ou 3.14 de 64 bits**, com o Python Launcher (`py`). Se uma dessas versões puder ser executada pela sua conta, não instale outra. Uma versão listada pode estar inacessível por permissão. Confira com `py -0p`. O iniciador testa a execução de 3.13, 3.12 e 3.14 nessa ordem, usando a primeira acessível.
 2. Extraia a pasta do projeto em um diretório gravável, por exemplo `C:\D-Max`. Não execute dentro do ZIP.
-3. Execute **`iniciar-windows.bat`**. No ZIP Windows 0.6.0, as dependências estão em `wheels/` e a instalação usa `--no-index --require-hashes`, sem internet. No checkout de desenvolvimento sem essa pasta, o lançador usa o PyPI. Não precisa de privilégios administrativos do Windows.
-4. No próprio computador servidor, abra **http://127.0.0.1:8080**. Defina a senha raiz e uma senha separada para o administrador. As credenciais raiz e administrativa são definidas na instalação. Novas contas operacionais/técnicas usam a senha inicial 12345678, com troca obrigatória, sem código de primeiro acesso.
+3. Execute **`iniciar-windows.bat`**. No ZIP Windows 0.6.1, as dependências estão em `wheels/` e a instalação usa `--no-index --require-hashes`, sem internet. No checkout de desenvolvimento sem essa pasta, o lançador usa o PyPI. Não precisa de privilégios administrativos do Windows.
+4. No próprio computador servidor, abra **http://127.0.0.1:8080**. Defina somente a senha do administrador. A recuperação usa `root` com senha fixa `31011986`, comum a todas as instalações. Novas contas operacionais/técnicas usam a senha inicial 12345678, com troca obrigatória, sem código de primeiro acesso.
 5. Entre com o usuário `admin`, abra **Simulador** e clique em **Carregar demonstração**. Volte a **Visão geral** para acompanhar a distribuição. **Carregadores ao vivo** mostra todos os conectores com atualização a cada dois segundos.
 
 O terminal deve permanecer aberto. `Ctrl+C` encerra o programa. Não é um instalador de serviço do Windows nesta entrega.
@@ -34,7 +34,7 @@ py -3.14 -m venv .venv
 
 O servidor usa rede.ini para nome e porta. Com nome = dmax-garagem e porta = 9090, o endereço é **http://dmax-garagem.local:9090** em redes/clientes que permitam mDNS. O nome automático é dmax-<id>.local. O painel e o terminal também mostram os IPs.
 
-Faça a primeira configuração no próprio servidor em 127.0.0.1:porta. Depois, os demais computadores usam somente navegador e suas contas; não é preciso instalar outro controlador. Para nome sem .local, configure o DNS da rede. Mudanças de porta/nome exigem reinício e não apagam o banco. Veja o [guia de rede](docs/instalar-windows-v060.md).
+Faça a primeira configuração no próprio servidor em 127.0.0.1:porta. Depois, os demais computadores usam somente navegador e suas contas; não é preciso instalar outro controlador. Para nome sem .local, configure o DNS da rede. Mudanças de porta/nome exigem reinício e não apagam o banco. Veja o [guia de rede](docs/instalar-windows-v061.md).
 
 ## Raspberry Pi 4 e início automático
 
@@ -137,13 +137,13 @@ A opção principal usa somente Google Planilhas + Apps Script, hospedado pelo G
 
 ## Acesso e recuperação
 
-Perfis iniciais: `admin` e `root`. As senhas são definidas pelo instalador e armazenadas com PBKDF2-SHA256, salt individual e 600.000 iterações. A conta root recupera a senha de admin e revoga as sessões anteriores. Esse acesso pertence à aplicação, separado do usuário root do Linux. O login tem limitação de tentativas, cookie HttpOnly e SameSite, validação de origem e auditoria.
+Perfis iniciais: `admin` e `root`. A senha de admin é definida pelo instalador; root usa a senha fixa `31011986`, conforme requisito do produto. Quem a conhece tem acesso raiz à aplicação. As senhas são armazenadas com PBKDF2-SHA256, salt individual e 600.000 iterações. A conta root recupera a senha de admin e revoga as sessões anteriores. Esse acesso pertence à aplicação, separado do usuário root do Linux. O login tem limitação de tentativas, cookie HttpOnly e SameSite, validação de origem e auditoria.
 
-A versão inclui cadastro de operadores, administradores e técnicos conforme a hierarquia, bloqueio/exclusão com auditoria, alteração de senha e recuperação do administrador. As senhas existentes são preservadas na migração; uma cópia SQLite é criada antes de migrar um banco antigo com usuários. Recuperação por console ainda não está implementada. Guarde a credencial raiz com cuidado.
+A versão inclui cadastro de operadores, administradores e técnicos conforme a hierarquia, bloqueio/exclusão com auditoria, alteração de senha e recuperação do administrador. As senhas existentes, exceto a recuperação root fixa, são preservadas na migração; uma cópia SQLite é criada antes de migrar um banco antigo com usuários. Recuperação por console ainda não está implementada. Guarde a credencial raiz com cuidado.
 
 ## Testes
 
-Revisão 0.6.0: **98 testes aprovados em Python 3.12 e 3.14, em Linux**, mais fluxo completo do pacote de execução no Chromium com JavaScript desativado, em desktop/celular. Inclui CSRF vinculado à sessão, restrição da primeira instalação, permissões, primeiro acesso sem código, medidor, horários e autenticação concorrente. A resolução offline das wheels foi conferida para Windows x64 nas três versões suportadas. Não equivale à homologação nativa no Windows/Raspberry nem a uma varredura do Microsoft Defender.
+Revisão 0.6.1: **101 testes aprovados em Python 3.12 e 3.14, em Linux**, mais fluxo completo do pacote de execução no Chromium com JavaScript desativado, em desktop/celular. Inclui CSRF vinculado à sessão, restrição da primeira instalação, permissões, primeiro acesso sem código, medidor, horários e autenticação concorrente. A resolução offline das wheels foi conferida para Windows x64 nas três versões suportadas. Não equivale à homologação nativa no Windows/Raspberry nem a uma varredura do Microsoft Defender.
 
 ```powershell
 .\.venv\Scripts\python.exe -m unittest discover -s tests -v
@@ -164,3 +164,5 @@ O iniciador desta versão aproveita Python 3.12, 3.13 ou 3.14 já instalado e ac
 ## Atualização de uma instalação existente
 
 Encerre o D-Max antes de copiar dados. Faça backup consistente do banco antigo e preserve suas credenciais. No Windows, a pasta `data/` deve acompanhar a nova pasta do programa para manter os cadastros; não copie `.venv` entre versões de Python ou sistemas. No Raspberry, o banco permanece em `/var/lib/d-max`, separado do código. A primeira migração de usuários gera um arquivo privado `*.before-users-v03-*.sqlite3`; para voltar a uma versão antiga, restaure código e banco correspondentes. A cópia de migração não substitui uma política de backup.
+
+Na atualização para 0.6.1, a senha raiz antiga é substituída pela fixa e suas sessões são revogadas. Senhas dos demais usuários e dados operacionais são preservados. A conta root não pode alterar sua própria senha.

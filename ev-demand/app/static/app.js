@@ -690,7 +690,7 @@ function bindEvents() {
     try {
       const form = new FormData(event.target);
       if (setupRequired) {
-        await api('/setup', {root_password: form.get('root_password'), admin_password: form.get('admin_password')});
+        await api('/setup', {admin_password: form.get('admin_password')});
         await api('/login', {username: 'admin', password: form.get('admin_password')});
       } else {
         await api('/login', {username: form.get('username'), password: form.get('password')});

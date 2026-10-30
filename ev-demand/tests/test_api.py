@@ -10,11 +10,19 @@ class APITests(unittest.TestCase):
         self.app = create_app(':memory:', background=False)
         self.context = TestClient(self.app)
         self.c = self.context.__enter__()
-        self.c.post('/api/setup', json={'root_password': 'fixture-root-123', 'admin_password': 'fixture-admin-123'})
-        self.c.post('/api/login', json={'username': 'root', 'password': 'fixture-root-123'})
+        self.c.post('/api/setup', json={'root_password': '31011986', 'admin_password': 'fixture-admin-123'})
+        self.c.post('/api/login', json={'username': 'root', 'password': '31011986'})
 
     def tearDown(self):
         self.context.__exit__(None, None, None)
+
+    def test_setup_needs_only_admin_password(self):
+        with TestClient(create_app(':memory:',background=False)) as client:
+            response=client.post('/api/setup',json={'admin_password':'fixture-admin-only'})
+            self.assertEqual(response.status_code,200)
+            response=client.post('/api/login',json={'username':'root','password':'31011986'})
+            self.assertEqual(response.status_code,200)
+            self.assertEqual(response.json()['role'],'root')
 
     def test_setup_only_once_and_password_not_exposed(self):
         self.assertEqual(self.c.post('/api/setup', json={'root_password': 'another-root', 'admin_password': 'another-admin'}).status_code, 409)
@@ -45,7 +53,7 @@ class APITests(unittest.TestCase):
     def test_root_can_recover_admin_and_revoke_sessions(self):
         self.c.post('/api/login', json={'username': 'admin', 'password': 'fixture-admin-123'})
         self.assertEqual(self.c.post('/api/recover-admin', json={'username': 'admin', 'password': 'changed-password'}).status_code, 403)
-        self.c.post('/api/login', json={'username': 'root', 'password': 'fixture-root-123'})
+        self.c.post('/api/login', json={'username': 'root', 'password': '31011986'})
         self.assertEqual(self.c.post('/api/recover-admin', json={'username': 'admin', 'password': 'changed-password'}).status_code, 200)
         self.assertEqual(self.c.post('/api/login', json={'username': 'admin', 'password': 'fixture-admin-123'}).status_code, 401)
         self.assertEqual(self.c.post('/api/login', json={'username': 'admin', 'password': 'changed-password'}).status_code, 200)

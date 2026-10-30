@@ -20,7 +20,7 @@ async function main() {
       if (new URL(r.url()).origin !== origin) external.push(r.url());
       if (r.resourceType() === 'script') scripts.push(r.url());
     });
-    const root = password(), admin = password(), personal = password();
+    const root = '31011986', admin = password(), personal = password();
     const form = action => page.locator('form').filter({has:page.locator('input[name=_action][value="' + action + '"]')});
     const fill = (action,name,value) => form(action).locator('[name="' + name + '"]').fill(value);
     const submit = async action => {
@@ -36,7 +36,7 @@ async function main() {
     await page.goto(base);
     assert.equal(await page.locator('script').count(),0);
     await capture('login-server-v050.png');
-    await fill('setup','root_password',root);
+    assert.equal(await page.locator('[name=root_password]').count(),0);
     await fill('setup','admin_password',admin);
     await submit('setup');
     await fill('login','username','admin');

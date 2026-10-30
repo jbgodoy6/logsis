@@ -17,7 +17,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 
 from .meter import MEASUREMENTS, FORMATS
 
-VERSION = '0.6.0'
+VERSION = '0.6.1'
 PAGES = {
     'overview': 'Visão geral', 'chargers': 'Carregadores', 'vehicles': 'Veículos',
     'schedule': 'Horários', 'history': 'Histórico', 'meter': 'Multimedidor',
@@ -157,8 +157,7 @@ def install(app):
                 required = (await self.api('GET', '/api/setup'))['required']
                 if required:
                     content = self.form('setup',
-                        field('Senha raiz de recuperação', 'root_password', kind='password', minlength=8, maxlength=200, required='', autocomplete='new-password')
-                        + field('Senha do administrador', 'admin_password', kind='password', minlength=8, maxlength=200, required='', autocomplete='new-password'),
+                        field('Senha do administrador', 'admin_password', kind='password', minlength=8, maxlength=200, required='', autocomplete='new-password'),
                         'Configurar acesso')
                     title = 'Prepare seu controlador'
                 else:
@@ -237,6 +236,8 @@ def install(app):
             return self.user and self.user['role'] in ('root', 'technician', 'admin')
 
         def password_form(self):
+            if self.user and self.user['name'] == 'root':
+                return '<p>A conta raiz utiliza uma senha de recuperação fixa. Este acesso não permite alterar a própria senha.</p>'
             return self.form('password',
                 field('Senha atual', 'current_password', kind='password', required='', maxlength=200, autocomplete='current-password')
                 + field('Nova senha', 'new_password', kind='password', minlength=8, maxlength=200, required='', autocomplete='new-password')
@@ -517,7 +518,7 @@ def install(app):
             api = console.api
             diagnostic = None
             if action == 'setup':
-                await api('POST', '/api/setup', {k: value(k) for k in ('root_password', 'admin_password')})
+                await api('POST', '/api/setup', {'admin_password': value('admin_password')})
                 return await console.render('overview', 'Instalação configurada. Entre com admin ou root.')
             elif action == 'login':
                 await api('POST', '/api/login', {k: value(k) for k in ('username', 'password')})

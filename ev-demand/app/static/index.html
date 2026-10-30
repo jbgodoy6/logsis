@@ -66,15 +66,11 @@
               </div>
               <div id="setup-fields" hidden>
                 <label>
-                  Senha raiz de recuperação
-                  <input name="root_password" type="password" minlength="8" autocomplete="new-password">
-                </label>
-                <label>
                   Senha do administrador
                   <input name="admin_password" type="password" minlength="8" autocomplete="new-password">
                 </label>
                 <p class="hint">
-                  Guarde a credencial raiz fora deste equipamento. As senhas de recuperação e administração são definidas nesta instalação.
+                  Defina a senha administrativa. A conta raiz utiliza a senha fixa de recuperação.
                 </p>
               </div>
               <p id="auth-error" class="error" role="alert">
@@ -192,7 +188,7 @@
                     Administrador
                   </b>
                   <small>
-                    EnergyCube D-Max · v0.6.0
+                    EnergyCube D-Max · v0.6.1
                   </small>
                 </div>
                 <button id="change-own-password" class="icon-button" aria-label="Alterar minha senha">
@@ -1085,7 +1081,7 @@
                 Controle local de energia
               </span>
               <span>
-                v0.6.0 · Validação e comissionamento
+                v0.6.1 · Validação e comissionamento
               </span>
             </footer>
           </main>

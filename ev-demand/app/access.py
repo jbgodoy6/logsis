@@ -9,6 +9,7 @@ import uuid
 from .store import password_hash, password_matches
 
 INITIAL_PASSWORD = '12345678'
+ROOT_PASSWORD = '31011986'  # Shared recovery credential explicitly required by the product owner.
 ROLES = ('operator', 'admin', 'technician', 'root')
 TECHNICAL = ('root', 'technician')
 MANAGERS = ('root', 'technician', 'admin')
@@ -88,6 +89,15 @@ class Access:
         ''')
         self.db.execute('INSERT OR IGNORE INTO directory_config VALUES (1,?)', (json.dumps(DIRECTORY_DEFAULTS),))
         self.db.commit()
+        recovery = self.by_name('root')
+        if recovery and (not password_matches(ROOT_PASSWORD, recovery['password'])
+                         or recovery['role'] != 'root' or not self.usable(recovery)
+                         or recovery['must_change'] or recovery['expires_at'] is not None):
+            with self.db:
+                self.db.execute("UPDATE users SET password=?,role='root',active=1,deleted=0,expires_at=NULL,must_change=0,activation_hash=NULL,source='local',credential_version=credential_version+1 WHERE name='root'",
+                                (password_hash(ROOT_PASSWORD),))
+                self.revoke('root')
+            self.store.record('root_recovery_migrated', {'note': 'Política de recuperação fixa aplicada; sessões raiz revogadas'})
         self.status = {'message': 'Não configurada', 'last_success': None, 'last_attempt': None, 'next_attempt': None}
         self.lock = None  # Bound lazily to the serving event loop.
         self.wakeup = None
@@ -240,6 +250,8 @@ class Access:
 
     def change_password(self, actor, current, new):
         row = self.by_id(actor['id'])
+        if row['name'] == 'root':
+            raise ValueError('A senha de recuperação raiz é fixa e não pode ser alterada')
         if not password_matches(current, row['password']):
             raise ValueError('Senha atual incorreta')
         if len(new) < 8 or len(new) > 200 or new == INITIAL_PASSWORD or new == current:

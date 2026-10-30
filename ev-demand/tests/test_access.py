@@ -11,7 +11,7 @@ from fastapi.testclient import TestClient
 from app.access import Access
 from app.directory import synchronize
 from app.main import create_app
-from app.store import Store, password_hash
+from app.store import Store, password_hash, password_matches
 from platform_service.server import create_platform
 from platform_service.sheets import parse_rows, sheet_expiry
 
@@ -29,8 +29,8 @@ class PermissionsTests(unittest.TestCase):
     def setUp(self):
         self.app=create_app(':memory:',background=False)
         self.context=TestClient(self.app);self.c=self.context.__enter__()
-        self.c.post('/api/setup',json={'root_password':'fixture-root','admin_password':'fixture-admin'})
-        self.login('root','fixture-root')
+        self.c.post('/api/setup',json={'root_password':'obsolete-root-password','admin_password':'fixture-admin'})
+        self.login('root','31011986')
 
     def tearDown(self): self.context.__exit__(None,None,None)
 
@@ -38,7 +38,7 @@ class PermissionsTests(unittest.TestCase):
         return self.c.post('/api/login',json={'username':name,'password':password,'activation_code':code})
 
     def create(self,name,role):
-        self.login('root','fixture-root')
+        self.login('root','31011986')
         r=self.c.post('/api/users',json={'name':name,'full_name':name,'role':role})
         self.assertEqual(r.status_code,200,r.text)
         return r.json()
@@ -47,6 +47,32 @@ class PermissionsTests(unittest.TestCase):
         self.assertEqual(self.login(user['name'],'12345678').status_code,200)
         self.assertEqual(self.c.post('/api/change-password',json={'current_password':'12345678','new_password':'fixture-personal-password'}).status_code,200)
         self.assertEqual(self.login(user['name'],'fixture-personal-password').status_code,200)
+
+    def test_root_password_is_fixed_and_cannot_be_changed_or_reset(self):
+        self.assertEqual(self.login('root','31011986').status_code,200)
+        self.assertFalse(self.c.get('/api/me').json()['must_change'])
+        response=self.c.post('/api/change-password',json={'current_password':'31011986','new_password':'different-root-password'})
+        self.assertEqual(response.status_code,422)
+        root=self.app.state.access.by_name('root')
+        self.assertEqual(self.c.post('/api/users/'+root['id']+'/reset',json={}).status_code,403)
+        self.assertEqual(self.login('root','31011986').status_code,200)
+
+    def test_existing_root_migration_revokes_sessions_and_preserves_admin(self):
+        access=self.app.state.access
+        old_token=self.c.cookies.get('ev_session')
+        admin_before=access.by_name('admin')['password']
+        with access.db:
+            access.db.execute("UPDATE users SET password=?,must_change=1 WHERE name='root'",(HASH,))
+        migrated=Access(self.app.state.store)
+        root=migrated.by_name('root')
+        self.assertTrue(password_matches('31011986',root['password']))
+        self.assertFalse(root['must_change'])
+        self.assertIsNone(migrated.session(old_token))
+        self.assertEqual(migrated.by_name('admin')['password'],admin_before)
+        password_before=root['password'];epoch_before=root['epoch']
+        repeated=Access(self.app.state.store).by_name('root')
+        self.assertEqual(repeated['password'],password_before)
+        self.assertEqual(repeated['epoch'],epoch_before)
 
     def test_first_access_needs_only_password_and_forces_change(self):
         u=self.create('operador.um','operator')
@@ -81,7 +107,7 @@ class PermissionsTests(unittest.TestCase):
     def test_reset_returns_initial_password_flow_without_code_and_revokes_session(self):
         user=self.create('reset.operator','operator');self.activate(user)
         token=self.c.cookies.get('ev_session')
-        self.login('root','fixture-root')
+        self.login('root','31011986')
         response=self.c.post('/api/users/'+user['id']+'/reset',json={})
         self.assertEqual(response.status_code,200)
         self.assertNotIn('activation_code',response.json())
@@ -121,7 +147,7 @@ class PermissionsTests(unittest.TestCase):
     def test_block_and_delete_revoke_existing_sessions_and_preserve_identity(self):
         u=self.create('operador.tres','operator');self.activate(u)
         token=self.c.cookies.get('ev_session')
-        self.login('root','fixture-root')
+        self.login('root','31011986')
         result=self.c.put('/api/users/'+u['id'],json={'full_name':u['full_name'],'role':'operator','active':False,'deleted':True})
         self.assertEqual(result.status_code,200)
         self.c.cookies.set('ev_session',token,domain='testserver.local',path='/')
@@ -186,14 +212,14 @@ class PermissionsTests(unittest.TestCase):
         self.assertNotIn(key,json.dumps(self.app.state.store.pending()))
         self.assertNotIn(key,self.c.get('/api/state').text)
 
-    def test_existing_database_migration_preserves_password_and_backs_up(self):
+    def test_existing_database_migration_sets_fixed_root_and_backs_up(self):
         import tempfile
         from pathlib import Path
         with tempfile.TemporaryDirectory() as temp:
             path=Path(temp)/'old.sqlite3';old=Store(str(path))
             with old.db:old.db.execute('INSERT INTO users VALUES (?,?,?)',('root',HASH,'root'))
             Access(old)
-            self.assertEqual(old.db.execute("SELECT password FROM users WHERE name='root'").fetchone()[0],HASH)
+            self.assertTrue(password_matches('31011986', old.db.execute("SELECT password FROM users WHERE name='root'").fetchone()[0]))
             self.assertTrue(list(Path(temp).glob('*.before-users-v03-*.sqlite3')))
             old.db.close()
 

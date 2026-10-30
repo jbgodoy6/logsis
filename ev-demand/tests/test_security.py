@@ -50,8 +50,8 @@ class SecurityTests(unittest.TestCase):
     def test_successful_login_does_not_clear_attempt_limit(self):
         app = create_app(':memory:', background=False)
         with TestClient(app) as client:
-            client.post('/api/setup', json={'root_password':'fixture-root', 'admin_password':'fixture-admin'})
-            payload = {'username':'root', 'password':'fixture-root'}
+            client.post('/api/setup', json={'root_password':'31011986', 'admin_password':'fixture-admin'})
+            payload = {'username':'root', 'password':'31011986'}
             for _ in range(8):
                 self.assertEqual(client.post('/api/login', json=payload).status_code, 200)
             self.assertEqual(client.post('/api/login', json=payload).status_code, 429)
