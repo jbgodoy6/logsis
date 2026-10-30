@@ -8,6 +8,7 @@ fieldset{border:1px solid var(--line);border-radius:10px;padding:16px;margin:14p
 .table-wrap td form{min-width:100px}.table-wrap{max-width:100%}.table-wrap input:not([type=checkbox]),.table-wrap select{min-width:85px}
 .notice{margin:18px 0}.initial-password{max-width:650px;margin:40px auto;padding:24px}
 .auth-panel form{width:100%}.sidebar-bottom form .primary{background:#155787}
+.auth-panel textarea{display:block;width:100%;min-width:0;margin-top:7px;padding:11px 12px;border:1px solid var(--line);border-radius:7px;background:#fff;color:var(--ink);font:12px/1.5 Consolas,monospace;resize:vertical;outline-offset:4px}.auth-panel textarea:focus{outline:2px solid #078b7940;border-color:var(--teal)}
 .sidebar nav{overflow:auto}.sidebar-bottom{padding-top:14px}a.secondary{text-decoration:none;display:inline-block}
 .charger-power{gap:12px}.charger-power small{white-space:normal}
 @media(max-width:720px){.sidebar nav{display:flex;overflow-x:auto}.sidebar-bottom{display:flex;gap:12px;align-items:center}.sidebar-bottom p{margin:0}.sidebar-bottom form{margin:0}.auth-panel{padding:28px}.table-wrap{overflow:auto}}

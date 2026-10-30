@@ -30,6 +30,7 @@ def main(argv=None):
     except (ValueError, OSError) as exc:
         parser.error(str(exc))
     app = create_app()
+    print('D-Max · ' + app.state.recovery.status, flush=True)
     identity = app.state.store.entities('system')[0]['controller_id']
     lan = LAN(config, identity, tls=bool(args.tls_cert))
     app.state.web_network = lan

@@ -20,9 +20,10 @@ from .ocpp_server import Socket, Station
 from .services import cloud_loop, meter_loop
 from .meter import Meter, MEASUREMENTS, read_meter
 from .store import Store, password_hash, password_matches
-from .access import Access, TECHNICAL, MANAGERS, ROOT_PASSWORD
+from .access import Access, TECHNICAL, MANAGERS
 from .directory import directory_loop, synchronize, validate_config
 from .security import AttemptLimiter, same_origin, valid_host
+from .recovery import Recovery, TTL as RECOVERY_TTL
 
 
 class Model(BaseModel):
@@ -38,6 +39,10 @@ class Login(Model):
 class Setup(Model):
     root_password: str | None = Field(default=None, max_length=200)  # Ignored; legacy setup clients.
     admin_password: str = Field(min_length=8, max_length=200)
+
+
+class RecoveryAuthorization(Model):
+    authorization: str = Field(min_length=1, max_length=4096)
 
 
 class Vehicle(Model):
@@ -188,11 +193,14 @@ class DirectoryConfig(Model):
     device_token: str | None = Field(default=None, min_length=32, max_length=512)
 
 
-def create_app(database=None, background=True):
+def create_app(database=None, background=True, recovery_public_key=None):
     web_ui = os.getenv('DMAX_WEB_UI', 'server')
     store = Store(database)
     engine = Engine(store)
     access = Access(store)
+    recovery = Recovery(store, recovery_public_key)
+    recovery_issues = AttemptLimiter()
+    recovery_attempts = AttemptLimiter()
     attempts = AttemptLimiter()
     password_attempts = AttemptLimiter()
     ocpp_attempts = AttemptLimiter()
@@ -228,9 +236,10 @@ def create_app(database=None, background=True):
             await asyncio.to_thread(network.close)
         store.db.close()
 
-    app = FastAPI(title='EnergyCube D-Max · Controle de demanda', version='0.6.1', lifespan=lifespan,
+    app = FastAPI(title='EnergyCube D-Max · Controle de demanda', version='0.7.0', lifespan=lifespan,
                   docs_url=None, redoc_url=None, openapi_url=None)
     app.state.store, app.state.engine, app.state.access = store, engine, access
+    app.state.recovery = recovery
 
     def get_user(token):
         return access.session(token)
@@ -298,7 +307,7 @@ def create_app(database=None, background=True):
         if not test_client and (address not in ('127.0.0.1', '::1') or hostname not in ('localhost', '127.0.0.1', '::1')):
             raise HTTPException(403, 'Primeira configuração deve ser feita no próprio servidor, usando localhost ou 127.0.0.1')
         with store.db:
-            store.db.execute('INSERT INTO users(name,password,role,id,full_name) VALUES (?,?,?,?,?)', ('root', password_hash(ROOT_PASSWORD), 'root', secrets.token_hex(16), 'Raiz'))
+            store.db.execute('INSERT INTO users(name,password,role,id,full_name) VALUES (?,?,?,?,?)', ('root', '', 'root', secrets.token_hex(16), 'Raiz'))
             store.db.execute('INSERT INTO users(name,password,role,id,full_name) VALUES (?,?,?,?,?)', ('admin', password_hash(data.admin_password), 'admin', secrets.token_hex(16), 'Administrador'))
         store.record('setup', {'note': 'Credenciais iniciais configuradas; valores não registrados'})
         return {'ok': True}
@@ -310,6 +319,8 @@ def create_app(database=None, background=True):
             raise HTTPException(429, 'Muitas tentativas. Aguarde cinco minutos.')
         name = data.username.strip().lower()
         row = access.by_name(name)
+        if name == 'root':
+            raise HTTPException(401, 'Acesso raiz exige autorização de recuperação; não aceita senha')
         if access.config()['enabled'] and (not row or row['role'] == 'technician'):
             try:
                 await asyncio.wait_for(synchronize(access), timeout=5)
@@ -328,13 +339,57 @@ def create_app(database=None, background=True):
         if not access.usable(latest) or any(latest[k] != row[k] for k in ('epoch','password')):
             raise HTTPException(401, 'Acesso alterado durante a autenticação. Faça login novamente.')
         row = latest
+        return open_session(row, response, request)
+
+    def open_session(row, response, request, lifetime=28800):
         token = secrets.token_urlsafe(32)
         with store.db:
             store.db.execute('INSERT INTO logins(token,username,expires,epoch) VALUES (?,?,?,?)',
-                (hashlib.sha256(token.encode()).hexdigest(), row['name'], time.time() + 28800, row['epoch']))
-        response.set_cookie('ev_session', token, httponly=True, secure=request.url.scheme == 'https', samesite='strict', max_age=28800)
+                (hashlib.sha256(token.encode()).hexdigest(), row['name'], time.time() + lifetime, row['epoch']))
+        response.set_cookie('ev_session', token, httponly=True, secure=request.url.scheme == 'https', samesite='strict', max_age=lifetime)
         store.record('login', {'user': row['name'], 'role': row['role']})
         return access.public(row)
+
+    @app.get('/api/recovery')
+    async def recovery_status():
+        return recovery.public()
+
+    @app.post('/api/recovery/challenge')
+    async def recovery_challenge(response: Response, request: Request):
+        address = request.client.host if request.client else 'unknown'
+        if not recovery_issues.allow(address):
+            raise HTTPException(429, 'Muitos desafios. Aguarde cinco minutos.')
+        if not access.by_name('root'):
+            raise HTTPException(409, 'Configure primeiro a senha do administrador no servidor')
+        binding = request.cookies.get('dmax_recovery', '')
+        if not re.fullmatch(r'[A-Za-z0-9_-]{43}', binding):
+            binding = secrets.token_urlsafe(32)
+        try:
+            challenge = recovery.issue(binding)
+        except ValueError as exc:
+            raise HTTPException(409, str(exc)) from None
+        response.set_cookie('dmax_recovery', binding, httponly=True, secure=request.url.scheme == 'https',
+                            samesite='strict', max_age=RECOVERY_TTL)
+        return challenge
+
+    @app.post('/api/recovery/authorize')
+    async def recovery_authorize(data: RecoveryAuthorization, response: Response, request: Request):
+        address = request.client.host if request.client else 'unknown'
+        if not recovery_attempts.allow(address):
+            raise HTTPException(429, 'Muitas tentativas. Aguarde cinco minutos.')
+        row = access.by_name('root')
+        if not access.usable(row):
+            raise HTTPException(401, 'Recuperação indisponível')
+        binding = request.cookies.get('dmax_recovery', '')
+        if not re.fullmatch(r'[A-Za-z0-9_-]{43}', binding):
+            raise HTTPException(401, 'Gere o desafio neste navegador')
+        try:
+            recovery.consume(data.authorization.strip(), binding)
+        except ValueError as exc:
+            raise HTTPException(401, str(exc)) from None
+        response.delete_cookie('dmax_recovery')
+        store.record('root_recovery_authorized', {'key_fingerprint': recovery.public()['fingerprint']})
+        return open_session(row, response, request, lifetime=RECOVERY_TTL)
 
     @app.post('/api/logout')
     async def logout(request: Request, response: Response, u=Depends(authenticated)):

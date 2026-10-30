@@ -10,7 +10,7 @@ from fastapi.testclient import TestClient
 
 from app.access import Access
 from app.directory import synchronize
-from app.main import create_app
+from recovery_helpers import create_test_app as create_app, recover_root
 from app.store import Store, password_hash, password_matches
 from platform_service.server import create_platform
 from platform_service.sheets import parse_rows, sheet_expiry
@@ -35,6 +35,8 @@ class PermissionsTests(unittest.TestCase):
     def tearDown(self): self.context.__exit__(None,None,None)
 
     def login(self,name,password,code=''):
+        if name == 'root':
+            return recover_root(self.c)
         return self.c.post('/api/login',json={'username':name,'password':password,'activation_code':code})
 
     def create(self,name,role):
@@ -48,8 +50,9 @@ class PermissionsTests(unittest.TestCase):
         self.assertEqual(self.c.post('/api/change-password',json={'current_password':'12345678','new_password':'fixture-personal-password'}).status_code,200)
         self.assertEqual(self.login(user['name'],'fixture-personal-password').status_code,200)
 
-    def test_root_password_is_fixed_and_cannot_be_changed_or_reset(self):
+    def test_root_requires_signature_and_cannot_be_changed_or_reset(self):
         self.assertEqual(self.login('root','31011986').status_code,200)
+        self.assertEqual(self.c.post('/api/login',json={'username':'root','password':'31011986'}).status_code,401)
         self.assertFalse(self.c.get('/api/me').json()['must_change'])
         response=self.c.post('/api/change-password',json={'current_password':'31011986','new_password':'different-root-password'})
         self.assertEqual(response.status_code,422)
@@ -65,7 +68,7 @@ class PermissionsTests(unittest.TestCase):
             access.db.execute("UPDATE users SET password=?,must_change=1 WHERE name='root'",(HASH,))
         migrated=Access(self.app.state.store)
         root=migrated.by_name('root')
-        self.assertTrue(password_matches('31011986',root['password']))
+        self.assertEqual(root['password'],'')
         self.assertFalse(root['must_change'])
         self.assertIsNone(migrated.session(old_token))
         self.assertEqual(migrated.by_name('admin')['password'],admin_before)
@@ -212,14 +215,14 @@ class PermissionsTests(unittest.TestCase):
         self.assertNotIn(key,json.dumps(self.app.state.store.pending()))
         self.assertNotIn(key,self.c.get('/api/state').text)
 
-    def test_existing_database_migration_sets_fixed_root_and_backs_up(self):
+    def test_existing_database_migration_disables_root_password_and_backs_up(self):
         import tempfile
         from pathlib import Path
         with tempfile.TemporaryDirectory() as temp:
             path=Path(temp)/'old.sqlite3';old=Store(str(path))
             with old.db:old.db.execute('INSERT INTO users VALUES (?,?,?)',('root',HASH,'root'))
             Access(old)
-            self.assertTrue(password_matches('31011986', old.db.execute("SELECT password FROM users WHERE name='root'").fetchone()[0]))
+            self.assertEqual(old.db.execute("SELECT password FROM users WHERE name='root'").fetchone()[0], '')
             self.assertTrue(list(Path(temp).glob('*.before-users-v03-*.sqlite3')))
             old.db.close()
 

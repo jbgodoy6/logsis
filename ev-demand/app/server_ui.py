@@ -17,7 +17,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 
 from .meter import MEASUREMENTS, FORMATS
 
-VERSION = '0.6.1'
+VERSION = '0.7.0'
 PAGES = {
     'overview': 'Visão geral', 'chargers': 'Carregadores', 'vehicles': 'Veículos',
     'schedule': 'Horários', 'history': 'Histórico', 'meter': 'Multimedidor',
@@ -149,7 +149,7 @@ def install(app):
                     '<link rel="stylesheet" href="/static/server.css">'
                     '</head><body>' + content + '</body></html>')
 
-        async def render(self, page='overview', message='', diagnostic=None, status=200):
+        async def render(self, page='overview', message='', diagnostic=None, status=200, recovery_data=None):
             if page not in PAGES:
                 return self.finish(HTMLResponse('Página não encontrada', status_code=404))
             note = '<div class="notice" role="status">' + esc(message) + '</div>' if message else ''
@@ -165,7 +165,21 @@ def install(app):
                         field('Usuário', 'username', 'admin', autocomplete='username', required='', maxlength=40)
                         + field('Senha', 'password', kind='password', autocomplete='current-password', required='', maxlength=200),
                         'Entrar no controlador')
+                    content += '<p><a href="/?recovery=1">Recuperar acesso / acesso raiz</a></p>'
                     title = 'Bem-vindo de volta'
+                    if self.request.query_params.get('recovery') == '1' or recovery_data is not None:
+                        info = await self.api('GET', '/api/recovery')
+                        title = 'Recuperar acesso'
+                        content = '<p>' + esc(info['message']) + '</p>'
+                        if info['enabled']:
+                            content += '<p>Equipamento: ' + esc(info['controller_id']) + '</p>'
+                            content += '<p>Solicite ao responsável uma autorização. O desafio vale por 15 minutos e deve ser usado neste navegador.</p>'
+                            content += '<p class="hint">Chave pública: ' + esc(info['fingerprint']) + '</p>'
+                            content += self.form('recovery_challenge', submit='Gerar desafio de recuperação')
+                            if recovery_data and recovery_data.get('challenge'):
+                                content += '<label>Desafio para enviar ao responsável<textarea readonly rows="6" name="recovery_challenge">' + esc(recovery_data['challenge']) + '</textarea></label>'
+                            content += self.form('recovery_authorize', '<label>Autorização recebida<textarea name="authorization" required rows="6" maxlength="4096" autocomplete="off"></textarea></label>', 'Entrar como raiz por 15 minutos')
+                        content += '<p><a href="/">Voltar ao login</a></p>'
                 auth = ('<div class="auth-screen"><div class="auth-art"><div class="brand">'
                         '<img src="/static/d-max-logo.png" class="dmax-logo" alt="D-Max by EnergyCube"></div>'
                         '<h1>Mais recarga.<br>Dentro do seu limite.</h1><p>Controle local de energia.</p></div>'
@@ -237,7 +251,7 @@ def install(app):
 
         def password_form(self):
             if self.user and self.user['name'] == 'root':
-                return '<p>A conta raiz utiliza uma senha de recuperação fixa. Este acesso não permite alterar a própria senha.</p>'
+                return '<p>A conta raiz usa autorização assinada, válida por 15 minutos. Ela não possui senha de login.</p>'
             return self.form('password',
                 field('Senha atual', 'current_password', kind='password', required='', maxlength=200, autocomplete='current-password')
                 + field('Nova senha', 'new_password', kind='password', minlength=8, maxlength=200, required='', autocomplete='new-password')
@@ -519,7 +533,12 @@ def install(app):
             diagnostic = None
             if action == 'setup':
                 await api('POST', '/api/setup', {'admin_password': value('admin_password')})
-                return await console.render('overview', 'Instalação configurada. Entre com admin ou root.')
+                return await console.render('overview', 'Instalação configurada. Entre com admin e a senha cadastrada.')
+            elif action == 'recovery_challenge':
+                result = await api('POST', '/api/recovery/challenge', {})
+                return await console.render('overview', 'Envie o desafio ao responsável pela chave de recuperação.', recovery_data=result)
+            elif action == 'recovery_authorize':
+                await api('POST', '/api/recovery/authorize', {'authorization': value('authorization')})
             elif action == 'login':
                 await api('POST', '/api/login', {k: value(k) for k in ('username', 'password')})
             elif action == 'logout':
@@ -636,7 +655,8 @@ def install(app):
             if exc.status == 401:
                 console.user = None
             page = value('_page', 'overview')
-            return await console.render(page if page in PAGES else 'overview', exc.message, status=exc.status)
+            return await console.render(page if page in PAGES else 'overview', exc.message, status=exc.status,
+                                        recovery_data={} if value('_action').startswith('recovery_') else None)
         except (ValueError, UnicodeDecodeError, OverflowError):
             return await console.render('overview', 'Confira os valores do formulário.', status=422)
 

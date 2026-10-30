@@ -3,7 +3,7 @@ from html.parser import HTMLParser
 from unittest.mock import AsyncMock, patch
 
 from fastapi.testclient import TestClient
-from app.main import create_app
+from recovery_helpers import create_test_app as create_app, recover_root
 
 
 class Forms(HTMLParser):
@@ -65,7 +65,7 @@ class ServerUITests(unittest.TestCase):
     def setup_login(self, user='root'):
         response = self.submit('setup', admin_password='fixture-ui-admin')
         self.assertEqual(response.status_code, 200, response.text)
-        response = self.submit('login', username=user, password='31011986' if user == 'root' else 'fixture-ui-' + user)
+        response = recover_root(self.client) if user == 'root' else self.submit('login', username=user, password='fixture-ui-' + user)
         self.assertEqual(response.status_code, 200, response.text)
 
     def test_native_setup_login_has_no_scripts_and_strict_policy(self):
@@ -115,8 +115,7 @@ class ServerUITests(unittest.TestCase):
         remote = TestClient(self.app, client=('192.0.2.25', 1234), base_url='http://dmax-garagem.local:9090')
         form = Forms(remote.get('/').text).find('login')
         self.assertNotIn('activation_code', form)
-        form.update(username='root', password='31011986')
-        response = remote.post('/ui/post', data=form)
+        response = recover_root(remote)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(remote.get('/api/me').json()['role'], 'root')
         remote.close()
@@ -213,7 +212,6 @@ class ServerUITests(unittest.TestCase):
                 self.assertEqual(first.post('/ui/post', data=form).status_code, 401)
             self.assertEqual(first.post('/ui/post', data=form).status_code, 429)
             form = Forms(second.get('/').text).find('login')
-            form.update(username='root', password='31011986')
-            self.assertEqual(second.post('/ui/post', data=form).status_code, 200)
+            self.assertEqual(recover_root(second).status_code, 200)
         finally:
             first.close(); second.close()

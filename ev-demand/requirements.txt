@@ -6,3 +6,4 @@ httpx==0.28.1
 tzdata==2025.2
 pyserial==3.5
 zeroconf==0.151.5
+cryptography==50.0.2

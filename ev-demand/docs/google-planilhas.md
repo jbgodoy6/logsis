@@ -27,7 +27,7 @@ Se a política da sua organização Google não permitir essa publicação, é n
 
 Essa autorização identifica o produto que consulta a plataforma; **não é uma liberação de técnico por cliente**. Todos os técnicos ativos são globais.
 
-1. Entre no D-Max como `root` e abra **Técnicos globais**.
+1. Na versão 0.7.0, entre como `root` por [autorização de recuperação assinada](recuperacao-assinada.md) e abra **Técnicos globais**. A chave privada de recuperação é diferente da chave de autorização do equipamento no Google.
 2. Copie o **Identificador do D-Max**.
 3. Na planilha, use **D-Max → Autorizar um D-Max** e cole esse identificador.
 4. Copie a chave exibida uma única vez no diálogo do Google. Ela não é escrita em células.

@@ -51,7 +51,7 @@ class SecurityTests(unittest.TestCase):
         app = create_app(':memory:', background=False)
         with TestClient(app) as client:
             client.post('/api/setup', json={'root_password':'31011986', 'admin_password':'fixture-admin'})
-            payload = {'username':'root', 'password':'31011986'}
+            payload = {'username':'admin', 'password':'fixture-admin'}
             for _ in range(8):
                 self.assertEqual(client.post('/api/login', json=payload).status_code, 200)
             self.assertEqual(client.post('/api/login', json=payload).status_code, 429)
@@ -86,9 +86,9 @@ class AuthenticationConcurrencyTests(unittest.IsolatedAsyncioTestCase):
                 store = app.state.store
                 with store.db:
                     store.db.execute('INSERT INTO users(name,password,role,id,full_name) VALUES (?,?,?,?,?)',
-                                     ('root', 'fixture', 'root', 'fixture-root', 'Raiz'))
+                                     ('admin', 'fixture', 'admin', 'fixture-admin', 'Admin'))
                 with patch('app.main.password_matches', slow_verify):
-                    login = asyncio.create_task(client.post('/api/login', json={'username':'root','password':'fixture'}))
+                    login = asyncio.create_task(client.post('/api/login', json={'username':'admin','password':'fixture'}))
                     for _ in range(100):
                         if started.is_set():
                             break
@@ -99,7 +99,7 @@ class AuthenticationConcurrencyTests(unittest.IsolatedAsyncioTestCase):
                         result = await asyncio.wait_for(client.get('/api/setup'), timeout=.5)
                         self.assertEqual(result.status_code, 200)
                         with store.db:
-                            store.db.execute("UPDATE users SET active=0 WHERE name='root'")
+                            store.db.execute("UPDATE users SET active=0 WHERE name='admin'")
                     finally:
                         release.set()
                     self.assertEqual((await login).status_code, 401)
