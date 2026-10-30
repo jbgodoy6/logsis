@@ -2,6 +2,7 @@ import asyncio
 import base64
 from contextlib import asynccontextmanager, suppress
 import hashlib
+import os
 import re
 import secrets
 import time
@@ -188,6 +189,7 @@ class DirectoryConfig(Model):
 
 
 def create_app(database=None, background=True):
+    web_ui = os.getenv('DMAX_WEB_UI', 'server')
     store = Store(database)
     engine = Engine(store)
     access = Access(store)
@@ -218,7 +220,7 @@ def create_app(database=None, background=True):
         engine.flush()
         store.db.close()
 
-    app = FastAPI(title='EnergyCube D-Max · Controle de demanda', version='0.4.0', lifespan=lifespan,
+    app = FastAPI(title='EnergyCube D-Max · Controle de demanda', version='0.5.0', lifespan=lifespan,
                   docs_url=None, redoc_url=None, openapi_url=None)
     app.state.store, app.state.engine, app.state.access = store, engine, access
 
@@ -265,7 +267,8 @@ def create_app(database=None, background=True):
         response.headers['X-Frame-Options'] = 'DENY'
         response.headers['Referrer-Policy'] = 'same-origin'
         response.headers['Content-Security-Policy'] = (
-            "default-src 'self'; connect-src 'self'; style-src 'self'; script-src 'self'; "
+            "default-src 'self'; connect-src 'self'; style-src 'self'; script-src "
+            + ("'none'; " if web_ui == 'server' else "'self'; ") +
             "img-src 'self' data:; frame-ancestors 'none'; form-action 'self'; "
             "base-uri 'none'; object-src 'none'; require-trusted-types-for 'script'; trusted-types 'none'"
         )
@@ -281,8 +284,11 @@ def create_app(database=None, background=True):
     async def setup(data: Setup, request: Request):
         if store.db.execute('SELECT 1 FROM users LIMIT 1').fetchone():
             raise HTTPException(409, 'Instalação já configurada')
-        if request.client and request.client.host not in ('127.0.0.1', '::1', 'testclient'):
-            raise HTTPException(403, 'Primeira configuração deve ser feita no próprio servidor')
+        address = request.client.host if request.client else ''
+        hostname = urlsplit('http://' + request.headers.get('host', '')).hostname
+        test_client = database == ':memory:' and address == 'testclient' and hostname == 'testserver'
+        if not test_client and (address not in ('127.0.0.1', '::1') or hostname not in ('localhost', '127.0.0.1', '::1')):
+            raise HTTPException(403, 'Primeira configuração deve ser feita no próprio servidor, usando localhost ou 127.0.0.1')
         with store.db:
             store.db.execute('INSERT INTO users(name,password,role,id,full_name) VALUES (?,?,?,?,?)', ('root', password_hash(data.root_password), 'root', secrets.token_hex(16), 'Raiz'))
             store.db.execute('INSERT INTO users(name,password,role,id,full_name) VALUES (?,?,?,?,?)', ('admin', password_hash(data.admin_password), 'admin', secrets.token_hex(16), 'Administrador'))
@@ -627,8 +633,12 @@ def create_app(database=None, background=True):
 
     app.mount('/static', StaticFiles(directory=Path(__file__).parent / 'static'), name='static')
 
-    @app.get('/')
-    async def index():
-        return FileResponse(Path(__file__).parent / 'static/index.html')
+    if web_ui == 'server':
+        from .server_ui import install
+        install(app)
+    else:
+        @app.get('/')
+        async def index():
+            return FileResponse(Path(__file__).parent / 'static/index.html')
 
     return app

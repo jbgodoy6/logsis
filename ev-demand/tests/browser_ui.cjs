@@ -1,6 +1,6 @@
 /**
  * Browser regression for the DOM console.
- * Start a fresh simulation server, then:
+ * Legacy DOM interface only: start a fresh simulation server with DMAX_WEB_UI=legacy, then:
  * DMAX_TEST_URL=http://127.0.0.1:8094 node tests/browser_ui.cjs
  * Requires Playwright and Chromium only in the validation environment.
  * No charger hardware, internet service, production data or fixed admin secret.

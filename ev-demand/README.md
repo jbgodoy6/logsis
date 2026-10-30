@@ -1,14 +1,14 @@
-# EnergyCube D-Max — Controlador de demanda · v0.4.0
+# EnergyCube D-Max — Controlador de demanda · v0.5.0
 
-**Validação pelo Windows pendente:** o Defender bloqueou os ZIPs 0.3.0 e 0.3.1. A interface foi reescrita na 0.4.0 com componentes DOM e comunicação restrita à mesma origem. Essa mudança não garante liberação pelo antivírus. Mantenha qualquer bloqueio ativo. [Reescrita e validação da 0.4.0](docs/frontend-v040.md) · [Investigação dos ZIPs anteriores](docs/defender-investigation.md).
+**Edição Windows 0.5.0:** interface gerada pelo servidor, sem JavaScript no navegador, com dependências locais para Python x64 3.12/3.13/3.14. [Guia de instalação](docs/instalar-windows-v050.md) · [Validação e arquitetura](docs/server-ui-v050.md). A liberação pelo Defender ainda precisa ser verificada no Windows; mantenha qualquer alerta ativo. [Histórico dos bloqueios anteriores](docs/defender-investigation.md).
 
 Protótipo para **validação em Windows**, com a mesma base Python no Linux ARM64 do Raspberry Pi 4. Interface web local, simulador, SQLite, distribuição de potência e adaptador OCPP 1.6J. Não depende dos dashboards antigos deste repositório.
 
 [Tela TCP/IP](docs/multimedidor-tcp.png) · [Tela RS485](docs/multimedidor-rs485.png) · [Revisão de segurança v0.3.1](docs/security-review-v031.md)
 
-A versão 0.4.0 inclui as correções de dependências e autenticação da 0.3.1 e substitui a construção de HTML por texto por componentes DOM. A causa da classificação dos pacotes anteriores permanece não determinada. Esta revisão não é uma certificação antivírus.
+A versão 0.5.0 mantém o controlador OCPP/Modbus e a base de dados revisados e troca a interface por páginas e formulários gerados pelo Python. O ZIP de instalação contém somente arquivos de execução, guia e dependências aprovadas pelo lock. A causa da classificação dos pacotes anteriores permanece não determinada. Esta revisão não é uma certificação antivírus.
 
-![Visão geral](docs/painel-dom-v040.png)
+![Visão geral](docs/painel-server-v050.png)
 
 [Nova página de usuários](docs/usuarios.png) · [Técnicos e Google](docs/tecnicos-google.png) · [Validação v0.3](docs/validation-v03.md)
 
@@ -16,9 +16,9 @@ A versão 0.4.0 inclui as correções de dependências e autenticação da 0.3.1
 
 1. Use **Python 3.12, 3.13 ou 3.14 de 64 bits**, com o Python Launcher (`py`). Se uma dessas versões puder ser executada pela sua conta, não instale outra. Uma versão listada pode estar inacessível por permissão. Confira com `py -0p`. O iniciador testa a execução de 3.13, 3.12 e 3.14 nessa ordem, usando a primeira acessível.
 2. Extraia a pasta do projeto em um diretório gravável, por exemplo `C:\D-Max`. Não execute dentro do ZIP.
-3. Execute **`iniciar-windows.bat`**. A primeira execução precisa de internet para instalar as dependências. Depois de instaladas, o mesmo lançador funciona sem internet enquanto o arquivo de dependências não mudar.
+3. Execute **`iniciar-windows.bat`**. No ZIP Windows 0.5.0, as dependências estão em `wheels/` e a instalação usa `--no-index --require-hashes`, sem internet. No checkout de desenvolvimento sem essa pasta, o lançador usa o PyPI. Não precisa de privilégios administrativos do Windows.
 4. No próprio computador servidor, abra **http://127.0.0.1:8080**. Defina a senha raiz e uma senha separada para o administrador. As credenciais raiz e administrativa são definidas na instalação. Novas contas operacionais/técnicas usam a senha inicial 12345678, com ativação individual e troca obrigatória.
-5. Entre com o usuário `admin` e clique em **Carregar demonstração**.
+5. Entre com o usuário `admin`, abra **Simulador** e clique em **Carregar demonstração**. Volte a **Visão geral** para acompanhar a distribuição. **Carregadores ao vivo** mostra todos os conectores com atualização a cada dois segundos.
 
 O terminal deve permanecer aberto. `Ctrl+C` encerra o programa. Não é um instalador de serviço do Windows nesta entrega.
 
@@ -137,7 +137,7 @@ A versão inclui cadastro de operadores, administradores e técnicos conforme a 
 
 ## Testes
 
-Revisão 0.4.0: **73 testes aprovados em Python 3.12 e 3.14, em Linux**, mais regressão da interface no Chromium desktop/celular. Inclui autenticação concorrente, revogação durante o login, renderização literal de marcação HTML e tráfego da página restrito à origem do controlador. Não equivale à homologação nativa no Windows/Raspberry nem a uma varredura do Microsoft Defender.
+Revisão 0.5.0: **84 testes aprovados em Python 3.12 e 3.14, em Linux**, mais fluxo completo do pacote de execução no Chromium com JavaScript desativado, em desktop/celular. Inclui CSRF vinculado à sessão, restrição da primeira instalação, permissões, ativação, medidor, horários e autenticação concorrente. A resolução offline das wheels foi conferida para Windows x64 nas três versões suportadas. Não equivale à homologação nativa no Windows/Raspberry nem a uma varredura do Microsoft Defender.
 
 ```powershell
 .\.venv\Scripts\python.exe -m unittest discover -s tests -v
