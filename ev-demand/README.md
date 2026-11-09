@@ -1,3 +1,7 @@
+# D-Max 0.8.5 · Portas, leituras e cadastro
+
+Consulte NOVIDADES-0.8.5.md no pacote. Seleção de porta serial, leituras habilitadas nas duas telas, exclusão com histórico, separação de simulados e tentativa imediata de sincronizar técnicos. Atualize sem desinstalar.
+
 # D-Max 0.8.4 · Dados sem piscar e versão visível
 
 Atualiza somente os valores e pontos da curva, sem recarregar documentos. Consulte ATUALIZACAO-SEM-PISCAR.md no pacote ou [o guia](docs/live-v084.md). Atualize sem desinstalar e abra uma aba nova depois.

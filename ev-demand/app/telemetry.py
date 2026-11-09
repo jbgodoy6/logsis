@@ -5,6 +5,17 @@ import re
 import time
 
 
+MEASUREMENTS = {
+    'power_total_kw': ('Potência ativa total', 'kW'),
+    'energy_import_kwh': ('Energia ativa importada', 'kWh'),
+    'current_l1_a': ('Corrente L1', 'A'), 'current_l2_a': ('Corrente L2', 'A'),
+    'current_l3_a': ('Corrente L3', 'A'), 'voltage_l1_v': ('Tensão L1–N', 'V'),
+    'voltage_l2_v': ('Tensão L2–N', 'V'), 'voltage_l3_v': ('Tensão L3–N', 'V'),
+    'frequency_hz': ('Frequência', 'Hz'), 'power_factor': ('Fator de potência', ''),
+    'power_l1_kw': ('Potência ativa L1', 'kW'), 'power_l2_kw': ('Potência ativa L2', 'kW'),
+    'power_l3_kw': ('Potência ativa L3', 'kW'),
+}
+
 DEFAULT_COLORS = {'charging': '#239b75', 'connected': '#338bd1', 'alarm': '#dc4c58',
                   'disconnected': '#8395a8', 'communication': '#c59138'}
 
@@ -58,12 +69,20 @@ def plant_snapshot(state):
             enabled=charger['enabled'], online=charger.get('online', False), connectors=ports))
     meter = state['meter']
     meter_fresh = bool(meter.get('at') and 0 <= now - meter['at'] <= settings['freshness_s'] and not meter.get('error'))
-    readings = [dict(measurement=r['measurement'], label=r['label'], unit=r.get('unit', ''),
-        value=finite(r.get('value')) if meter_fresh and not r.get('error') else None,
-        error=bool(r.get('error')), at=r.get('at', meter.get('at', 0))) for r in meter.get('readings', [])]
-    if not readings:
-        readings = [dict(measurement='power_total_kw', label='Potência ativa total', unit='kW',
-            value=finite(meter.get('total_kw')) if meter_fresh else None, error=not meter_fresh, at=meter.get('at', 0))]
+    received = {reading['measurement']: reading for reading in meter.get('readings', [])}
+    mapping = settings.get('meter', {}).get('registers')
+    enabled = [reg['measurement'] for reg in mapping if reg['enabled']] if mapping is not None else list(received) or ['power_total_kw']
+    readings = []
+    for measurement in enabled:
+        reading = received.get(measurement, {})
+        label, unit = MEASUREMENTS[measurement]
+        value = reading.get('value')
+        if not reading and measurement == 'power_total_kw' and (mapping is None or settings.get('mode') == 'simulation'):
+            value = meter.get('total_kw')
+        valid = meter_fresh and not reading.get('error') and finite(value) is not None
+        readings.append(dict(measurement=measurement, label=label, unit=unit,
+            value=finite(value) if valid else None, error=not valid,
+            at=reading.get('at', meter.get('at', 0))))
     summary = state.get('summary', {})
     return dict(schema_version=1, observed_at=now, site_name=settings['site_name'], mode=settings['mode'],
         limit_kw=settings['limit_kw'], margin_kw=settings['margin_kw'], controller_fault=bool(state.get('fault')),

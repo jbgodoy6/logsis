@@ -201,6 +201,8 @@ class Access:
         old = json.loads(existing['payload']) if existing else {}
         operations = set(old.get('operations', [])) | {kind}
         payload = dict(payload)
+        if old.get('_acknowledged_base'):
+            payload['_acknowledged_base'] = old['_acknowledged_base']
         payload['operations'] = sorted(operations)
         payload['base_version'] = old.get('base_version', payload.get('base_version', payload['credential_version']))
         payload['base_meta_version'] = old.get('base_meta_version', payload.get('meta_version', 0))
@@ -208,6 +210,8 @@ class Access:
         self.db.execute('''INSERT INTO directory_pending VALUES (?,?,?,?) ON CONFLICT(user_id) DO UPDATE SET
             kind=excluded.kind,payload=excluded.payload,queued_at=excluded.queued_at''',
                         (identifier, kind, json.dumps(payload), time.time()))
+        if self.wakeup:
+            self.wakeup.set()
 
     def update(self, actor, identifier, data):
         target = self.by_id(identifier)

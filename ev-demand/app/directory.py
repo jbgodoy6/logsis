@@ -1,5 +1,6 @@
 """Authenticated global technician sync, independent of telemetry uploads."""
 import asyncio
+import json
 import os
 import random
 import time
@@ -70,6 +71,8 @@ async def synchronize(access, client=None):
             pending_failed = False
             # Apply locally authorized offline changes before refreshing the global copy.
             for pending in access.pending():
+                if pending['payload'].get('_acknowledged_base'):
+                    continue
                 try:
                     response = await request('update', {'kind': pending['kind'], 'record': pending['payload']})
                     if response.status_code != 409:
@@ -80,6 +83,17 @@ async def synchronize(access, client=None):
                     raise
                 except Exception:
                     pending_failed = True
+                    continue
+                current = next((row for row in access.pending() if row['user_id'] == pending['user_id']), None)
+                if current is None:
+                    continue
+                if current['queued_at'] != pending['queued_at'] or current['payload'] != pending['payload']:
+                    if response.status_code != 409:
+                        payload = current['payload']
+                        payload['_acknowledged_base'] = pending['payload']
+                        with access.db:
+                            access.db.execute('UPDATE directory_pending SET payload=? WHERE user_id=?',
+                                              (json.dumps(payload), pending['user_id']))
                     continue
                 if response.status_code == 409:
                     # The central version wins. No silent resurrection of a revoked user.
@@ -106,7 +120,10 @@ async def synchronize(access, client=None):
             if data.get('complete') is not True:
                 raise ValueError('Uma lista parcial não pode atualizar os acessos')
             access.apply_snapshot(data['technicians'])
-            access.status.update(message='Cadastro atualizado; alterações locais ainda pendentes' if pending_failed else 'Sincronizado', last_success=time.time())
+            if any(row['payload'].get('_acknowledged_base') for row in access.pending()):
+                rebase_acknowledged(access, data['technicians'])
+                access.apply_snapshot(data['technicians'])
+            access.status.update(message='Cadastro atualizado; alterações locais ainda pendentes' if pending_failed or access.pending() else 'Sincronizado', last_success=time.time())
             return True
         except asyncio.CancelledError:
             raise
@@ -118,6 +135,39 @@ async def synchronize(access, client=None):
         finally:
             if own:
                 await client.aclose()
+
+
+def rebase_acknowledged(access, records):
+    """Only rebase local edits on an ACK we actually received, never on a remote conflict."""
+    remote = {record['id']: record for record in records}
+    credentials = ('password', 'must_change', 'credential_version')
+    metadata = ('full_name', 'active', 'deleted', 'expires_at')
+    with access.db:
+        for current in access.pending():
+            identifier = current['user_id']
+            previous = current['payload'].get('_acknowledged_base')
+            if not previous:
+                continue
+            central = remote.get(identifier)
+            if not current or not central or central['name'] != previous['name']:
+                continue
+            payload = current['payload']
+            operations = []
+            if any(payload.get(key) != previous.get(key) for key in credentials):
+                operations.append('credential')
+            if any(payload.get(key) != previous.get(key) for key in metadata):
+                operations.append('metadata')
+            if not operations:
+                access.db.execute('DELETE FROM directory_pending WHERE user_id=?', (identifier,))
+                continue
+            payload.pop('_acknowledged_base', None)
+            payload['operations'] = operations
+            payload['base_version'] = previous['credential_version']
+            payload['base_meta_version'] = central.get('meta_version', 0) if all(central.get(key) == previous.get(key) for key in metadata) else previous.get('base_meta_version', 0)
+            access.db.execute("UPDATE directory_pending SET kind='update',payload=? WHERE user_id=?",
+                              (json.dumps(payload), identifier))
+            if access.wakeup:
+                access.wakeup.set()
 
 
 async def directory_loop(access):

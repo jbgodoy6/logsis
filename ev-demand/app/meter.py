@@ -7,19 +7,11 @@ import struct
 import threading
 import time
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
-MEASUREMENTS = {
-    'power_total_kw': ('Potência ativa total', 'kW'),
-    'energy_import_kwh': ('Energia ativa importada', 'kWh'),
-    'current_l1_a': ('Corrente L1', 'A'), 'current_l2_a': ('Corrente L2', 'A'),
-    'current_l3_a': ('Corrente L3', 'A'), 'voltage_l1_v': ('Tensão L1–N', 'V'),
-    'voltage_l2_v': ('Tensão L2–N', 'V'), 'voltage_l3_v': ('Tensão L3–N', 'V'),
-    'frequency_hz': ('Frequência', 'Hz'), 'power_factor': ('Fator de potência', ''),
-    'power_l1_kw': ('Potência ativa L1', 'kW'), 'power_l2_kw': ('Potência ativa L2', 'kW'),
-    'power_l3_kw': ('Potência ativa L3', 'kW'),
-}
+from .telemetry import MEASUREMENTS
+
 FORMATS = {'float32': ('f', 2), 'float64': ('d', 4), 'int16': ('h', 1),
            'uint16': ('H', 1), 'int32': ('i', 2), 'uint32': ('I', 2),
            'int64': ('q', 4), 'uint64': ('Q', 4)}
@@ -33,6 +25,13 @@ DEFAULT_METER = {
 }
 
 
+def normalize_serial_port(value):
+    if not isinstance(value, str):
+        return value
+    value = value.strip()
+    return '/' + value if value.startswith('dev/') else value
+
+
 def normalize_meter(data):
     """Migrate v0.1 without changing the configured register's meaning."""
     result = copy.deepcopy(DEFAULT_METER)
@@ -43,6 +42,7 @@ def normalize_meter(data):
         for key in ('address', 'type', 'scale', 'word_order'):
             if key in data:
                 result['registers'][0][key] = data[key]
+    result['serial_port'] = normalize_serial_port(result['serial_port'])
     return result
 
 
@@ -85,6 +85,11 @@ class Meter(BaseModel):
     bytesize: int = 8
     address_base: int = 0
     registers: list[Register] = Field(min_length=1, max_length=len(MEASUREMENTS))
+
+    @field_validator('serial_port', mode='before')
+    @classmethod
+    def serial_path(cls, value):
+        return normalize_serial_port(value)
 
     @model_validator(mode='after')
     def valid(self):

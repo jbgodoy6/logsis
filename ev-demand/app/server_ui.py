@@ -15,11 +15,11 @@ import httpx
 from fastapi import Request
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 
-from .meter import MEASUREMENTS, FORMATS
+from .meter import MEASUREMENTS, FORMATS, normalize_serial_port
 from .plant_view import render_plant
 from .live_dom import view_tree
 
-VERSION = '0.8.4'
+VERSION = '0.8.5'
 PAGES = {
     'overview': 'Visão geral', 'chargers': 'Carregadores', 'vehicles': 'Veículos',
     'schedule': 'Horários', 'history': 'Histórico', 'meter': 'Multimedidor',
@@ -212,7 +212,8 @@ def install(app):
             elif page == 'settings':
                 content = self.settings()
             elif page == 'meter':
-                content = self.meter(diagnostic)
+                serial = await self.api('GET', '/api/meter/ports')
+                content = self.meter(diagnostic, serial['ports'])
             elif page == 'history':
                 content = await self.history()
             elif page == 'users':
@@ -280,6 +281,8 @@ def install(app):
             if self.state.get('fault') or not summary.get('meter_fresh'):
                 content += '<div class="notice">' + esc(self.state.get('fault') or 'Sem medição atual: novas liberações bloqueadas.') + '</div>'
             content += '<p>' + ('Horário bloqueado · novas conexões aguardam.' if summary.get('blocked') else 'Horário permitido para recarga.') + '</p>'
+            from .plant_view import render_meter
+            content += render_meter(self.state)
             content += panel('Demanda da instalação · últimos minutos', self.chart()).replace('<article class="panel">', '<article class="panel" data-live-key="chart">', 1)
             content += '<div class="charger-grid" data-live-key="ports">' + ''.join(self.card(p, controls=False) for p in self.state['ports'][:6]) + '</div>'
             if self.manager and settings['mode'] == 'simulation':
@@ -359,15 +362,24 @@ def install(app):
                             field('Limite de teste · kW', 'cap_kw', port['limit_kw'] / 2, 'number', min=0, step='any', required='')
                             + field('Duração · segundos', 'seconds', 30, 'number', min=10, max=300, required=''),
                             'Testar redução', page='chargers', key=port['key']) + '</details>'
+            if controls and self.technical:
+                content += self.delete_charger(charger)
             return '<article class="charger-card" data-live-key="' + esc(port['key']) + '">' + content + '</article>'
+
+        def delete_charger(self, charger):
+            return '<details><summary>Excluir carregador</summary><p>Remove do cadastro ativo e preserva o histórico. Equipamentos físicos devem estar sem recarga e desconectados do OCPP.</p>' + self.form('delete_charger', checkbox('Confirmo excluir este carregador', 'confirm').replace('name="confirm"','name="confirm" value="yes"'), 'Excluir carregador', page='chargers', id=charger['id']) + '</details>'
 
         def chargers(self):
             content = '<div class="charger-grid" data-live-key="ports">' + ''.join(self.card(p) for p in self.state['ports']) + '</div>'
             if not self.technical:
                 return content
+            inactive = self.state.get('inactive_chargers', [])
+            if inactive:
+                content += panel('Carregadores de outro modo', table(['Carregador','Transporte','Ação'],
+                    [[esc(c['name']), esc(c['transport']), self.delete_charger(c)] for c in inactive]))
             old = next((c for c in self.state['chargers'] if c['id'] == self.request.query_params.get('edit')), None)
             c = old or dict(id='', name='', model='', ip='', max_kw=320, connector_max_kw=320, min_kw=6, connectors=1,
-                            transport='simulator', circuit=self.state['settings']['circuits'][0]['id'], enabled=True,
+                            transport='ocpp' if self.state['settings']['mode'] == 'physical' else 'simulator', circuit=self.state['settings']['circuits'][0]['id'], enabled=True,
                             commissioned=False, zero_supported=False, rate_unit='W', voltage=230, phases=3, input_factor=1)
             fields = field('Identificador OCPP', 'id', c['id'], required='', maxlength=40, readonly='' if old else None)
             fields += field('Nome', 'name', c['name'], required='', maxlength=100) + field('Modelo', 'model', c['model'], maxlength=100) + field('IP de referência', 'ip', c['ip'], maxlength=253)
@@ -441,11 +453,22 @@ def install(app):
                     'Redefinir e encerrar sessões', page='settings'))
             return content
 
-        def meter(self, diagnostic):
-            m = self.state['settings']['meter']
+        def meter(self, diagnostic, ports):
+            m = diagnostic.get('draft', self.state['settings']['meter']) if diagnostic else self.state['settings']['meter']
             fields = select('Transporte', 'transport', [('tcp', 'Modbus TCP/IP'), ('rtu', 'RS485 · Modbus RTU')], m['transport'])
             fields += field('Host / IP', 'host', m['host'], maxlength=253) + field('Porta TCP', 'port', m['port'], 'number', min=1, max=65535)
-            fields += field('Porta serial · COM3 ou /dev/ttyUSB0', 'serial_port', m['serial_port'])
+            choices = [('', 'Selecione uma porta conectada ao servidor')]
+            for port in ports:
+                device = port.get('stable_path') or port['device']
+                choices.append((device, port['description'] + ' · ' + device))
+                if m['serial_port'] == port['device'] and device != port['device']:
+                    choices.append((port['device'], port['description'] + ' · ' + port['device'] + ' (configuração atual)'))
+            if m['serial_port'] and m['serial_port'] not in {key for key, label in choices}:
+                choices.append((m['serial_port'], 'Configurada, não detectada: ' + m['serial_port']))
+            fields += select('Porta serial do servidor', 'serial_port', choices, m['serial_port'])
+            if not ports:
+                fields += '<p class="hint">Nenhuma porta serial detectada no servidor.</p>'
+            fields += '<p class="hint">A lista mostra as portas do Raspberry/servidor, não do computador que abriu a página. Atualize esta página após conectar o adaptador.</p>'
             for key, title in [('baudrate', 'Baud rate'), ('unit', 'Unit ID'), ('address_base', 'Base · 0 ou 1'), ('poll_s', 'Intervalo de leitura · s'), ('timeout_s', 'Timeout · s'), ('stopbits', 'Stop bits')]:
                 fields += field(title, key, m[key], 'number', step='any', required='')
             fields += select('Paridade', 'parity', [('N', 'Nenhuma'), ('E', 'Par'), ('O', 'Ímpar')], m['parity'])
@@ -485,9 +508,10 @@ def install(app):
         async def users(self):
             users = (await self.api('GET', '/api/users'))['users']
             rows = [[esc(u['full_name']), esc(u['name']), esc(ROLES[u['role']]), 'Excluído' if u['deleted'] else 'Ativo' if u['active'] else 'Bloqueado',
+                     'Pendente de envio' if u['source'] == 'local_pending' else 'Global' if u['source'] == 'directory' else 'Local',
                      link('users', 'Editar', edit=u['id']) + self.form('reset_user', submit='Redefinir senha inicial', page='users', id=u['id']) if u['role'] != 'root' else 'Recuperação']
                     for u in users]
-            content = panel('Contas gerenciáveis', table(['Nome', 'Login', 'Perfil', 'Situação', ''], rows))
+            content = panel('Contas gerenciáveis', table(['Nome', 'Login', 'Perfil', 'Situação', 'Sincronização', ''], rows))
             old = next((u for u in users if u['id'] == self.request.query_params.get('edit') and u['role'] != 'root'), None)
             u = old or dict(name='', full_name='', role='operator', active=True, deleted=False, expires_at=None, can_emergency=False)
             choices = ['technician'] if u['role'] == 'technician' else ['operator', 'admin', 'technician'] if self.user['role'] == 'root' else ['operator', 'admin'] if self.technical else ['operator']
@@ -614,6 +638,10 @@ def install(app):
                     if value('password'):
                         data['password'] = value('password')
                     await api('POST', '/api/chargers', data)
+                elif action == 'delete_charger':
+                    if value('confirm') != 'yes':
+                        raise UIError('Confirme a exclusão do carregador.')
+                    await api('DELETE', '/api/chargers/' + quote(value('id'), safe=''))
                 elif action == 'vehicle':
                     data = dict(name=value('name'), plate=value('plate'), identifiers=[x.strip() for x in value('identifiers').split(',') if x.strip()], priority='priority' in form)
                     if value('id'):
@@ -646,7 +674,7 @@ def install(app):
                     else:
                         meter = settings['meter']
                         for key in ('transport', 'host', 'serial_port', 'parity'):
-                            meter[key] = value(key)
+                            meter[key] = normalize_serial_port(value(key)) if key == 'serial_port' else value(key)
                         for key in ('port', 'unit', 'baudrate', 'address_base', 'stopbits'):
                             meter[key] = int(value(key))
                         for key in ('poll_s', 'timeout_s'):
@@ -661,6 +689,7 @@ def install(app):
                                 reg[key] = value(prefix + key)
                         if value('operation') == 'test':
                             diagnostic = await api('POST', '/api/meter/test', meter)
+                            diagnostic['draft'] = meter
                     if diagnostic is None:
                         await api('PUT', '/api/settings', settings)
                 elif action in ('user', 'reset_user'):
@@ -682,7 +711,9 @@ def install(app):
                         data['device_token'] = value('device_token')
                     await api('PUT', '/api/directory', data)
                 elif action == 'sync':
-                    await api('POST', '/api/directory/sync', {})
+                    result = await api('POST', '/api/directory/sync', {})
+                    if not result['ok']:
+                        raise UIError('Sincronização não concluída. ' + result['status']['message'], 502)
                 else:
                     raise UIError('Operação desconhecida')
             if diagnostic is not None:

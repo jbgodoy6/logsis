@@ -262,7 +262,7 @@ def create_app(database=None, background=True, recovery_public_key=None, root_pa
                 await asyncio.to_thread(network.close)
             store.db.close()
 
-    app = FastAPI(title='EnergyCube D-Max · Controle de demanda', version='0.8.4', lifespan=lifespan,
+    app = FastAPI(title='EnergyCube D-Max · Controle de demanda', version='0.8.5', lifespan=lifespan,
                   docs_url=None, redoc_url=None, openapi_url=None)
     app.state.store, app.state.engine, app.state.access = store, engine, access
     app.state.recovery = recovery
@@ -536,16 +536,20 @@ def create_app(database=None, background=True, recovery_public_key=None, root_pa
             submitted = data.model_dump()
             if any(submitted.get(k) != value for k, value in current.items() if k not in allowed):
                 raise HTTPException(403, 'Administrador não altera multimedidor, teto técnico, circuitos ou parâmetros técnicos')
-        if data.mode != current['mode'] and any(p['connected'] for p in engine.ports.values()):
+        if data.mode != current['mode'] and any(engine.config(p['charger'])['transport'] == 'ocpp' and (p['connected'] or p['running'] or p['charger'] in engine.connections) for p in engine.ports.values()):
             raise HTTPException(409, 'Desconecte as sessões antes de trocar o modo')
         ids = {c.id for c in data.circuits}
-        if any(c['circuit'] not in ids for c in store.entities('charger')):
+        if any(c['circuit'] not in ids for c in store.entities('charger') if not c.get('archived')):
             raise HTTPException(409, 'Um circuito em uso não pode ser removido')
         if data.mode == 'physical':
             if (data.meter.transport == 'tcp' and not data.meter.host) or (data.meter.transport == 'rtu' and not data.meter.serial_port):
                 raise HTTPException(422, 'Configure a conexão do multimedidor antes da operação física')
             if not any(r.enabled and r.measurement == 'power_total_kw' for r in data.meter.registers):
                 raise HTTPException(422, 'Configure a leitura da potência ativa total para o controle de demanda')
+        if data.mode != current['mode']:
+            for port in list(engine.ports.values()):
+                if engine.config(port['charger'])['transport'] == 'simulator':
+                    engine.disconnect(port['key'])
         store.save_settings(data.model_dump())
         if data.mode != current['mode'] or data.meter.model_dump() != current['meter']:
             engine.meter.update(at=0, total_kw=0, readings=[], energy_kwh=None, error='')
@@ -557,7 +561,9 @@ def create_app(database=None, background=True, recovery_public_key=None, root_pa
     async def serial_ports(u=Depends(technician)):
         from serial.tools import list_ports
         ports = await asyncio.to_thread(list_ports.comports)
-        return {'ports': [{'device': p.device, 'description': p.description} for p in ports]}
+        aliases = list(Path('/dev/serial/by-id').glob('*')) if os.name == 'posix' else []
+        return {'ports': [{'device': p.device, 'description': p.description,
+            'stable_path': next((str(alias) for alias in aliases if alias.resolve() == Path(p.device).resolve()), None)} for p in ports]}
 
     @app.get('/api/meter/measurements')
     async def measurements(u=Depends(technician)):
@@ -575,7 +581,9 @@ def create_app(database=None, background=True, recovery_public_key=None, root_pa
     @app.post('/api/chargers')
     async def charger(data: Charger, u=Depends(technician)):
         old = engine.config(data.id)
-        chargers = store.entities('charger')
+        if old and old.get('archived'):
+            raise HTTPException(409, 'Identificador já usado no histórico; cadastre outro identificador')
+        chargers = [c for c in store.entities('charger') if not c.get('archived')]
         if not old and len(chargers) >= 60:
             raise HTTPException(422, 'Esta versão está dimensionada para até 60 carregadores')
         if data.circuit not in {c['id'] for c in store.settings()['circuits']}:
@@ -591,6 +599,23 @@ def create_app(database=None, background=True, recovery_public_key=None, root_pa
         store.put('charger', record)
         engine.refresh()
         store.record('charger_configured', {'actor': u['name'], 'charger': data.id, 'commissioned': record['commissioned']})
+        return {'ok': True}
+
+    @app.delete('/api/chargers/{identifier}')
+    async def delete_charger(identifier: str, u=Depends(technician)):
+        charger = engine.config(identifier)
+        if not charger or charger.get('archived'):
+            raise HTTPException(404, 'Carregador não encontrado')
+        ports = [port for port in engine.ports.values() if port['charger'] == identifier]
+        if charger['transport'] == 'ocpp' and (identifier in engine.connections or any(
+            port['connected'] or port['running'] or port['power_kw'] > .1 or port['limit_kw'] > 0 for port in ports)):
+            raise HTTPException(409, 'Encerre a recarga, confirme a desconexão do veículo e desconecte a comunicação OCPP antes de excluir')
+        if charger['transport'] == 'simulator':
+            for port in ports:
+                engine.disconnect(port['key'])
+        charger.update(archived=True, enabled=False)
+        store.put('charger', charger)
+        store.record('charger_removed', {'actor': u['name'], 'charger': identifier, 'history_preserved': True})
         return {'ok': True}
 
     @app.post('/api/vehicles')
@@ -615,6 +640,8 @@ def create_app(database=None, background=True, recovery_public_key=None, root_pa
             raise HTTPException(404, 'Conector desconhecido')
         p = engine.ports[key]
         c = engine.config(p['charger'])
+        if c.get('archived'):
+            raise HTTPException(404, 'Carregador excluído')
         if data.vehicle_id and not any(v['id'] == data.vehicle_id for v in store.entities('vehicle')):
             raise HTTPException(422, 'Veículo desconhecido')
         if data.action in ('connect', 'disconnect'):
@@ -672,17 +699,18 @@ def create_app(database=None, background=True, recovery_public_key=None, root_pa
 
     @app.post('/api/demo')
     async def demo(u=Depends(administrator)):
-        if store.entities('charger') or store.settings()['mode'] != 'simulation':
+        if any(not c.get('archived') for c in store.entities('charger')) or store.settings()['mode'] != 'simulation':
             raise HTTPException(409, 'Demonstração disponível somente em uma instalação vazia em simulação')
+        suffix = '-' + secrets.token_hex(3) if store.entities('charger') else ''
         for identifier, name, power in [('DC-01', 'Estação rápida 01', 320), ('DC-02', 'Estação rápida 02', 320), ('AC-03', 'Estação AC 03', 22)]:
-            c = Charger(id=identifier, name=name, max_kw=power, connector_max_kw=power, min_kw=6).model_dump(exclude={'password'})
+            c = Charger(id=identifier + suffix, name=name, max_kw=power, connector_max_kw=power, min_kw=6).model_dump(exclude={'password'})
             c.update(password_hash=None, commissioned=True, zero_supported=True)
             store.put('charger', c)
         for identifier, name, priority in [('frota-01', 'Veículo da diretoria', True), ('frota-02', 'Veículo operacional', False)]:
-            store.put('vehicle', {'id': identifier, 'name': name, 'priority': priority, 'plate': '', 'identifiers': ['SIM-' + identifier]})
+            store.put('vehicle', {'id': identifier + suffix, 'name': name, 'priority': priority, 'plate': '', 'identifiers': ['SIM-' + identifier + suffix]})
         engine.refresh()
-        engine.connect_simulated('DC-01:1', 'frota-02')
-        engine.connect_simulated('DC-02:1', 'frota-01')
+        engine.connect_simulated('DC-01' + suffix + ':1', 'frota-02' + suffix)
+        engine.connect_simulated('DC-02' + suffix + ':1', 'frota-01' + suffix)
         store.record('demo_created', {'actor': u['name']})
         return {'ok': True}
 
@@ -704,7 +732,7 @@ def create_app(database=None, background=True, recovery_public_key=None, root_pa
     @app.websocket('/ocpp/{identifier}')
     async def ocpp(ws: WebSocket, identifier: str):
         c = engine.config(identifier)
-        if not c or c['transport'] != 'ocpp' or store.settings()['mode'] != 'physical':
+        if not c or c.get('archived') or c['transport'] != 'ocpp' or store.settings()['mode'] != 'physical':
             await ws.close(code=1008)
             return
         if not ocpp_attempts.allow(identifier):

@@ -27,6 +27,14 @@ def meter_svg():
     return '''<svg viewBox="0 0 160 158" role="img" aria-label="Multimedidor de entrada"><rect x="24" y="8" width="112" height="141" rx="15" fill="#153758"/><rect x="34" y="21" width="92" height="78" rx="6" fill="#daf6ed"/><text x="46" y="42" fill="#366357" font-size="10">ENERGY METER</text><path d="M44 73H57L63 53L72 85L80 61L87 73H115" fill="none" stroke="#008b70" stroke-width="3"/><circle cx="49" cy="116" r="6" fill="#ffc627"/><circle cx="80" cy="116" r="6" fill="#54748d"/><circle cx="110" cy="116" r="6" fill="#54748d"/><path d="M48 140V149M64 140V149M80 140V149M96 140V149M112 140V149" stroke="#a3b7c9" stroke-width="4"/></svg>'''
 
 
+def render_meter(state):
+    plant = plant_snapshot(state)
+    result = '<div class="plant-energy" data-live-key="site-meter"><div class="plant-meter-art">' + meter_svg() + '</div><div class="plant-meter"><span class="plant-kicker">ENTRADA DE ENERGIA · MULTIMEDIDOR</span><h3>Leituras da instalação</h3><span class="plant-badge ' + ('ok' if plant['meter']['fresh'] else 'offline') + '">' + ('Medição atual' if plant['meter']['fresh'] else 'Sem medição atual') + '</span><div class="plant-readings">'
+    for reading in plant['meter']['readings']:
+        result += '<div><span>' + esc(reading['label']) + '</span><b>' + number(reading['value'], 2) + ' <small>' + esc(reading['unit']) + '</small></b>' + ('<small>Leitura indisponível</small>' if reading['error'] else '') + '</div>'
+    return result + '</div></div></div>'
+
+
 def render_plant(state):
     plant = plant_snapshot(state)
     colors = display_colors(state['settings'].get('display_colors'))
@@ -42,10 +50,8 @@ def render_plant(state):
         ('Limite operacional', number(plant['limit_kw']) + ' <em>kW</em>', 'Margem: ' + number(plant['margin_kw']) + ' kW'),
         ('Carregadores online', str(online) + ' <em>/ ' + str(len(plant['chargers'])) + '</em>', str(connected) + ' conectores com veículo confirmado online'),
         ('Alarmes ativos', str(alarms), 'Verifique os equipamentos em vermelho' if alarms else 'Nenhum alarme informado')]) + '</div>'
-    result += '<div class="plant-energy"><div class="plant-meter-art">' + meter_svg() + '</div><div class="plant-meter"><span class="plant-kicker">ENTRADA DE ENERGIA · MULTIMEDIDOR</span><h3>Leituras da instalação</h3><span class="plant-badge ' + ('ok' if plant['meter']['fresh'] else 'offline') + '">' + ('Medição atual' if plant['meter']['fresh'] else 'Sem medição atual') + '</span><div class="plant-readings">'
-    for reading in plant['meter']['readings']:
-        result += '<div><span>' + esc(reading['label']) + '</span><b>' + number(reading['value'], 2) + ' <small>' + esc(reading['unit']) + '</small></b>' + ('<small>Leitura indisponível</small>' if reading['error'] else '') + '</div>'
-    result += '</div></div></div><div class="plant-section-title"><div><h3>Parque de carregadores</h3><p>O equipamento permanece na planta mesmo sem comunicação.</p></div><span>Verde · carregando &nbsp; Azul · cabo conectado &nbsp; Vermelho · alarme &nbsp; Cinza · cabo desconectado</span></div><div class="plant-grid">'
+    result += render_meter(state)
+    result += '<div class="plant-section-title"><div><h3>Parque de carregadores</h3><p>O equipamento permanece na planta mesmo sem comunicação.</p></div><span>Verde · carregando &nbsp; Azul · cabo conectado &nbsp; Vermelho · alarme &nbsp; Cinza · cabo desconectado</span></div><div class="plant-grid">'
     for charger, port in ports:
         tone = ('idle', 'plugged', 'charging', 'alarm')[port['display_state']]
         vehicle = (port['vehicle_name'] or 'Veículo não identificado') if port['plugged'] else 'Sem veículo conectado'

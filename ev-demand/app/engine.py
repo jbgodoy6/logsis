@@ -33,6 +33,8 @@ class Engine:
 
     def refresh(self):
         for charger in self.store.entities('charger'):
+            if charger.get('archived'):
+                continue
             for number in range(1, charger['connectors'] + 1):
                 key = f"{charger['id']}:{number}"
                 if key not in self.ports:
@@ -174,12 +176,14 @@ class Engine:
         return True
 
     async def tick(self):
+        self.ports = {key: port for key, port in self.ports.items() if not self.config(port['charger']).get('archived')}
+        ports = list(self.ports.values())
         now = time.time()
         elapsed = min(max(now - self.last_tick, 0), 5)
         self.last_tick = now
         settings = self.store.settings()
         simulation = settings['mode'] == 'simulation'
-        for p in self.ports.values():
+        for p in ports:
             c = self.config(p['charger'])
             if p.get('test') and now >= p['test']['until']:
                 test = p.pop('test')
@@ -196,13 +200,13 @@ class Engine:
                 power = min(p['limit_kw'], p.get('acceptance_kw', c['max_kw'])) if p['running'] and p['connected'] else 0.0
                 self.telemetry(p, power, (p.get('meter_kwh') or 0) + power * elapsed / 3600)
         if simulation:
-            total = self.other_kw + sum(p['power_kw'] * self.config(p['charger']).get('input_factor', 1.0) for p in self.ports.values())
+            total = self.other_kw + sum(p['power_kw'] * self.config(p['charger']).get('input_factor', 1.0) for p in ports)
             self.meter.update(total_kw=total, at=now, error='')
             self.aggregate('site', total)
         fresh = bool(self.meter['at']) and now - self.meter['at'] <= settings['freshness_s']
         fresh = fresh and not self.fault
         # Subtract only contemporaneous EV measurements from the incoming meter.
-        measured_ev = sum(p['power_kw'] for p in self.ports.values()
+        measured_ev = sum(p['power_kw'] for p in ports
                           if now - p['sample_at'] <= settings['freshness_s'] and p['sample_at'])
         other = max(0.0, self.meter['total_kw'] - measured_ev)
         budget = max(0.0, settings['limit_kw'] - settings['margin_kw'] - other) if fresh else 0.0
@@ -211,7 +215,7 @@ class Engine:
         vehicles = {v['id']: v for v in self.store.entities('vehicle')}
         circuits = {c['id']: c['limit_kw'] for c in settings['circuits']}
         demands = []
-        for p in self.ports.values():
+        for p in ports:
             c = chargers[p['charger']]
             if not p['connected'] or not c['enabled'] or not c['commissioned'] or p['manual_pause']:
                 continue
@@ -239,31 +243,31 @@ class Engine:
                                       vehicle.get('priority', False), p['arrival']))
         inputs = allocate(demands, budget, {k: v['max_kw'] * v.get('input_factor', 1.0) for k, v in chargers.items()}, circuits)
         targets = {p['key']: inputs.get(p['key'], 0) / chargers[p['charger']].get('input_factor', 1.0)
-                   for p in self.ports.values()}
-        for p in self.ports.values():
+                   for p in ports}
+        for p in ports:
             p['target_kw'] = targets.get(p['key'], 0.0)
         # Phase 1: all necessary decreases must be issued before any increase/start.
-        reductions = [self.set_limit(p, p['target_kw']) for p in self.ports.values() if p['limit_kw'] > p['target_kw'] + 0.01]
+        reductions = [self.set_limit(p, p['target_kw']) for p in ports if p['limit_kw'] > p['target_kw'] + 0.01]
         if reductions:
             await asyncio.gather(*reductions)
         self.control_progress_at = time.monotonic()
-        initial_profiles = [self.set_limit(p, min(p['limit_kw'], p['target_kw'])) for p in self.ports.values()
+        initial_profiles = [self.set_limit(p, min(p['limit_kw'], p['target_kw'])) for p in ports
                             if p['connected'] and not p['profile_initialized'] and p['charger'] in self.connections]
         if initial_profiles:
             await asyncio.gather(*initial_profiles)
         self.control_progress_at = time.monotonic()
-        ready = fresh and admission_ready(list(self.ports.values()), targets, now, settings['freshness_s'])
-        ready = ready and self.meter['at'] >= max((p['reduction_at'] for p in self.ports.values()), default=0)
+        ready = fresh and admission_ready(list(ports), targets, now, settings['freshness_s'])
+        ready = ready and self.meter['at'] >= max((p['reduction_at'] for p in ports), default=0)
         # Reserve increases against measured site headroom, shared chargers and circuits.
         # Current high authorizations are retained in reservations even if consumption is low.
         headroom = max(0.0, settings['limit_kw'] - settings['margin_kw'] - self.meter['total_kw'])
-        for p in sorted(self.ports.values(), key=lambda q: (not vehicles.get(q['vehicle_id'], {}).get('priority', False), q['arrival'])):
+        for p in sorted(ports, key=lambda q: (not vehicles.get(q['vehicle_id'], {}).get('priority', False), q['arrival'])):
             c = chargers[p['charger']]
             target = p['target_kw']
             if target > p['limit_kw'] + 0.01 and ready:
                 factor = c.get('input_factor', 1.0)
-                peers = [q for q in self.ports.values() if q['charger'] == p['charger'] and q['key'] != p['key']]
-                circuit_peers = [q for q in self.ports.values() if chargers[q['charger']]['circuit'] == c['circuit'] and q['key'] != p['key']]
+                peers = [q for q in ports if q['charger'] == p['charger'] and q['key'] != p['key']]
+                circuit_peers = [q for q in ports if chargers[q['charger']]['circuit'] == c['circuit'] and q['key'] != p['key']]
                 minimum = min(c['min_kw'], p.get('test', {}).get('cap_kw', c['min_kw']))
                 ramp = max(settings['ramp_kw_s'] * elapsed, minimum if not p['running'] else 0)
                 delta = min(target - p['limit_kw'], headroom / factor, ramp,
@@ -275,7 +279,7 @@ class Engine:
                     if await self.set_limit(p, value):
                         headroom -= delta * factor
             pending_input = sum(q['limit_kw'] * chargers[q['charger']].get('input_factor', 1.0)
-                                for q in self.ports.values() if q['connected'] and not q['running'])
+                                for q in ports if q['connected'] and not q['running'])
             current_settings = self.store.settings()
             start_headroom = self.meter['total_kw'] + pending_input <= current_settings['limit_kw'] - current_settings['margin_kw'] + 0.001
             if p['connected'] and not p['running'] and p['limit_kw'] > 0 and ready and start_headroom:
@@ -318,9 +322,13 @@ class Engine:
         self.control_progress_at = time.monotonic()
 
     def snapshot(self):
-        chargers = [{k: v for k, v in c.items() if k != 'password_hash'} | {'online': (c['transport'] == 'simulator' and self.store.settings()['mode'] == 'simulation') or c['id'] in self.connections} for c in self.store.entities('charger')]
-        return {'settings': self.store.settings(), 'chargers': chargers, 'vehicles': self.store.entities('vehicle'),
-                'sessions': [session for identifier in {p.get('session_id') for p in self.ports.values()} if identifier and (session := self.store.get('session', identifier))], 'identifiers': self.store.entities('identifier'), 'ports': list(self.ports.values()),
+        mode = self.store.settings()['mode']
+        active = [c for c in self.store.entities('charger') if not c.get('archived')]
+        visible = [c for c in active if (c['transport'] == 'simulator') == (mode == 'simulation')]
+        inactive = [{k: v for k, v in c.items() if k != 'password_hash'} for c in active if c not in visible]
+        chargers = [{k: v for k, v in c.items() if k != 'password_hash'} | {'online': (c['transport'] == 'simulator' and self.store.settings()['mode'] == 'simulation') or c['id'] in self.connections} for c in visible]
+        return {'settings': self.store.settings(), 'chargers': chargers, 'inactive_chargers': inactive, 'vehicles': self.store.entities('vehicle'),
+                'sessions': [session for identifier in {p.get('session_id') for p in self.ports.values()} if identifier and (session := self.store.get('session', identifier))], 'identifiers': self.store.entities('identifier'), 'ports': [p for p in self.ports.values() if p['charger'] in {c['id'] for c in chargers}],
                 'meter': self.meter, 'summary': getattr(self, 'summary', {}), 'trace': self.trace,
                 'cloud': self.cloud | {'pending': self.store.pending_count(), 'controller_id': os.getenv('EV_CONTROLLER_ID') or self.store.entities('system')[0]['controller_id']}, 'fault': self.fault,
                 'time': time.time()}

@@ -92,6 +92,7 @@ class AlarmTests(unittest.IsolatedAsyncioTestCase):
     async def test_ocpp_station_alarm_is_retained_until_station_clear(self):
         from app.ocpp_server import Station
         store=Store(':memory:')
+        cfg=store.settings();cfg['mode']='physical';store.save_settings(cfg)
         store.put('charger',dict(id='CP',name='Teste',connectors=2,transport='ocpp',enabled=True,max_kw=320))
         engine=Engine(store);engine.connections['CP']=object()
         station=Station('CP',object(),engine)

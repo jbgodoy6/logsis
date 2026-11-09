@@ -1,3 +1,7 @@
+# Melhoria solicitada: incluída na atualização 0.8.5
+
+Envio imediato implementado com fila durável e proteção de edições durante envio. Versão instalada permanece fixa no rodapé. Veja release-v085.md para validação e limites.
+
 # Pendências para a próxima atualização
 
 Registradas em 09/11/2026 a pedido do responsável pelo D-Max. Não implementar nem
