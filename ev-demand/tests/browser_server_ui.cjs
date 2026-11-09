@@ -1,4 +1,4 @@
-/** Real-browser regression with JavaScript disabled. Use a fresh simulation DB. */
+/** Real-browser regression with only the local live-data script. Use a fresh simulation DB. */
 const assert = require('node:assert/strict');
 const crypto = require('node:crypto');
 const fs = require('node:fs');
@@ -12,7 +12,7 @@ async function main() {
   const browser = await chromium.launch({executablePath: process.env.DMAX_CHROMIUM || '/usr/bin/chromium',
     headless:true, args:['--no-sandbox']});
   try {
-    const context = await browser.newContext({javaScriptEnabled:false, viewport:{width:1440,height:1100}});
+    const context = await browser.newContext({javaScriptEnabled:true, viewport:{width:1440,height:1100}});
     const page = await context.newPage();
     const errors = [], external = [], scripts = [];
     page.on('pageerror', e => errors.push(e.message));
@@ -46,7 +46,7 @@ async function main() {
     await go('simulation');
     await submit('demo');
     await go('overview');
-    await page.frameLocator('.live-data').locator('.server-chart').waitFor();
+    await page.locator('.server-chart').waitFor();
     await page.waitForTimeout(2200);
     await capture('painel-server-v050.png');
     await go('settings');
@@ -87,8 +87,8 @@ async function main() {
     assert.ok((await page.locator('.charger-grid').innerText()).includes('Estação de validação'));
     const state = await (await context.request.get(base + '/api/state')).json();
     await go('monitor');
-    await page.frameLocator('.live-data').locator('.plant-charger').first().waitFor();
-    assert.equal(await page.frameLocator('.live-data').locator('.plant-charger').count(),state.ports.length);
+    await page.locator('.plant-charger').first().waitFor();
+    assert.equal(await page.locator('.plant-charger').count(),state.ports.length);
     await go('chargers');
     const port = state.ports.find(p => p.connected);
     const card = page.locator('.charger-card').filter({has:page.locator('small').filter({hasText:port.key})}).first();
@@ -164,13 +164,14 @@ async function main() {
     assert.equal(dimensions.width <= dimensions.viewport,true);
     assert.deepEqual(errors,[]);
     assert.deepEqual(external,[]);
-    assert.deepEqual(scripts,[]);
-    assert.equal(await page.locator('script').count(),0);
+    assert.ok(scripts.length > 0);
+    assert.ok(scripts.every(url => new URL(url).pathname === '/static/live.js'));
+    assert.equal(await page.locator('script:not([src])').count(),0);
     if (process.env.DMAX_RUNTIME_PACKAGE === '1') {
       assert.equal((await context.request.get(base + '/static/app.js')).status(),404);
       assert.equal((await context.request.get(base + '/static/index.html')).status(),404);
     }
-    console.log('PASS: JavaScript disabled; setup, roles, passwords, chargers, vehicles, meter, schedules, emergency, history, Google and mobile.');
+    console.log('PASS: local live-data script only; setup, roles, passwords, chargers, vehicles, meter, schedules, emergency, history, Google and mobile.');
   } finally { await browser.close(); }
 }
 main().catch(e => { console.error(e.message);process.exitCode=1; });

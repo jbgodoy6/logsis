@@ -1,2 +1,2 @@
-/* Only the authenticated, read-only live document uses this stylesheet. */
-body{padding:4px 3px 18px;overflow-x:hidden}body>.panel{margin-top:14px}body>.plant{padding:0 2px}.plant-intro{margin-top:0}.plant-section-title{gap:12px}.metrics{margin-top:4px}
+/* Live values occupy the normal page layout; no nested documents or reloads. */
+.live-content{display:block;width:100%;min-width:0}.live-status{font-size:10px;color:#6c8499;min-height:20px;margin:0 0 12px}.live-status[data-stale=true]{color:#ad7520;background:#fff4df;border:1px solid #ebd6ac;padding:10px;border-radius:5px}.live-content>.plant{padding:0}.live-content .plant-intro{margin-top:0}

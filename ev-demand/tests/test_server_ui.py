@@ -150,7 +150,8 @@ class ServerUITests(unittest.TestCase):
             self.assertEqual(self.client.get('/ui/' + page).status_code, 403)
         page = self.client.get('/')
         self.assertNotIn('href="/ui/users"', page.text)
-        self.assertNotIn('<script', page.text.lower())
+        self.assertIn('<script src="/static/live.js?v=', page.text)
+        self.assertNotIn('<script>', page.text)
 
     def test_meter_draft_test_and_saved_manual_map(self):
         self.setup_login()

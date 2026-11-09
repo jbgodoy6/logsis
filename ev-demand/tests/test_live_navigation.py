@@ -14,43 +14,39 @@ class LiveNavigationTests(unittest.TestCase):
     def tearDown(self):
         self.client.close();self.app.state.store.db.close()
 
-    def test_only_readonly_content_refreshes(self):
+    def test_live_values_use_json_and_never_reload_a_document(self):
         for page in ['overview','monitor']:
             shell=self.client.get('/ui/'+page)
             self.assertEqual(shell.status_code,200)
             self.assertNotIn('http-equiv="refresh"',shell.text)
-            self.assertIn('width="100%" height="720"',shell.text)
-            self.assertIn('src="/ui-live/'+page+'"',shell.text)
-            self.assertIn('referrerpolicy="same-origin"',shell.text)
+            self.assertNotIn('<iframe',shell.text)
+            self.assertIn('data-live-page="'+page+'"',shell.text)
+            self.assertIn('/static/live.js?v=',shell.text)
+            self.assertIn("script-src 'self'",shell.headers['content-security-policy'])
             self.assertEqual(shell.headers['x-frame-options'],'DENY')
-            child=self.client.get('/ui-live/'+page)
-            self.assertEqual(child.status_code,200)
-            self.assertIn('http-equiv="refresh"',child.text)
-            self.assertNotIn('<aside',child.text)
-            self.assertNotIn('<form',child.text)
-            self.assertNotIn('<script',child.text)
-            self.assertEqual(child.headers['x-frame-options'],'SAMEORIGIN')
-            self.assertIn("frame-ancestors 'self'",child.headers['content-security-policy'])
-            self.assertIn("script-src 'none'",child.headers['content-security-policy'])
+            data=self.client.get('/ui-data/'+page)
+            self.assertEqual(data.status_code,200)
+            self.assertEqual(data.json()['schema_version'],1)
+            self.assertIsInstance(data.json()['nodes'],list)
+            self.assertEqual(data.headers['cache-control'],'no-store')
+            self.assertEqual(data.headers['x-frame-options'],'DENY')
+            self.assertIn('data-dmax-version',shell.text)
 
-    def test_configuration_and_credentials_cannot_be_embedded_or_auto_refreshed(self):
+    def test_configuration_and_credentials_do_not_run_scripts_or_auto_refresh(self):
         for page in ['settings','chargers','profile']:
             response=self.client.get('/ui/'+page)
             self.assertNotIn('http-equiv="refresh"',response.text)
-            self.assertNotIn('class="live-data"',response.text)
+            self.assertNotIn('<script',response.text)
+            self.assertIn("script-src 'none'",response.headers['content-security-policy'])
             self.assertEqual(response.headers['x-frame-options'],'DENY')
-        self.assertEqual(self.client.get('/ui-live/settings').status_code,404)
-        self.assertEqual(self.client.get('/static/live.css').status_code,200)
-        self.assertEqual(self.client.get('/api/state').headers['x-frame-options'],'DENY')
+        self.assertEqual(self.client.get('/ui-data/settings').status_code,404)
 
-    def test_live_view_checks_session_on_every_refresh(self):
+    def test_live_view_checks_session_on_every_poll(self):
         self.client.post('/api/logout')
         for page in ['overview','monitor']:
-            response=self.client.get('/ui-live/'+page)
+            response=self.client.get('/ui-data/'+page)
             self.assertEqual(response.status_code,401)
-            self.assertNotIn('http-equiv="refresh"',response.text)
-            self.assertIn('Entrar novamente',response.text)
-            self.assertNotIn('class="plant"',response.text)
+            self.assertNotIn('nodes',response.json())
             self.assertEqual(response.headers['cache-control'],'no-store')
 
     def test_palette_saved_and_validated_without_resetting_other_settings(self):
@@ -84,9 +80,18 @@ class LiveNavigationTests(unittest.TestCase):
 
     def test_static_styles_use_versioned_urls_on_shell_and_live_document(self):
         from app.server_ui import VERSION
-        for path in ['/ui/monitor','/ui-live/monitor','/ui/settings']:
+        for path in ['/ui/monitor','/ui/overview','/ui/settings']:
             response=self.client.get(path)
             for name in ['style.css','energycube.css','server.css','plant.css']:
                 self.assertIn('/static/'+name+'?v='+VERSION,response.text)
             self.assertEqual(response.headers['cache-control'],'no-store')
-        self.assertIn('/static/live.css?v='+VERSION,self.client.get('/ui-live/monitor').text)
+        self.assertIn('/static/live.css?v='+VERSION,self.client.get('/ui/overview').text)
+
+    def test_dom_contract_escapes_labels_and_rejects_executable_markup(self):
+        from app.live_dom import view_tree
+        tree=view_tree('<p>&lt;script&gt;untrusted&lt;/script&gt;</p>')
+        self.assertEqual(tree[0]['children'],['<script>untrusted</script>'])
+        with self.assertRaises(ValueError):view_tree('<script>alert(1)</script>')
+        tree=view_tree('<a href="/ui/simulation" onclick="bad()">Abrir</a>')
+        self.assertNotIn('onclick',tree[0]['attrs'])
+        self.assertEqual(self.client.get('/static/live.js').status_code,200)

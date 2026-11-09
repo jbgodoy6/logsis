@@ -1,3 +1,7 @@
+# D-Max 0.8.4 · Dados sem piscar e versão visível
+
+Atualiza somente os valores e pontos da curva, sem recarregar documentos. Consulte ATUALIZACAO-SEM-PISCAR.md no pacote ou [o guia](docs/live-v084.md). Atualize sem desinstalar e abra uma aba nova depois.
+
 # D-Max 0.8.3 · Planta ao vivo em largura completa
 
 Leia PLANTA-EM-LARGURA-COMPLETA.md. Atualize sem desinstalar; feche a aba antiga do navegador e abra o D-Max novamente depois da atualização.

@@ -51,7 +51,7 @@ def render_plant(state):
         vehicle = (port['vehicle_name'] or 'Veículo não identificado') if port['plugged'] else 'Sem veículo conectado'
         if not port['online']:
             vehicle = 'Último estado: ' + vehicle
-        result += '<article class="plant-charger ' + tone + (' offline' if not port['online'] else '') + '"><div class="plant-card-top"><div><small>' + esc(charger['id']) + ' · CONECTOR ' + str(port['connector']) + '</small><h4>' + esc(charger['name']) + '</h4></div><span class="plant-badge ' + tone + '">' + esc(port['status']) + '</span></div>'
+        result += '<article data-live-key="' + esc(port['id']) + '" class="plant-charger ' + tone + (' offline' if not port['online'] else '') + '"><div class="plant-card-top"><div><small>' + esc(charger['id']) + ' · CONECTOR ' + str(port['connector']) + '</small><h4>' + esc(charger['name']) + '</h4></div><span class="plant-badge ' + tone + '">' + esc(port['status']) + '</span></div>'
         result += equipment_svg(port['plugged'], port['alarm'], not port['online'], port['charging'], colors)
         result += '<div class="plant-vehicle"><span>' + ('● CABO CONECTADO' if port['plugged'] and port['online'] else 'ESTADO NÃO CONFIRMADO' if not port['online'] else 'PRONTO PARA CONECTAR') + '</span><b>' + esc(vehicle) + '</b></div>'
         result += '<div class="plant-card-data"><div><span>Potência atual</span><b>' + number(port['power_kw']) + ' <small>kW</small></b></div><div><span>Limite aplicado</span><b>' + number(port['limit_kw']) + ' <small>kW</small></b></div><div><span>Energia da sessão</span><b>' + number(port['energy_kwh'], 2) + ' <small>kWh</small></b></div></div>'

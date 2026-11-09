@@ -262,7 +262,7 @@ def create_app(database=None, background=True, recovery_public_key=None, root_pa
                 await asyncio.to_thread(network.close)
             store.db.close()
 
-    app = FastAPI(title='EnergyCube D-Max · Controle de demanda', version='0.8.3', lifespan=lifespan,
+    app = FastAPI(title='EnergyCube D-Max · Controle de demanda', version='0.8.4', lifespan=lifespan,
                   docs_url=None, redoc_url=None, openapi_url=None)
     app.state.store, app.state.engine, app.state.access = store, engine, access
     app.state.recovery = recovery
@@ -309,13 +309,15 @@ def create_app(database=None, background=True, recovery_public_key=None, root_pa
                 return Response('Origem não permitida', status_code=403)
         response = await call_next(request)
         response.headers['X-Content-Type-Options'] = 'nosniff'
-        live_document = web_ui == 'server' and request.url.path in ('/ui-live/overview', '/ui-live/monitor')
-        response.headers['X-Frame-Options'] = 'SAMEORIGIN' if live_document else 'DENY'
+        live_document = response.headers.get('X-DMax-Live') == '1'
+        if 'X-DMax-Live' in response.headers:
+            del response.headers['X-DMax-Live']
+        response.headers['X-Frame-Options'] = 'DENY'
         response.headers['Referrer-Policy'] = 'same-origin'
         response.headers['Content-Security-Policy'] = (
             "default-src 'self'; connect-src 'self'; style-src 'self'; script-src "
-            + ("'none'; " if web_ui == 'server' else "'self'; ") +
-            "img-src 'self' data:; frame-ancestors " + ("'self'" if live_document else "'none'") + "; form-action 'self'; "
+            + ("'none'; " if web_ui == 'server' and not live_document else "'self'; ") +
+            "img-src 'self' data:; frame-ancestors 'none'; form-action 'self'; "
             "base-uri 'none'; object-src 'none'; require-trusted-types-for 'script'; trusted-types 'none'"
         )
         if request.url.path.startswith('/api'):
