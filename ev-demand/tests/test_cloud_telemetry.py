@@ -16,7 +16,7 @@ from tools.plant_demo import fixture
 class TelemetryTests(unittest.TestCase):
     def test_identity_freshness_and_alarms_are_independent(self):
         state=fixture();p=plant_snapshot(state)
-        self.assertEqual(len(p['chargers']),4)
+        self.assertEqual(len(p['chargers']),5)
         self.assertTrue(p['chargers'][1]['connectors'][0]['alarm'])
         self.assertFalse(p['chargers'][2]['online'])
         self.assertIsNone(p['chargers'][2]['connectors'][0]['power_kw'])
@@ -45,7 +45,7 @@ class TelemetryTests(unittest.TestCase):
         document=render_plant(state)
         self.assertNotIn('<script>',document);self.assertNotIn('<img onerror',document)
         self.assertIn('class="plant-charger alarm"',document)
-        self.assertIn('class="plant-charger offline"',document)
+        self.assertIn('class="plant-charger idle offline"',document)
 
     def test_only_latest_snapshot_coalesces_and_ack_cannot_remove_replacement(self):
         store=Store(':memory:')
@@ -117,3 +117,17 @@ class BacklogTests(unittest.TestCase):
         store.acknowledge([r['id'] for r in batch])
         self.assertEqual(store.pending_count(),52)
         store.db.close()
+
+
+class DisplayStateTests(unittest.TestCase):
+    def test_four_states_and_separate_communication(self):
+        state=fixture();p=plant_snapshot(state)
+        self.assertEqual([c['connectors'][0]['display_state'] for c in p['chargers']],[2,3,0,0,1])
+        self.assertFalse(p['chargers'][2]['online'])
+        self.assertTrue(p['chargers'][3]['online'])
+        state['ports'][0]['power_kw']=0
+        state['ports'][0]['manual_pause']=True
+        self.assertEqual(plant_snapshot(state)['chargers'][0]['connectors'][0]['display_state'],1)
+        state['ports'][0]['power_kw']=200
+        state['time']+=20
+        self.assertEqual(plant_snapshot(state)['chargers'][0]['connectors'][0]['display_state'],1)

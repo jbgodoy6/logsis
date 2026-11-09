@@ -2,7 +2,7 @@
   "uid": "dmax-energycube",
   "title": "D-Max · EnergyCube · Planta ao vivo",
   "schemaVersion": 41,
-  "version": 1,
+  "version": 2,
   "tags": [
     "D-Max",
     "EnergyCube"
@@ -27,7 +27,7 @@
       },
       "options": {
         "mode": "html",
-        "content": "<div style=\"display:flex;align-items:center;gap:24px\"><img style=\"background:white;padding:8px;border-radius:8px\" src=\"/public/img/dmax/d-max-logo.png\" alt=\"D-Max by EnergyCube\" width=\"160\"><div><h2 style=\"margin:0 0 8px\">Supervisão de energia · Planta ao vivo</h2><p>Azul: online · Vermelho: alarme · Cinza: offline | Atualização 5 s · Amostras até 1 minuto · Veículo conforme associação no D-Max</p></div></div>"
+        "content": "<div style=\"display:flex;align-items:center;gap:24px\"><img style=\"background:white;padding:8px;border-radius:8px\" src=\"/public/img/dmax/d-max-logo.png\" alt=\"D-Max by EnergyCube\" width=\"160\"><div><h2 style=\"margin:0 0 8px\">Supervisão de energia · Planta ao vivo</h2><p>Carregando · Cabo conectado · Alarme · Cabo desconectado · Cores ajustáveis no editor | Atualização 5 s · Amostras até 1 minuto · Veículo conforme associação no D-Max</p></div></div>"
       }
     },
     {
@@ -76,13 +76,42 @@
                 "value": 1
               },
               {
-                "color": "#f05264",
+                "color": "#239b75",
                 "value": 2
+              },
+              {
+                "color": "#dc4c58",
+                "value": 3
               }
             ]
           }
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "communication_state"
+            },
+            "properties": [
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "#c59138",
+                      "value": null
+                    },
+                    {
+                      "color": "#8296a8",
+                      "value": 1
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
       },
       "options": {
         "inlineEditing": false,
@@ -416,8 +445,8 @@
       "gridPos": {
         "x": 0,
         "y": 12,
-        "w": 8,
-        "h": 12
+        "w": 6,
+        "h": 7
       },
       "targets": [
         {
@@ -426,7 +455,7 @@
             "type": "grafana-postgresql-datasource",
             "uid": "${DS_DMAX}"
           },
-          "rawSql": "select *,case when vehicle_state=1 then '../img/dmax/cable.svg' else '../img/dmax/cable-free.svg' end as cable_path,case when last_plugged then case when online then '' else 'Último estado: ' end || vehicle_name else 'Sem veículo conectado' end as vehicle_label,case when alarm then 'ALARME · '||coalesce(error_code,'Faulted') else 'Sem alarme informado' end as fault_label,'Última atualização: '||to_char(observed_at at time zone 'America/Sao_Paulo','DD/MM HH24:MI:SS') as freshness_label from dmax.v_ports where controller_id=${site:sqlstring} and port_id=${port:sqlstring}",
+          "rawSql": "select *,case when vehicle_state=1 then '../img/dmax/cable.svg' else '../img/dmax/cable-free.svg' end as cable_path,case when online then '../img/dmax/network.svg' else '../img/dmax/network-off.svg' end as network_path,case when equipment_state=3 then case when online then 'Alarme · ' else 'Último alarme · ' end ||coalesce(error_code,'Faulted') when not online then 'Estado não confirmado' when equipment_state=2 then 'Carregando' when equipment_state=1 then 'Cabo conectado · aguardando' else 'Cabo desconectado' end as state_label,case when last_plugged then case when online then '' else 'Último: ' end || vehicle_name else 'Sem veículo conectado' end as vehicle_label,communication_label||' · '||to_char(observed_at at time zone 'America/Sao_Paulo','HH24:MI:SS') as network_note from dmax.v_ports where controller_id=${site:sqlstring} and port_id=${port:sqlstring}",
           "format": "table",
           "rawQuery": true,
           "editorMode": "code"
@@ -451,13 +480,42 @@
                 "value": 1
               },
               {
-                "color": "#f05264",
+                "color": "#239b75",
                 "value": 2
+              },
+              {
+                "color": "#dc4c58",
+                "value": 3
               }
             ]
           }
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "communication_state"
+            },
+            "properties": [
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "#c59138",
+                      "value": null
+                    },
+                    {
+                      "color": "#8296a8",
+                      "value": 1
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
       },
       "options": {
         "inlineEditing": false,
@@ -472,10 +530,10 @@
               "name": "Nome",
               "type": "metric-value",
               "placement": {
-                "left": 14,
-                "top": 5,
-                "width": 400,
-                "height": 30
+                "left": 8,
+                "top": 0,
+                "width": 310,
+                "height": 24
               },
               "constraint": {
                 "horizontal": "left",
@@ -494,7 +552,7 @@
                 "color": {
                   "fixed": "#dce8f4"
                 },
-                "size": 21,
+                "size": 16,
                 "align": "left",
                 "valign": "middle"
               }
@@ -503,10 +561,10 @@
               "name": "Estado",
               "type": "metric-value",
               "placement": {
-                "left": 14,
-                "top": 39,
-                "width": 390,
-                "height": 25
+                "left": 8,
+                "top": 25,
+                "width": 310,
+                "height": 20
               },
               "constraint": {
                 "horizontal": "left",
@@ -520,12 +578,12 @@
               "config": {
                 "text": {
                   "mode": "field",
-                  "field": "status"
+                  "field": "state_label"
                 },
                 "color": {
-                  "fixed": "#dce8f4"
+                  "field": "equipment_state"
                 },
-                "size": 13,
+                "size": 11,
                 "align": "left",
                 "valign": "middle"
               }
@@ -534,10 +592,10 @@
               "name": "Carregador",
               "type": "icon",
               "placement": {
-                "left": 22,
-                "top": 76,
-                "width": 114,
-                "height": 152
+                "left": 8,
+                "top": 52,
+                "width": 34,
+                "height": 56
               },
               "constraint": {
                 "horizontal": "left",
@@ -555,6 +613,12 @@
                 },
                 "fill": {
                   "field": "equipment_state"
+                },
+                "stroke": {
+                  "width": 1.8,
+                  "color": {
+                    "field": "equipment_state"
+                  }
                 }
               }
             },
@@ -562,10 +626,10 @@
               "name": "Cabo",
               "type": "icon",
               "placement": {
-                "left": 128,
-                "top": 116,
-                "width": 75,
-                "height": 95
+                "left": 40,
+                "top": 70,
+                "width": 20,
+                "height": 38
               },
               "constraint": {
                 "horizontal": "left",
@@ -582,12 +646,12 @@
                   "field": "cable_path"
                 },
                 "fill": {
-                  "field": "vehicle_state"
+                  "field": "equipment_state"
                 },
                 "stroke": {
-                  "width": 5,
+                  "width": 2,
                   "color": {
-                    "field": "vehicle_state"
+                    "field": "equipment_state"
                   }
                 }
               }
@@ -596,10 +660,10 @@
               "name": "Veiculo",
               "type": "icon",
               "placement": {
-                "left": 186,
-                "top": 106,
-                "width": 245,
-                "height": 126
+                "left": 60,
+                "top": 74,
+                "width": 70,
+                "height": 30
               },
               "constraint": {
                 "horizontal": "left",
@@ -616,80 +680,24 @@
                   "fixed": "../img/dmax/car.svg"
                 },
                 "fill": {
-                  "field": "vehicle_state"
+                  "field": "equipment_state"
+                },
+                "stroke": {
+                  "width": 1.8,
+                  "color": {
+                    "field": "equipment_state"
+                  }
                 }
-              }
-            },
-            {
-              "name": "VeiculoNome",
-              "type": "metric-value",
-              "placement": {
-                "left": 14,
-                "top": 240,
-                "width": 420,
-                "height": 30
-              },
-              "constraint": {
-                "horizontal": "left",
-                "vertical": "top"
-              },
-              "background": {
-                "color": {
-                  "fixed": "transparent"
-                }
-              },
-              "config": {
-                "text": {
-                  "mode": "field",
-                  "field": "vehicle_label"
-                },
-                "color": {
-                  "fixed": "#dce8f4"
-                },
-                "size": 17,
-                "align": "left",
-                "valign": "middle"
-              }
-            },
-            {
-              "name": "PLabel",
-              "type": "text",
-              "placement": {
-                "left": 14,
-                "top": 285,
-                "width": 140,
-                "height": 25
-              },
-              "constraint": {
-                "horizontal": "left",
-                "vertical": "top"
-              },
-              "background": {
-                "color": {
-                  "fixed": "transparent"
-                }
-              },
-              "config": {
-                "text": {
-                  "mode": "fixed",
-                  "fixed": "POTÊNCIA · kW"
-                },
-                "color": {
-                  "fixed": "#dce8f4"
-                },
-                "size": 11,
-                "align": "left",
-                "valign": "middle"
               }
             },
             {
               "name": "P",
               "type": "metric-value",
               "placement": {
-                "left": 14,
-                "top": 310,
-                "width": 140,
-                "height": 34
+                "left": 156,
+                "top": 52,
+                "width": 160,
+                "height": 38
               },
               "constraint": {
                 "horizontal": "left",
@@ -708,7 +716,69 @@
                 "color": {
                   "fixed": "#dce8f4"
                 },
-                "size": 26,
+                "size": 31,
+                "align": "left",
+                "valign": "middle"
+              }
+            },
+            {
+              "name": "PLabel",
+              "type": "text",
+              "placement": {
+                "left": 156,
+                "top": 91,
+                "width": 160,
+                "height": 18
+              },
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "background": {
+                "color": {
+                  "fixed": "transparent"
+                }
+              },
+              "config": {
+                "text": {
+                  "mode": "fixed",
+                  "fixed": "POTÊNCIA · kW"
+                },
+                "color": {
+                  "fixed": "#dce8f4"
+                },
+                "size": 9,
+                "align": "left",
+                "valign": "middle"
+              }
+            },
+            {
+              "name": "VeiculoNome",
+              "type": "metric-value",
+              "placement": {
+                "left": 8,
+                "top": 116,
+                "width": 310,
+                "height": 22
+              },
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "background": {
+                "color": {
+                  "fixed": "transparent"
+                }
+              },
+              "config": {
+                "text": {
+                  "mode": "field",
+                  "field": "vehicle_label"
+                },
+                "color": {
+                  "fixed": "#dce8f4"
+                },
+                "size": 12,
                 "align": "left",
                 "valign": "middle"
               }
@@ -717,10 +787,10 @@
               "name": "LLabel",
               "type": "text",
               "placement": {
-                "left": 164,
-                "top": 285,
-                "width": 140,
-                "height": 25
+                "left": 8,
+                "top": 143,
+                "width": 100,
+                "height": 17
               },
               "constraint": {
                 "horizontal": "left",
@@ -739,7 +809,7 @@
                 "color": {
                   "fixed": "#dce8f4"
                 },
-                "size": 11,
+                "size": 8,
                 "align": "left",
                 "valign": "middle"
               }
@@ -748,10 +818,10 @@
               "name": "Limite",
               "type": "metric-value",
               "placement": {
-                "left": 164,
-                "top": 310,
-                "width": 140,
-                "height": 34
+                "left": 8,
+                "top": 161,
+                "width": 100,
+                "height": 25
               },
               "constraint": {
                 "horizontal": "left",
@@ -770,7 +840,7 @@
                 "color": {
                   "fixed": "#dce8f4"
                 },
-                "size": 26,
+                "size": 17,
                 "align": "left",
                 "valign": "middle"
               }
@@ -779,10 +849,10 @@
               "name": "ELabel",
               "type": "text",
               "placement": {
-                "left": 314,
-                "top": 285,
-                "width": 140,
-                "height": 25
+                "left": 118,
+                "top": 143,
+                "width": 100,
+                "height": 17
               },
               "constraint": {
                 "horizontal": "left",
@@ -801,7 +871,7 @@
                 "color": {
                   "fixed": "#dce8f4"
                 },
-                "size": 11,
+                "size": 8,
                 "align": "left",
                 "valign": "middle"
               }
@@ -810,10 +880,10 @@
               "name": "Energia",
               "type": "metric-value",
               "placement": {
-                "left": 314,
-                "top": 310,
-                "width": 140,
-                "height": 34
+                "left": 118,
+                "top": 161,
+                "width": 100,
+                "height": 25
               },
               "constraint": {
                 "horizontal": "left",
@@ -832,19 +902,19 @@
                 "color": {
                   "fixed": "#dce8f4"
                 },
-                "size": 26,
+                "size": 17,
                 "align": "left",
                 "valign": "middle"
               }
             },
             {
-              "name": "Erro",
-              "type": "metric-value",
+              "name": "MaxLabel",
+              "type": "text",
               "placement": {
-                "left": 14,
-                "top": 360,
-                "width": 420,
-                "height": 23
+                "left": 228,
+                "top": 143,
+                "width": 100,
+                "height": 17
               },
               "constraint": {
                 "horizontal": "left",
@@ -857,24 +927,24 @@
               },
               "config": {
                 "text": {
-                  "mode": "field",
-                  "field": "fault_label"
+                  "mode": "fixed",
+                  "fixed": "CAPACIDADE · kW"
                 },
                 "color": {
-                  "field": "equipment_state"
+                  "fixed": "#dce8f4"
                 },
-                "size": 12,
+                "size": 8,
                 "align": "left",
                 "valign": "middle"
               }
             },
             {
-              "name": "Qualidade",
+              "name": "Max",
               "type": "metric-value",
               "placement": {
-                "left": 14,
-                "top": 390,
-                "width": 420,
+                "left": 228,
+                "top": 161,
+                "width": 100,
                 "height": 25
               },
               "constraint": {
@@ -889,12 +959,77 @@
               "config": {
                 "text": {
                   "mode": "field",
-                  "field": "freshness_label"
+                  "field": "max_kw"
                 },
                 "color": {
-                  "fixed": "#8a9eb4"
+                  "fixed": "#dce8f4"
                 },
-                "size": 11,
+                "size": 17,
+                "align": "left",
+                "valign": "middle"
+              }
+            },
+            {
+              "name": "Rede",
+              "type": "icon",
+              "placement": {
+                "left": 8,
+                "top": 196,
+                "width": 13,
+                "height": 13
+              },
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "background": {
+                "color": {
+                  "fixed": "transparent"
+                }
+              },
+              "config": {
+                "path": {
+                  "mode": "mapping",
+                  "field": "network_path"
+                },
+                "fill": {
+                  "field": "communication_state"
+                },
+                "stroke": {
+                  "width": 1.6,
+                  "color": {
+                    "field": "communication_state"
+                  }
+                }
+              }
+            },
+            {
+              "name": "Comunicacao",
+              "type": "metric-value",
+              "placement": {
+                "left": 28,
+                "top": 191,
+                "width": 300,
+                "height": 22
+              },
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "background": {
+                "color": {
+                  "fixed": "transparent"
+                }
+              },
+              "config": {
+                "text": {
+                  "mode": "field",
+                  "field": "network_note"
+                },
+                "color": {
+                  "field": "communication_state"
+                },
+                "size": 9,
                 "align": "left",
                 "valign": "middle"
               }
@@ -907,7 +1042,7 @@
       },
       "repeat": "port",
       "repeatDirection": "h",
-      "maxPerRow": 3
+      "maxPerRow": 4
     },
     {
       "id": 6,
@@ -919,9 +1054,9 @@
       },
       "gridPos": {
         "x": 0,
-        "y": 24,
+        "y": 19,
         "w": 24,
-        "h": 8
+        "h": 7
       },
       "targets": [
         {

@@ -1,4 +1,4 @@
-# D-Max 0.8.0 · piloto de planta visual e nuvem
+# D-Max 0.8.1 · piloto de planta visual e nuvem
 
 Nova tela **Planta ao vivo**, integração Supabase/PostgreSQL e dashboard nativo Grafana. [Guia de teste e configuração](docs/nuvem-v080.md). Controle OCPP permanece local. Publicação Supabase e homologação física ainda necessárias.
 

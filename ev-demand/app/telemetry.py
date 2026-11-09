@@ -32,9 +32,12 @@ def plant_snapshot(state):
                 status = port['status']
             if alarm and error == 'NoError':
                 error = 'Faulted'
+            charging = bool(online and plugged and port.get('running') and fresh and not alarm
+                            and (finite(port.get('power_kw')) or 0) > 0.1)
+            display_state = 3 if alarm else 0 if not online else 2 if charging else 1 if plugged else 0
             session = sessions.get(port.get('session_id'), {})
             ports.append(dict(id=port['key'], connector=port['connector'], online=online,
-                plugged=plugged, running=bool(port.get('running')), alarm=alarm, error_code=error,
+                plugged=plugged, charging=charging, display_state=display_state, running=bool(port.get('running')), alarm=alarm, error_code=error,
                 status=status, ocpp_status=port.get('ocpp_status', ''), power_kw=finite(port.get('power_kw')) if fresh else None,
                 telemetry_fresh=fresh, sample_at=port.get('sample_at', 0), limit_kw=finite(port.get('limit_kw')),
                 vehicle_id=vehicle.get('id'), vehicle_name=vehicle.get('name') if plugged else None,

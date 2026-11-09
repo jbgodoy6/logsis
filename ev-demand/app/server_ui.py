@@ -18,7 +18,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from .meter import MEASUREMENTS, FORMATS
 from .plant_view import render_plant
 
-VERSION = '0.8.0'
+VERSION = '0.8.1'
 PAGES = {
     'overview': 'Visão geral', 'chargers': 'Carregadores', 'vehicles': 'Veículos',
     'schedule': 'Horários', 'history': 'Histórico', 'meter': 'Multimedidor',

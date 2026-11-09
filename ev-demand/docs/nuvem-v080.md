@@ -1,4 +1,4 @@
-# D-Max 0.8.0 · Planta visual e integração PostgreSQL/Grafana (piloto)
+# D-Max 0.8.1 · Planta visual e integração PostgreSQL/Grafana (piloto)
 
 Esta entrega atualiza o D-Max local e prepara uma integração testável. Não cria uma
 conta ou serviço na internet automaticamente. Dados reais na nuvem exigem criar o
@@ -7,7 +7,7 @@ prévia HTML usa dados fictícios identificados como demonstração.
 
 ## O que será mostrado
 
-- Carregador e carro desenhados em SVG: azul online, vermelho em alarme, cinza offline.
+- Ícones compactos em SVG. Padrões: verde carregando, azul cabo conectado, vermelho alarme e cinza cabo desconectado; paleta configurável no Grafana. Comunicação indicada separadamente. Veja CORES-E-VISUAL.md.
 - Um cartão por conector (importante em carregadores com duas ou mais saídas).
 - Estado do cabo e veículo associado, potência, limite aplicado e energia da sessão.
 - Carregador offline permanece cadastrado. Potência sem leitura atual aparece como
@@ -22,7 +22,7 @@ prévia HTML usa dados fictícios identificados como demonstração.
 
 ## Começar pela interface local (sem conta na nuvem)
 
-Atualize pelo pacote D-Max-v0.8.0-RaspberryPi-ARM64.zip, usando o instalador existente:
+Atualize pelo pacote D-Max-v0.8.1-RaspberryPi-ARM64.zip, usando o instalador existente:
 extraia fora de /opt/d-max, entre em D-Max-Raspberry e execute
 `sudo bash instalar-raspberry.sh`. O instalador preserva banco, usuários, rede.ini e
 variáveis em /etc/d-max e faz backup da instalação gerenciada. Não desinstale e não

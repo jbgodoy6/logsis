@@ -34,19 +34,27 @@ class PostgresContractTests(unittest.TestCase):
     def record(self,kind,payload):return dict(id=secrets.token_hex(16),ts=time.time(),kind=kind,payload=payload)
 
     def test_catalog_offline_new_charger_stale_data_and_replay(self):
-        state=plant_snapshot(fixture());record=self.record('plant_state',state)
+        state=plant_snapshot(fixture())
+        # The new dashboard remains compatible with unmodified 0.8.0 payloads.
+        for charger in state['chargers']:
+            for port in charger['connectors']:
+                port.pop('charging',None);port.pop('display_state',None)
+        record=self.record('plant_state',state)
         self.ingest([record]);self.ingest([record])
-        self.assertEqual(self.sql("select count(*) from dmax.v_ports where controller_id='"+self.cid+"';"),'4')
+        self.assertEqual(self.sql("select count(*) from dmax.v_ports where controller_id='"+self.cid+"';"),'5')
+        self.assertEqual(self.sql("select string_agg(equipment_state::text,',' order by charger_id) from dmax.v_ports where controller_id='"+self.cid+"';"),'2,3,0,0,1')
         self.assertEqual(self.sql("select status from dmax.v_ports where controller_id='"+self.cid+"' and charger_id='EC-03';"),'Offline')
+        self.assertEqual(self.sql("select communication_label from dmax.v_ports where controller_id='"+self.cid+"' and charger_id='EC-03';"),'Sem comunicação OCPP')
         newer=json.loads(json.dumps(state));newer['observed_at']+=1
-        extra=json.loads(json.dumps(newer['chargers'][0]));extra['id']='EC-05';extra['name']='Novo'
-        extra['connectors'][0].update(id='EC-05:1',connector=1)
+        extra=json.loads(json.dumps(newer['chargers'][0]));extra['id']='EC-06';extra['name']='Novo'
+        extra['connectors'][0].update(id='EC-06:1',connector=1)
         newer['chargers'].append(extra)
         self.ingest([self.record('plant_state',newer)])
         self.ingest([record])
-        self.assertEqual(self.sql("select count(*) from dmax.v_ports where controller_id='"+self.cid+"';"),'5')
+        self.assertEqual(self.sql("select count(*) from dmax.v_ports where controller_id='"+self.cid+"';"),'6')
         self.sql("update dmax.controllers set last_contact_at=now()-interval '10 minutes' where id='"+self.cid+"';")
         self.assertEqual(self.sql("select count(*) from dmax.v_ports where controller_id='"+self.cid+"' and power_kw is not null;"),'0')
+        self.assertEqual(self.sql("select bool_and(communication_label='Controlador sem comunicação com a nuvem') from dmax.v_ports where controller_id='"+self.cid+"';"),'t')
 
     def test_auth_revocation_readonly_and_minute_idempotence(self):
         r=self.record('minute',dict(source='site',minute_utc=int(time.time()//60)*60,avg_kw=700,min_kw=650,max_kw=800,energy_kwh=1))

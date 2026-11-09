@@ -10,7 +10,7 @@ import re
 import zipfile
 
 
-VERSION = '0.8.0'
+VERSION = '0.8.1'
 STATIC = ('style.css', 'energycube.css', 'server.css', 'plant.css', 'd-max-logo.png', 'energycube-logo.png')
 PYTHON = (
     '__init__.py', 'access.py', 'control.py', 'directory.py', 'engine.py', 'main.py',

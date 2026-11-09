@@ -252,7 +252,7 @@ def create_app(database=None, background=True, recovery_public_key=None, root_pa
                 await asyncio.to_thread(network.close)
             store.db.close()
 
-    app = FastAPI(title='EnergyCube D-Max · Controle de demanda', version='0.8.0', lifespan=lifespan,
+    app = FastAPI(title='EnergyCube D-Max · Controle de demanda', version='0.8.1', lifespan=lifespan,
                   docs_url=None, redoc_url=None, openapi_url=None)
     app.state.store, app.state.engine, app.state.access = store, engine, access
     app.state.recovery = recovery

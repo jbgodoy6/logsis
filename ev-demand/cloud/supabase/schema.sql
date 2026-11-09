@@ -96,14 +96,17 @@ create or replace view dmax.v_ports as
  case when not s.controller_online then 'Dados desatualizados'
   when not coalesce((port->>'online')::boolean,false) then 'Offline' else port->>'status' end as status,
  coalesce((port->>'alarm')::boolean,false) as alarm,
- case when coalesce((port->>'alarm')::boolean,false) then 2 when not s.controller_online or not coalesce((port->>'online')::boolean,false) then 0 else 1 end as equipment_state,
+ case when coalesce((port->>'alarm')::boolean,false) then 3 when not s.controller_online or not coalesce((port->>'online')::boolean,false) then 0 when s.controller_online and coalesce((port->>'online')::boolean,false) and coalesce((port->>'plugged')::boolean,false) and coalesce((port->>'running')::boolean,false) and coalesce((port->>'telemetry_fresh')::boolean,false) and coalesce((port->>'power_kw')::double precision,0)>0.1 and not coalesce((port->>'alarm')::boolean,false) then 2 when coalesce((port->>'plugged')::boolean,false) then 1 else 0 end as equipment_state,
  case when s.controller_online and coalesce((port->>'online')::boolean,false) and coalesce((port->>'plugged')::boolean,false) then 1 else 0 end as vehicle_state,
  coalesce(port->>'vehicle_name','Veículo não identificado') as vehicle_name,port->>'vehicle_id' as vehicle_id,
  (port->>'plugged')::boolean as last_plugged,port->>'error_code' as error_code,
  case when s.controller_online and (port->>'online')::boolean then (port->>'power_kw')::double precision end as power_kw,
  (port->>'limit_kw')::double precision as applied_kw,(port->>'energy_kwh')::double precision as energy_kwh,
  (port->>'soc')::double precision as soc,to_timestamp((port->>'sample_at')::double precision) as sampled_at,
- c.last_contact_at,c.observed_at
+ c.last_contact_at,c.observed_at,
+ (s.controller_online and coalesce((port->>'online')::boolean,false) and coalesce((port->>'plugged')::boolean,false) and coalesce((port->>'running')::boolean,false) and coalesce((port->>'telemetry_fresh')::boolean,false) and coalesce((port->>'power_kw')::double precision,0)>0.1 and not coalesce((port->>'alarm')::boolean,false)) as charging,
+ case when not s.controller_online then 'Controlador sem comunicação com a nuvem' when not coalesce((port->>'online')::boolean,false) then 'Sem comunicação OCPP' else 'Comunicação normal' end as communication_label,
+ case when s.controller_online and coalesce((port->>'online')::boolean,false) then 1 else 0 end as communication_state
  from dmax.controllers c join dmax.v_sites s on s.controller_id=c.id
  cross join lateral jsonb_array_elements(coalesce(c.plant->'chargers','[]')) charger
  join dmax.chargers ch on ch.controller_id=c.id and ch.id=charger->>'id' and ch.registered

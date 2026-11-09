@@ -53,6 +53,7 @@ providers:
   - name: D-Max
     folder: EnergyCube
     type: file
+    allowUiUpdates: true
     options:
       path: /var/lib/grafana/dmax-dashboards
 ''')

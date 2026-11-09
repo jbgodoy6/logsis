@@ -1,0 +1,12 @@
+/** Verify that operator-selected palette persists and recolors Canvas drawings. Isolated demo only. */
+const assert=require('node:assert/strict');const fs=require('fs');const path=require('path');const {chromium}=require('playwright');
+(async()=>{const b=await chromium.launch({executablePath:'/usr/bin/chromium',headless:true,args:['--no-sandbox']});let original;let page;
+try{page=await b.newPage({viewport:{width:1440,height:1000}});const base=process.env.DMAX_GRAFANA_URL||'http://127.0.0.1:3000';await page.goto(base+'/login');await page.getByRole('textbox',{name:/email or username/i}).fill('admin');await page.getByRole('textbox',{name:/password/i}).fill(fs.readFileSync(process.env.DMAX_GRAFANA_PASSWORD_FILE||path.join(__dirname,'../cloud/.demo/grafana-password'),'utf8'));await page.getByRole('button',{name:/log in/i}).click();await page.waitForTimeout(1000);
+const get=async()=>await (await page.request.get(base+'/api/dashboards/uid/dmax-energycube')).json();
+const save=async dashboard=>{const response=await page.request.post(base+'/api/dashboards/db',{data:{dashboard,overwrite:true,folderUid:original.meta.folderUid}});assert.equal(response.status(),200,await response.text())};
+original=await get();const updated=structuredClone(original.dashboard);const panel=updated.panels.find(p=>p.id===5);assert.equal(panel.maxPerRow,4);assert.equal(panel.gridPos.h,7);const steps=panel.fieldConfig.defaults.thresholds.steps;assert.equal(steps.length,4);steps.find(s=>s.value===2).color='#c18cff';await save(updated);
+await page.goto(base+'/d/dmax-energycube?orgId=1&kiosk');await page.waitForTimeout(6000);await page.reload();await page.waitForTimeout(6000);assert.equal((await get()).dashboard.panels.find(p=>p.id===5).fieldConfig.defaults.thresholds.steps.find(s=>s.value===2).color,'#c18cff');
+assert(await page.locator('svg').evaluateAll(nodes=>nodes.some(node=>getComputedStyle(node).stroke==='rgb(193, 140, 255)')),'Custom charging color did not reach the outline SVG');
+console.log('Palette saved, persisted after reload, and applied to SVGs; 4 cards/row, height 7: OK');
+await save(original.dashboard);original=null;
+}finally{if(original && page){await page.request.post((process.env.DMAX_GRAFANA_URL||'http://127.0.0.1:3000')+'/api/dashboards/db',{data:{dashboard:original.dashboard,overwrite:true,folderUid:original.meta.folderUid}})}await b.close()}})().catch(e=>{console.error(e);process.exit(1)});
