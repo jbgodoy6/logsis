@@ -1,6 +1,6 @@
 """Accessible SVG plant view; works without JavaScript or external assets."""
 import html
-from .telemetry import plant_snapshot
+from .telemetry import plant_snapshot, display_colors
 
 
 def esc(value):
@@ -11,8 +11,9 @@ def number(value, places=1):
     return f'{value:,.{places}f}'.replace(',', '_').replace('.', ',').replace('_', '.') if isinstance(value, (float, int)) else '—'
 
 
-def equipment_svg(plugged=False, alarm=False, offline=False, charging=False):
-    tone = '#dc4c58' if alarm else '#7e8c9c' if offline or not plugged else '#239b75' if charging else '#338bd1'
+def equipment_svg(plugged=False, alarm=False, offline=False, charging=False, palette=None):
+    colors = display_colors(palette)
+    tone = colors['alarm'] if alarm else colors['disconnected'] if offline or not plugged else colors['charging'] if charging else colors['connected']
     car_tone = tone if plugged else '#aeb9c5'
     car_opacity = '1' if plugged else '.4'
     cable_end = 'L75 68' if plugged else 'L65 76'
@@ -28,6 +29,7 @@ def meter_svg():
 
 def render_plant(state):
     plant = plant_snapshot(state)
+    colors = display_colors(state['settings'].get('display_colors'))
     ports = [(c, port) for c in plant['chargers'] for port in c['connectors']]
     alarms = sum(port['alarm'] for _, port in ports)
     online = sum(c['online'] for c in plant['chargers'])
@@ -50,7 +52,7 @@ def render_plant(state):
         if not port['online']:
             vehicle = 'Último estado: ' + vehicle
         result += '<article class="plant-charger ' + tone + (' offline' if not port['online'] else '') + '"><div class="plant-card-top"><div><small>' + esc(charger['id']) + ' · CONECTOR ' + str(port['connector']) + '</small><h4>' + esc(charger['name']) + '</h4></div><span class="plant-badge ' + tone + '">' + esc(port['status']) + '</span></div>'
-        result += equipment_svg(port['plugged'], port['alarm'], not port['online'], port['charging'])
+        result += equipment_svg(port['plugged'], port['alarm'], not port['online'], port['charging'], colors)
         result += '<div class="plant-vehicle"><span>' + ('● CABO CONECTADO' if port['plugged'] and port['online'] else 'ESTADO NÃO CONFIRMADO' if not port['online'] else 'PRONTO PARA CONECTAR') + '</span><b>' + esc(vehicle) + '</b></div>'
         result += '<div class="plant-card-data"><div><span>Potência atual</span><b>' + number(port['power_kw']) + ' <small>kW</small></b></div><div><span>Limite aplicado</span><b>' + number(port['limit_kw']) + ' <small>kW</small></b></div><div><span>Energia da sessão</span><b>' + number(port['energy_kwh'], 2) + ' <small>kWh</small></b></div></div>'
         result += '<div class="plant-card-foot"><span class="plant-network ' + ('normal' if port['online'] else 'lost') + '">' + ('● Online · ' if port['online'] else '⊘ Sem comunicação OCPP · ') + 'Capacidade ' + number(charger['max_kw'], 0) + ' kW</span><span>' + ('Erro: ' + esc(port['error_code']) if port['alarm'] else 'Leitura atual' if port['telemetry_fresh'] else 'Sem leitura atual') + '</span></div></article>'

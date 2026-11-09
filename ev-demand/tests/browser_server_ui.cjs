@@ -46,7 +46,7 @@ async function main() {
     await go('simulation');
     await submit('demo');
     await go('overview');
-    await page.waitForSelector('.server-chart');
+    await page.frameLocator('.live-data').locator('.server-chart').waitFor();
     await page.waitForTimeout(2200);
     await capture('painel-server-v050.png');
     await go('settings');
@@ -87,7 +87,8 @@ async function main() {
     assert.ok((await page.locator('.charger-grid').innerText()).includes('Estação de validação'));
     const state = await (await context.request.get(base + '/api/state')).json();
     await go('monitor');
-    assert.equal(await page.locator('.charger-card').count(),state.ports.length);
+    await page.frameLocator('.live-data').locator('.plant-charger').first().waitFor();
+    assert.equal(await page.frameLocator('.live-data').locator('.plant-charger').count(),state.ports.length);
     await go('chargers');
     const port = state.ports.find(p => p.connected);
     const card = page.locator('.charger-card').filter({has:page.locator('small').filter({hasText:port.key})}).first();

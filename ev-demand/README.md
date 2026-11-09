@@ -1,3 +1,7 @@
+# D-Max 0.8.2 · Navegação estável e paleta local
+
+[Correção e atualização](docs/navigation-v082.md). Os dados ao vivo se atualizam mantendo o menu estável. A paleta local pode ser alterada em Configurações.
+
 # D-Max 0.8.1 · piloto de planta visual e nuvem
 
 Nova tela **Planta ao vivo**, integração Supabase/PostgreSQL e dashboard nativo Grafana. [Guia de teste e configuração](docs/nuvem-v080.md). Controle OCPP permanece local. Publicação Supabase e homologação física ainda necessárias.

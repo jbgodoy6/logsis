@@ -1,7 +1,18 @@
 """Explicit, credential-free cloud contract shared with the local plant view."""
 import json
 import math
+import re
 import time
+
+
+DEFAULT_COLORS = {'charging': '#239b75', 'connected': '#338bd1', 'alarm': '#dc4c58',
+                  'disconnected': '#8395a8', 'communication': '#c59138'}
+
+
+def display_colors(value=None):
+    value = value if isinstance(value, dict) else {}
+    return {key: color.lower() if isinstance(color := value.get(key), str) and re.fullmatch(r'#[0-9a-fA-F]{6}', color)
+            else default for key, default in DEFAULT_COLORS.items()}
 
 
 def finite(value):

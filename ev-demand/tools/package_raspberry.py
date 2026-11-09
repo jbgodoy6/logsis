@@ -5,11 +5,11 @@ from pathlib import Path
 import re
 import zipfile
 
-VERSION = '0.8.1'
+VERSION = '0.8.2'
 PYTHON = ('__init__.py', 'access.py', 'control.py', 'directory.py', 'engine.py', 'main.py',
           'meter.py', 'network.py', 'ocpp_server.py', 'recovery.py', 'root_auth.py',
           'security.py', 'server_ui.py', 'services.py', 'store.py', 'supervision.py', 'plant_view.py', 'telemetry.py')
-STATIC = ('style.css', 'energycube.css', 'server.css', 'plant.css', 'd-max-logo.png', 'energycube-logo.png')
+STATIC = ('style.css', 'energycube.css', 'server.css', 'plant.css', 'live.css', 'd-max-logo.png', 'energycube-logo.png')
 
 
 def package(root, wheels, output):
@@ -36,6 +36,7 @@ def package(root, wheels, output):
     include(root / 'docs/raspberry.md', 'LEIA-ME.txt')
     include(root / 'docs/nuvem-v080.md', 'NUVEM-E-GRAFANA.md')
     include(root / 'docs/visual-v081.md', 'CORES-E-VISUAL.md')
+    include(root / 'docs/navigation-v082.md', 'NAVEGACAO-E-CORES.md')
     include(root / 'docs/raspberry-acesso.md', 'ACESSO-RAIZ.txt')
     include(root / 'docs/raspberry-ocpp.md', 'OCPP-E-MULTIMEDIDOR.txt')
     lock = (root / 'requirements.lock').read_text()

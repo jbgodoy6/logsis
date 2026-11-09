@@ -18,7 +18,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from .meter import MEASUREMENTS, FORMATS
 from .plant_view import render_plant
 
-VERSION = '0.8.1'
+VERSION = '0.8.2'
 PAGES = {
     'overview': 'Visão geral', 'chargers': 'Carregadores', 'vehicles': 'Veículos',
     'schedule': 'Horários', 'history': 'Histórico', 'meter': 'Multimedidor',
@@ -139,7 +139,7 @@ def install(app):
                 response.headers.append('set-cookie', cookie)
             return response
 
-        def document(self, content, title='D-Max', refresh=False):
+        def document(self, content, title='D-Max', refresh=False, live=False):
             update = '<meta http-equiv="refresh" content="2">' if refresh else ''
             return ('<!doctype html><html lang="pt-BR"><head><meta charset="utf-8">'
                     '<meta name="viewport" content="width=device-width,initial-scale=1">'
@@ -149,7 +149,9 @@ def install(app):
                     '<link rel="stylesheet" href="/static/energycube.css">'
                     '<link rel="stylesheet" href="/static/server.css">'
                     '<link rel="stylesheet" href="/static/plant.css">'
-                    '</head><body>' + content + '</body></html>')
+                    + ('<link rel="stylesheet" href="/ui-colors.css">' if self.user and not self.user['must_change'] else '')
+                    + ('<link rel="stylesheet" href="/static/live.css">' if live else '')
+                    + '</head><body>' + content + '</body></html>')
 
         async def render(self, page='overview', message='', diagnostic=None, status=200, recovery_data=None):
             if page not in PAGES:
@@ -197,7 +199,11 @@ def install(app):
             if not allowed.get(page, True):
                 page, note, status = 'overview', '<div class="notice">Acesso não permitido para seu perfil.</div>', 403
             self.state = await self.api('GET', '/api/state')
-            if page == 'overview':
+            if page in ('overview', 'monitor') and status == 200:
+                content = ('<iframe class="live-data" title="' + esc(PAGES[page]) + ' · dados ao vivo" src="/ui-live/' + page
+                           + '" referrerpolicy="same-origin"></iframe>'
+                           '<p class="hint">Os dados se atualizam automaticamente; o menu permanece disponível.</p>')
+            elif page == 'overview':
                 content = self.overview()
             elif page == 'chargers':
                 content = self.chargers()
@@ -240,7 +246,7 @@ def install(app):
                     '<main><header><div><div class="eyebrow">' + esc(self.state['settings']['site_name']) + '</div>'
                     '<h1>' + esc(PAGES[page]) + '</h1></div><a class="secondary" href="/ui/' + page + '">Atualizar</a></header>'
                     + note + content + '<footer>EnergyCube D-Max · v' + VERSION + ' · Controle local</footer></main></div>')
-            refresh = page in ('overview', 'monitor') and status == 200
+            refresh = False  # Only the read-only live data document refreshes.
             return self.finish(HTMLResponse(self.document(body, PAGES[page], refresh), status_code=status))
 
         @property
@@ -414,6 +420,11 @@ def install(app):
                     fields += field('Nome', 'circuit_name_' + str(i), circuit['name'], required='')
                     fields += field('Limite · kW', 'circuit_limit_' + str(i), circuit['limit_kw'], 'number', step='any', required='') + '</fieldset>'
             content = panel('Configuração', self.form('settings', fields, page='settings'))
+            colors = ''.join(field(label, 'color_' + key, s['display_colors'][key], 'color', required='')
+                for key, label in [('charging', 'Carregando'), ('connected', 'Cabo conectado'), ('alarm', 'Alarme'),
+                                   ('disconnected', 'Cabo desconectado / estado não confirmado'), ('communication', 'Sem comunicação')])
+            content += panel('Cores da planta local', '<p>Escolha as cores nos seletores abaixo. Elas alteram a página local do D-Max; no Grafana, use os limiares do cartão.</p>'
+                + self.form('appearance', colors, 'Salvar cores', page='settings'))
             if self.technical:
                 content += panel('Integração com a nuvem', '<p>Identificador deste controlador: <code>' + esc(self.state['cloud']['controller_id']) + '</code></p><p>' + esc(self.state['cloud']['status']) + '</p><p>Registros pendentes: ' + str(self.state['cloud']['pending']) + '</p><p>Token por equipamento: EV_CLOUD_TOKEN no ambiente do serviço. Nunca use a senha raiz como token.</p>')
             if self.technical:
@@ -505,6 +516,25 @@ def install(app):
         def __init__(self, message, status=422):
             self.message, self.status = message, status
 
+    async def live_page(request: Request, page):
+        console = Console(request)
+        if page not in ('overview', 'monitor'):
+            return HTMLResponse('Página não encontrada', status_code=404)
+        if not console.user or console.user['must_change']:
+            return console.finish(HTMLResponse(console.document(
+                '<p>Sessão encerrada ou troca de senha necessária. <a target="_top" href="/">Entrar novamente</a></p>',
+                live=True), status_code=401))
+        try:
+            console.state = await console.api('GET', '/api/state')
+            content = console.overview() if page == 'overview' else render_plant(console.state)
+            # These read-only views contain no forms. Their links leave the live frame.
+            content = content.replace('<a ', '<a target="_top" ')
+            return console.finish(HTMLResponse(console.document(content, PAGES[page], refresh=True, live=True)))
+        except UIError as exc:
+            return console.finish(HTMLResponse(console.document(
+                '<p>' + esc(exc.message) + ' <a target="_top" href="/">Voltar ao D-Max</a></p>',
+                live=True), status_code=exc.status))
+
     async def get_page(request: Request, page='overview'):
         console = Console(request)
         message = 'Alteração aplicada.' if request.query_params.get('notice') == 'saved' else ''
@@ -556,7 +586,10 @@ def install(app):
                     raise UIError('Faça login e conclua a troca de senha antes de operar.', 401)
                 state = await api('GET', '/api/state')
                 settings = state['settings']
-                if action in ('demo', 'load'):
+                if action == 'appearance':
+                    await api('PUT', '/api/appearance', {key: value('color_' + key) for key in
+                        ('charging', 'connected', 'alarm', 'disconnected', 'communication')})
+                elif action in ('demo', 'load'):
                     await api('POST', '/api/demo' if action == 'demo' else '/api/simulation',
                               {} if action == 'demo' else {'other_kw': float(value('other_kw'))})
                 elif action in ('port', 'learn'):
@@ -664,6 +697,7 @@ def install(app):
         except (ValueError, UnicodeDecodeError, OverflowError):
             return await console.render('overview', 'Confira os valores do formulário.', status=422)
 
+    app.add_api_route('/ui-live/{page}', live_page, methods=['GET'], response_class=HTMLResponse)
     app.add_api_route('/', get_page, methods=['GET'], response_class=HTMLResponse)
     app.add_api_route('/ui/{page}', get_page, methods=['GET'], response_class=HTMLResponse)
     app.add_api_route('/ui/post', post, methods=['POST'], response_class=HTMLResponse)

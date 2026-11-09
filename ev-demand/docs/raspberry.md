@@ -1,3 +1,7 @@
+# D-Max 0.8.2 · Correção do menu e cores locais
+
+Veja NAVEGACAO-E-CORES.md. O menu não recarrega com os dados. Escolha a paleta em Configurações > Cores da planta local. Atualize sem desinstalar.
+
 # D-Max 0.8.1 · atualização da planta e nuvem
 
 Abra **Planta ao vivo** no menu após atualizar. Veja NUVEM-E-GRAFANA.md para o novo painel e a integração com Supabase/Grafana. Atualize preservando o banco e /etc/d-max; não desinstale para atualizar.

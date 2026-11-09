@@ -20,6 +20,7 @@ from .ocpp_server import Socket, Station
 from .services import cloud_loop, meter_loop
 from .meter import Meter, MEASUREMENTS, read_meter
 from .store import Store, password_hash, password_matches
+from .telemetry import DEFAULT_COLORS, display_colors
 from .access import Access, TECHNICAL, MANAGERS
 from .directory import directory_loop, synchronize, validate_config
 from .security import AttemptLimiter, same_origin, valid_host
@@ -112,6 +113,14 @@ class Circuit(Model):
     limit_kw: float = Field(gt=0)
 
 
+class DisplayColors(Model):
+    charging: str = Field(default=DEFAULT_COLORS['charging'], pattern=r'^#[0-9a-fA-F]{6}$')
+    connected: str = Field(default=DEFAULT_COLORS['connected'], pattern=r'^#[0-9a-fA-F]{6}$')
+    alarm: str = Field(default=DEFAULT_COLORS['alarm'], pattern=r'^#[0-9a-fA-F]{6}$')
+    disconnected: str = Field(default=DEFAULT_COLORS['disconnected'], pattern=r'^#[0-9a-fA-F]{6}$')
+    communication: str = Field(default=DEFAULT_COLORS['communication'], pattern=r'^#[0-9a-fA-F]{6}$')
+
+
 class Settings(Model):
     site_name: str = Field(min_length=1, max_length=100)
     mode: str
@@ -127,6 +136,7 @@ class Settings(Model):
     meter: Meter
     cloud_url: str = Field(default='', max_length=1000)
     retain_days: int = Field(default=7, ge=1, le=30)
+    display_colors: DisplayColors | None = None
 
     @model_validator(mode='after')
     def validate_settings(self):
@@ -252,7 +262,7 @@ def create_app(database=None, background=True, recovery_public_key=None, root_pa
                 await asyncio.to_thread(network.close)
             store.db.close()
 
-    app = FastAPI(title='EnergyCube D-Max · Controle de demanda', version='0.8.1', lifespan=lifespan,
+    app = FastAPI(title='EnergyCube D-Max · Controle de demanda', version='0.8.2', lifespan=lifespan,
                   docs_url=None, redoc_url=None, openapi_url=None)
     app.state.store, app.state.engine, app.state.access = store, engine, access
     app.state.recovery = recovery
@@ -299,12 +309,13 @@ def create_app(database=None, background=True, recovery_public_key=None, root_pa
                 return Response('Origem não permitida', status_code=403)
         response = await call_next(request)
         response.headers['X-Content-Type-Options'] = 'nosniff'
-        response.headers['X-Frame-Options'] = 'DENY'
+        live_document = web_ui == 'server' and request.url.path in ('/ui-live/overview', '/ui-live/monitor')
+        response.headers['X-Frame-Options'] = 'SAMEORIGIN' if live_document else 'DENY'
         response.headers['Referrer-Policy'] = 'same-origin'
         response.headers['Content-Security-Policy'] = (
             "default-src 'self'; connect-src 'self'; style-src 'self'; script-src "
             + ("'none'; " if web_ui == 'server' else "'self'; ") +
-            "img-src 'self' data:; frame-ancestors 'none'; form-action 'self'; "
+            "img-src 'self' data:; frame-ancestors " + ("'self'" if live_document else "'none'") + "; form-action 'self'; "
             "base-uri 'none'; object-src 'none'; require-trusted-types-for 'script'; trusted-types 'none'"
         )
         if request.url.path.startswith('/api'):
@@ -495,6 +506,20 @@ def create_app(database=None, background=True, recovery_public_key=None, root_pa
         ok = await synchronize(access)
         return {'ok': ok, 'status': access.status}
 
+    @app.put('/api/appearance')
+    async def appearance(data: DisplayColors, u=Depends(administrator)):
+        settings = store.settings()
+        settings['display_colors'] = data.model_dump()
+        store.save_settings(settings)
+        store.record('appearance_changed', {'actor': u['name']})
+        return {'ok': True}
+
+    @app.get('/ui-colors.css')
+    async def appearance_css(u=Depends(user)):
+        palette = display_colors(store.settings().get('display_colors'))
+        css = ':root{' + ''.join('--plant-' + key + ':' + color + ';' for key, color in palette.items()) + '}'
+        return Response(css, media_type='text/css', headers={'Cache-Control': 'no-store'})
+
     @app.get('/api/history')
     async def history(u=Depends(user)):
         return store.history()
@@ -502,8 +527,10 @@ def create_app(database=None, background=True, recovery_public_key=None, root_pa
     @app.put('/api/settings')
     async def settings(data: Settings, u=Depends(administrator)):
         current = store.settings()
+        if data.display_colors is None:
+            data.display_colors = DisplayColors(**current['display_colors'])
         if u['role'] == 'admin':
-            allowed = {'site_name', 'limit_kw', 'schedules', 'blocked_policy'}
+            allowed = {'site_name', 'limit_kw', 'schedules', 'blocked_policy', 'display_colors'}
             submitted = data.model_dump()
             if any(submitted.get(k) != value for k, value in current.items() if k not in allowed):
                 raise HTTPException(403, 'Administrador não altera multimedidor, teto técnico, circuitos ou parâmetros técnicos')

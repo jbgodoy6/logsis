@@ -8,6 +8,7 @@ import sqlite3
 import time
 import uuid
 from .meter import DEFAULT_METER, normalize_meter
+from .telemetry import display_colors
 
 
 DEFAULT_SETTINGS = {
@@ -75,6 +76,7 @@ class Store:
         data = json.loads(self.db.execute('SELECT payload FROM settings WHERE id=1').fetchone()[0])
         data['meter'] = normalize_meter(data['meter'])
         data.setdefault('technical_limit_kw', data['limit_kw'])
+        data['display_colors'] = display_colors(data.get('display_colors'))
         return data
 
     def save_settings(self, data):
