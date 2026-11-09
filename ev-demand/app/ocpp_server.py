@@ -52,6 +52,12 @@ class Station(ChargePoint):
     @on(Action.status_notification)
     async def status(self, connector_id, error_code, status, **kwargs):
         p = self.port(connector_id)
+        affected = [p] if p else [q for q in self.engine.ports.values() if q['charger'] == self.id] if connector_id == 0 else []
+        for target in affected:
+            target['error_code'] = error_code
+            if connector_id == 0:
+                target['station_alarm'] = status == 'Faulted' or error_code != 'NoError'
+                target['station_error_code'] = error_code
         if p:
             p['ocpp_status'] = status
             if status == 'Available':

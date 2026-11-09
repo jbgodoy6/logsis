@@ -1,3 +1,7 @@
+# D-Max 0.8.0 · atualização da planta e nuvem
+
+Abra **Planta ao vivo** no menu após atualizar. Veja NUVEM-E-GRAFANA.md para o novo painel e a integração com Supabase/Grafana. Atualize preservando o banco e /etc/d-max; não desinstale para atualizar.
+
 # D-Max 0.7.2 — Raspberry Pi 4, servidor OCPP e controle de demanda
 
 Use Raspberry Pi OS Lite 64 bits (ARM64). São suportados CPython 3.11 a 3.14;

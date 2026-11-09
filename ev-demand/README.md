@@ -1,3 +1,7 @@
+# D-Max 0.8.0 · piloto de planta visual e nuvem
+
+Nova tela **Planta ao vivo**, integração Supabase/PostgreSQL e dashboard nativo Grafana. [Guia de teste e configuração](docs/nuvem-v080.md). Controle OCPP permanece local. Publicação Supabase e homologação física ainda necessárias.
+
 # EnergyCube D-Max — Controlador de demanda · v0.7.2
 
 **Raspberry Pi 4 · 0.7.2:** pacote Linux ARM64 com dependências offline para Python 3.11–3.14, servidor OCPP 1.6J, início automático, watchdog do processo, preparação do watchdog físico e desinstalador. [Instalar no Raspberry](docs/raspberry.md) · [OCPP e multimedidor](docs/raspberry-ocpp.md) · [Validação](docs/release-v072-raspberry.md). São 136 testes em Python 3.11 e 3.13 no Linux x86-64; boot/watchdog físico ainda exigem validação no Raspberry real. O Windows publicado continua na 0.7.1.

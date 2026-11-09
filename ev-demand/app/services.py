@@ -7,6 +7,7 @@ import time
 
 import httpx
 from .meter import read_meter, read_modbus_power
+from .telemetry import plant_snapshot, state_signature, export_record
 
 
 async def meter_loop(engine):
@@ -43,32 +44,47 @@ async def meter_loop(engine):
 
 
 async def cloud_loop(engine):
+    signature, sampled, next_send, next_cleanup = None, 0.0, 0.0, 0.0
+    failures = 0
     while True:
+        now = time.monotonic()
         settings = engine.store.settings()
-        url = settings['cloud_url']
-        token = os.getenv('EV_CLOUD_TOKEN')
-        if url:
-            if not token:
-                engine.cloud['status'] = 'Pendente: configurar EV_CLOUD_TOKEN'
-            else:
-                try:
-                    records = engine.store.pending()
-                    if records:
+        url, token = settings['cloud_url'], os.getenv('EV_CLOUD_TOKEN')
+        if now >= next_cleanup:
+            engine.store.cleanup()
+            next_cleanup = now + 60
+        if url and token:
+            plant = plant_snapshot(engine.snapshot())
+            changed = state_signature(plant)
+            if changed != signature or now - sampled >= 60:
+                engine.store.queue_plant(plant)
+                signature, sampled = changed, now
+            if now >= next_send:
+                records = engine.store.pending()
+                if records:
+                    try:
                         async with httpx.AsyncClient(timeout=20, follow_redirects=False) as client:
                             response = await client.post(url, headers={'Authorization': f'Bearer {token}'},
-                                                         json={'controller_id': os.getenv('EV_CONTROLLER_ID') or engine.store.entities('system')[0]['controller_id'],
-                                                               'records': records})
+                                json={'controller_id': os.getenv('EV_CONTROLLER_ID') or engine.store.entities('system')[0]['controller_id'],
+                                      'records': [export_record(record) for record in records]})
                             response.raise_for_status()
                             ids = response.json()['acknowledged_ids']
                             sent = {r['id'] for r in records}
                             if not isinstance(ids, list) or any(not isinstance(i, str) or i not in sent for i in ids):
                                 raise ValueError('Confirmação inválida do servidor')
+                            if not ids:
+                                raise ValueError('Servidor não confirmou os registros')
                             engine.store.acknowledge(ids)
-                    engine.cloud.update(status='Sincronizado' if not engine.store.pending_count() else 'Enviando histórico pendente', last_sync=time.time())
-                except asyncio.CancelledError:
-                    raise
-                except Exception:
-                    # URL/token/server output must never leak through diagnostics.
-                    engine.cloud['status'] = 'Sem confirmação de envio; dados preservados'
-        engine.store.cleanup()
-        await asyncio.sleep(60)
+                        failures = 0
+                        engine.cloud.update(status='Sincronizado' if not engine.store.pending_count() else 'Enviando histórico pendente', last_sync=time.time())
+                        next_send = time.monotonic() + 1
+                    except asyncio.CancelledError:
+                        raise
+                    except Exception:
+                        failures += 1
+                        engine.cloud['status'] = 'Sem confirmação de envio; dados preservados'
+                        next_send = time.monotonic() + min(60, 2 ** min(failures, 6))
+        else:
+            engine.cloud['status'] = 'Pendente: configurar EV_CLOUD_TOKEN' if url else 'Não configurada'
+            signature = None
+        await asyncio.sleep(1)

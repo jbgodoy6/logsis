@@ -61,6 +61,10 @@ class Store:
             CREATE TABLE IF NOT EXISTS receipts (id TEXT PRIMARY KEY, ack_at REAL);
             CREATE INDEX IF NOT EXISTS events_time ON events(ts);
             CREATE INDEX IF NOT EXISTS samples_time ON samples(ts);
+            CREATE INDEX IF NOT EXISTS outbox_time ON outbox(ts);
+            CREATE INDEX IF NOT EXISTS outbox_kind_time ON outbox(kind,ts);
+            CREATE INDEX IF NOT EXISTS outbox_urgent_time ON outbox(ts DESC) WHERE kind IN
+                ('connected','disconnected','session_start','session_end','ocpp_status','ocpp_connected','ocpp_disconnected');
         ''')
         self.db.execute('INSERT OR IGNORE INTO settings VALUES (1,?)', (json.dumps(DEFAULT_SETTINGS),))
         self.db.commit()
@@ -80,6 +84,10 @@ class Store:
     def entities(self, kind):
         return [json.loads(r[0]) for r in self.db.execute('SELECT payload FROM entities WHERE kind=? ORDER BY id', (kind,))]
 
+    def get(self, kind, identifier):
+        row = self.db.execute('SELECT payload FROM entities WHERE kind=? AND id=?', (kind, identifier)).fetchone()
+        return json.loads(row[0]) if row else None
+
     def put(self, kind, data):
         with self.db:
             self.db.execute('INSERT INTO entities VALUES (?,?,?) ON CONFLICT(kind,id) DO UPDATE SET payload=excluded.payload',
@@ -96,9 +104,18 @@ class Store:
             self.db.execute('INSERT INTO outbox VALUES (?,?,?,?)', (identifier, now, kind, data))
         return identifier
 
+    def queue_plant(self, payload):
+        with self.db:
+            self.db.execute("DELETE FROM outbox WHERE kind='plant_state'")
+            self.db.execute('INSERT INTO outbox VALUES (?,?,?,?)',
+                (uuid.uuid4().hex, time.time(), 'plant_state', json.dumps(payload, ensure_ascii=False, allow_nan=False)))
+
     def pending(self):
-        return [dict(r) | {'payload': json.loads(r['payload'])} for r in
-                self.db.execute('SELECT * FROM outbox ORDER BY ts LIMIT 200')]
+        urgent = "('connected','disconnected','session_start','session_end','ocpp_status','ocpp_connected','ocpp_disconnected')"
+        rows = list(self.db.execute("SELECT * FROM outbox WHERE kind='plant_state' ORDER BY ts DESC LIMIT 1"))
+        rows += list(self.db.execute('SELECT * FROM outbox WHERE kind IN ' + urgent + ' ORDER BY ts DESC LIMIT ?', (200-len(rows),)))
+        rows += list(self.db.execute("SELECT * FROM outbox WHERE kind!='plant_state' AND kind NOT IN " + urgent + ' ORDER BY ts LIMIT ?', (200-len(rows),)))
+        return [dict(row) | {'payload': json.loads(row['payload'])} for row in rows]
 
     def acknowledge(self, identifiers):
         with self.db:

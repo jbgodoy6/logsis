@@ -1,6 +1,7 @@
 import asyncio
 from datetime import datetime, timezone
 import math
+import os
 import time
 import uuid
 
@@ -317,11 +318,11 @@ class Engine:
         self.control_progress_at = time.monotonic()
 
     def snapshot(self):
-        chargers = [{k: v for k, v in c.items() if k != 'password_hash'} for c in self.store.entities('charger')]
+        chargers = [{k: v for k, v in c.items() if k != 'password_hash'} | {'online': (c['transport'] == 'simulator' and self.store.settings()['mode'] == 'simulation') or c['id'] in self.connections} for c in self.store.entities('charger')]
         return {'settings': self.store.settings(), 'chargers': chargers, 'vehicles': self.store.entities('vehicle'),
-                'identifiers': self.store.entities('identifier'), 'ports': list(self.ports.values()),
+                'sessions': [session for identifier in {p.get('session_id') for p in self.ports.values()} if identifier and (session := self.store.get('session', identifier))], 'identifiers': self.store.entities('identifier'), 'ports': list(self.ports.values()),
                 'meter': self.meter, 'summary': getattr(self, 'summary', {}), 'trace': self.trace,
-                'cloud': self.cloud | {'pending': self.store.pending_count()}, 'fault': self.fault,
+                'cloud': self.cloud | {'pending': self.store.pending_count(), 'controller_id': os.getenv('EV_CONTROLLER_ID') or self.store.entities('system')[0]['controller_id']}, 'fault': self.fault,
                 'time': time.time()}
 
     async def run(self):

@@ -1,0 +1,47 @@
+name: dmax-demo
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: dmax
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres-password
+    volumes:
+      - dmax-demo-pg:/var/lib/postgresql/data
+      - ./.demo/postgres-password:/run/secrets/postgres-password:ro
+      - ./.demo/init.sql:/docker-entrypoint-initdb.d/01-dmax.sql:ro
+    healthcheck:
+      test: [CMD-SHELL, pg_isready -U postgres -d dmax]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+  grafana:
+    image: grafana/grafana:12.2.0
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports: ["127.0.0.1:3000:3000"]
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD__FILE: /run/secrets/grafana-password
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+    volumes:
+      - dmax-demo-grafana:/var/lib/grafana
+      - ./.demo/grafana-password:/run/secrets/grafana-password:ro
+      - ./.demo/datasource.yaml:/etc/grafana/provisioning/datasources/dmax.yaml:ro
+      - ./.demo/dashboard.yaml:/etc/grafana/provisioning/dashboards/dmax.yaml:ro
+      - ./grafana:/var/lib/grafana/dmax-dashboards:ro
+      - ./grafana/assets:/usr/share/grafana/public/img/dmax:ro
+  demo-feed:
+    image: postgres:16-alpine
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PGPASSWORD: ${DEMO_POSTGRES_PASSWORD:?Execute prepare_demo.py primeiro}
+    volumes:
+      - ./.demo/feed.sql:/feed.sql:ro
+    command: [sh, -c, "while true; do psql -h postgres -U postgres -d dmax -f /feed.sql >/dev/null; sleep 30; done"]
+volumes:
+  dmax-demo-pg:
+  dmax-demo-grafana:

@@ -16,15 +16,16 @@ from fastapi import Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 
 from .meter import MEASUREMENTS, FORMATS
+from .plant_view import render_plant
 
-VERSION = '0.7.2'
+VERSION = '0.8.0'
 PAGES = {
     'overview': 'Visão geral', 'chargers': 'Carregadores', 'vehicles': 'Veículos',
     'schedule': 'Horários', 'history': 'Histórico', 'meter': 'Multimedidor',
     'settings': 'Configurações', 'users': 'Usuários', 'directory': 'Técnicos globais',
     'profile': 'Minha senha',
     'simulation': 'Simulador',
-    'monitor': 'Carregadores ao vivo',
+    'monitor': 'Planta ao vivo',
 }
 ROLES = {'root': 'Raiz', 'technician': 'Técnico / instalador', 'admin': 'Administrador', 'operator': 'Operador'}
 
@@ -147,6 +148,7 @@ def install(app):
                     '<link rel="stylesheet" href="/static/style.css">'
                     '<link rel="stylesheet" href="/static/energycube.css">'
                     '<link rel="stylesheet" href="/static/server.css">'
+                    '<link rel="stylesheet" href="/static/plant.css">'
                     '</head><body>' + content + '</body></html>')
 
         async def render(self, page='overview', message='', diagnostic=None, status=200, recovery_data=None):
@@ -216,8 +218,7 @@ def install(app):
             elif page == 'simulation':
                 content = self.simulation()
             elif page == 'monitor':
-                content = ('<p class="hint">Todos os conectores · atualização a cada 2 segundos.</p>'
-                           '<div class="charger-grid">' + ''.join(self.card(p, controls=False) for p in self.state['ports']) + '</div>')
+                content = render_plant(self.state)
             else:
                 content = panel('Minha senha', self.password_form())
             network = getattr(app.state, 'web_network', None)
@@ -413,6 +414,8 @@ def install(app):
                     fields += field('Nome', 'circuit_name_' + str(i), circuit['name'], required='')
                     fields += field('Limite · kW', 'circuit_limit_' + str(i), circuit['limit_kw'], 'number', step='any', required='') + '</fieldset>'
             content = panel('Configuração', self.form('settings', fields, page='settings'))
+            if self.technical:
+                content += panel('Integração com a nuvem', '<p>Identificador deste controlador: <code>' + esc(self.state['cloud']['controller_id']) + '</code></p><p>' + esc(self.state['cloud']['status']) + '</p><p>Registros pendentes: ' + str(self.state['cloud']['pending']) + '</p><p>Token por equipamento: EV_CLOUD_TOKEN no ambiente do serviço. Nunca use a senha raiz como token.</p>')
             if self.technical:
                 content += panel('Adicionar circuito', self.form('circuit',
                     field('Identificador', 'id', required='', maxlength=40)

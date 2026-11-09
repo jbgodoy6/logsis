@@ -1,0 +1,1012 @@
+{
+  "uid": "dmax-energycube",
+  "title": "D-Max · EnergyCube · Planta ao vivo",
+  "schemaVersion": 41,
+  "version": 1,
+  "tags": [
+    "D-Max",
+    "EnergyCube"
+  ],
+  "editable": true,
+  "timezone": "America/Sao_Paulo",
+  "refresh": "5s",
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "text",
+      "title": "",
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 3
+      },
+      "options": {
+        "mode": "html",
+        "content": "<div style=\"display:flex;align-items:center;gap:24px\"><img style=\"background:white;padding:8px;border-radius:8px\" src=\"/public/img/dmax/d-max-logo.png\" alt=\"D-Max by EnergyCube\" width=\"160\"><div><h2 style=\"margin:0 0 8px\">Supervisão de energia · Planta ao vivo</h2><p>Azul: online · Vermelho: alarme · Cinza: offline | Atualização 5 s · Amostras até 1 minuto · Veículo conforme associação no D-Max</p></div></div>"
+      }
+    },
+    {
+      "id": 2,
+      "type": "canvas",
+      "title": "Entrada de energia · Multimedidor",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "${DS_DMAX}"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 3,
+        "w": 9,
+        "h": 6
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "${DS_DMAX}"
+          },
+          "rawSql": "select max(value) filter(where measurement='power_total_kw') as power, (select limit_kw from dmax.v_sites where controller_id=${site:sqlstring}) as site_limit, case when bool_and(fresh) then 'Medição atual' when bool_or(fresh) then 'Medição parcial' else 'Sem medição atual' end as meter_status from dmax.v_meter where controller_id=${site:sqlstring}",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "noValue": "—",
+          "decimals": 1,
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#8395a8",
+                "value": null
+              },
+              {
+                "color": "#25a5ec",
+                "value": 1
+              },
+              {
+                "color": "#f05264",
+                "value": 2
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "inlineEditing": false,
+        "panZoom": true,
+        "zoomToContent": true,
+        "showAdvancedTypes": false,
+        "root": {
+          "name": "Planta",
+          "type": "frame",
+          "elements": [
+            {
+              "name": "Medidor",
+              "type": "icon",
+              "placement": {
+                "left": 12,
+                "top": 8,
+                "width": 110,
+                "height": 135
+              },
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "background": {
+                "color": {
+                  "fixed": "transparent"
+                }
+              },
+              "config": {
+                "path": {
+                  "mode": "fixed",
+                  "fixed": "../img/dmax/meter.svg"
+                },
+                "fill": {
+                  "fixed": "#45b2f2"
+                }
+              }
+            },
+            {
+              "name": "Titulo",
+              "type": "text",
+              "placement": {
+                "left": 150,
+                "top": 5,
+                "width": 350,
+                "height": 25
+              },
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "background": {
+                "color": {
+                  "fixed": "transparent"
+                }
+              },
+              "config": {
+                "text": {
+                  "mode": "fixed",
+                  "fixed": "MEDIÇÃO DA INSTALAÇÃO"
+                },
+                "color": {
+                  "fixed": "#5fb7e9"
+                },
+                "size": 12,
+                "align": "left",
+                "valign": "middle"
+              }
+            },
+            {
+              "name": "Potencia",
+              "type": "metric-value",
+              "placement": {
+                "left": 150,
+                "top": 35,
+                "width": 300,
+                "height": 50
+              },
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "background": {
+                "color": {
+                  "fixed": "transparent"
+                }
+              },
+              "config": {
+                "text": {
+                  "mode": "field",
+                  "field": "power"
+                },
+                "color": {
+                  "fixed": "#dce8f4"
+                },
+                "size": 34,
+                "align": "left",
+                "valign": "middle"
+              }
+            },
+            {
+              "name": "Unidade",
+              "type": "text",
+              "placement": {
+                "left": 150,
+                "top": 92,
+                "width": 350,
+                "height": 25
+              },
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "background": {
+                "color": {
+                  "fixed": "transparent"
+                }
+              },
+              "config": {
+                "text": {
+                  "mode": "fixed",
+                  "fixed": "kW · última leitura"
+                },
+                "color": {
+                  "fixed": "#dce8f4"
+                },
+                "size": 13,
+                "align": "left",
+                "valign": "middle"
+              }
+            },
+            {
+              "name": "Estado",
+              "type": "metric-value",
+              "placement": {
+                "left": 150,
+                "top": 123,
+                "width": 400,
+                "height": 30
+              },
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "background": {
+                "color": {
+                  "fixed": "transparent"
+                }
+              },
+              "config": {
+                "text": {
+                  "mode": "field",
+                  "field": "meter_status"
+                },
+                "color": {
+                  "fixed": "#dce8f4"
+                },
+                "size": 14,
+                "align": "left",
+                "valign": "middle"
+              }
+            },
+            {
+              "name": "LimiteOperacional",
+              "type": "metric-value",
+              "placement": {
+                "left": 360,
+                "top": 40,
+                "width": 160,
+                "height": 36
+              },
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "background": {
+                "color": {
+                  "fixed": "transparent"
+                }
+              },
+              "config": {
+                "text": {
+                  "mode": "field",
+                  "field": "site_limit"
+                },
+                "color": {
+                  "fixed": "#dce8f4"
+                },
+                "size": 24,
+                "align": "left",
+                "valign": "middle"
+              }
+            },
+            {
+              "name": "LimiteLabel",
+              "type": "text",
+              "placement": {
+                "left": 360,
+                "top": 92,
+                "width": 160,
+                "height": 20
+              },
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "background": {
+                "color": {
+                  "fixed": "transparent"
+                }
+              },
+              "config": {
+                "text": {
+                  "mode": "fixed",
+                  "fixed": "Limite · kW"
+                },
+                "color": {
+                  "fixed": "#dce8f4"
+                },
+                "size": 12,
+                "align": "left",
+                "valign": "middle"
+              }
+            }
+          ]
+        },
+        "tooltip": {
+          "mode": "single"
+        }
+      }
+    },
+    {
+      "id": 3,
+      "type": "table",
+      "title": "Todas as grandezas recebidas",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "${DS_DMAX}"
+      },
+      "gridPos": {
+        "x": 9,
+        "y": 3,
+        "w": 15,
+        "h": 6
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "${DS_DMAX}"
+          },
+          "rawSql": "select label as \"Grandeza\",value as \"Valor\",unit as \"Unidade\",case when fresh then 'Atual' else 'Indisponível' end as \"Qualidade\",sampled_at as \"Horário da leitura\" from dmax.v_meter where controller_id=${site:sqlstring} order by label",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 2,
+          "noValue": "—",
+          "custom": {
+            "align": "auto"
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Parque da instalação",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "${DS_DMAX}"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 9,
+        "w": 24,
+        "h": 3
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "${DS_DMAX}"
+          },
+          "rawSql": "select count(distinct charger_id) as \"Carregadores cadastrados\",count(distinct charger_id) filter(where online) as \"Carregadores online\",count(*) filter(where vehicle_state=1) as \"Veículos conectados\",count(*) filter(where alarm) as \"Conectores em alarme\" from dmax.v_ports where controller_id=${site:sqlstring}",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value_and_name",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "blue"
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 5,
+      "type": "canvas",
+      "title": "$port",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "${DS_DMAX}"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 12,
+        "w": 8,
+        "h": 12
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "${DS_DMAX}"
+          },
+          "rawSql": "select *,case when vehicle_state=1 then '../img/dmax/cable.svg' else '../img/dmax/cable-free.svg' end as cable_path,case when last_plugged then case when online then '' else 'Último estado: ' end || vehicle_name else 'Sem veículo conectado' end as vehicle_label,case when alarm then 'ALARME · '||coalesce(error_code,'Faulted') else 'Sem alarme informado' end as fault_label,'Última atualização: '||to_char(observed_at at time zone 'America/Sao_Paulo','DD/MM HH24:MI:SS') as freshness_label from dmax.v_ports where controller_id=${site:sqlstring} and port_id=${port:sqlstring}",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "noValue": "—",
+          "decimals": 1,
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#8395a8",
+                "value": null
+              },
+              {
+                "color": "#25a5ec",
+                "value": 1
+              },
+              {
+                "color": "#f05264",
+                "value": 2
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "inlineEditing": false,
+        "panZoom": true,
+        "zoomToContent": true,
+        "showAdvancedTypes": false,
+        "root": {
+          "name": "Planta",
+          "type": "frame",
+          "elements": [
+            {
+              "name": "Nome",
+              "type": "metric-value",
+              "placement": {
+                "left": 14,
+                "top": 5,
+                "width": 400,
+                "height": 30
+              },
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "background": {
+                "color": {
+                  "fixed": "transparent"
+                }
+              },
+              "config": {
+                "text": {
+                  "mode": "field",
+                  "field": "charger_name"
+                },
+                "color": {
+                  "fixed": "#dce8f4"
+                },
+                "size": 21,
+                "align": "left",
+                "valign": "middle"
+              }
+            },
+            {
+              "name": "Estado",
+              "type": "metric-value",
+              "placement": {
+                "left": 14,
+                "top": 39,
+                "width": 390,
+                "height": 25
+              },
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "background": {
+                "color": {
+                  "fixed": "transparent"
+                }
+              },
+              "config": {
+                "text": {
+                  "mode": "field",
+                  "field": "status"
+                },
+                "color": {
+                  "fixed": "#dce8f4"
+                },
+                "size": 13,
+                "align": "left",
+                "valign": "middle"
+              }
+            },
+            {
+              "name": "Carregador",
+              "type": "icon",
+              "placement": {
+                "left": 22,
+                "top": 76,
+                "width": 114,
+                "height": 152
+              },
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "background": {
+                "color": {
+                  "fixed": "transparent"
+                }
+              },
+              "config": {
+                "path": {
+                  "mode": "fixed",
+                  "fixed": "../img/dmax/charger.svg"
+                },
+                "fill": {
+                  "field": "equipment_state"
+                }
+              }
+            },
+            {
+              "name": "Cabo",
+              "type": "icon",
+              "placement": {
+                "left": 128,
+                "top": 116,
+                "width": 75,
+                "height": 95
+              },
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "background": {
+                "color": {
+                  "fixed": "transparent"
+                }
+              },
+              "config": {
+                "path": {
+                  "mode": "mapping",
+                  "field": "cable_path"
+                },
+                "fill": {
+                  "field": "vehicle_state"
+                },
+                "stroke": {
+                  "width": 5,
+                  "color": {
+                    "field": "vehicle_state"
+                  }
+                }
+              }
+            },
+            {
+              "name": "Veiculo",
+              "type": "icon",
+              "placement": {
+                "left": 186,
+                "top": 106,
+                "width": 245,
+                "height": 126
+              },
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "background": {
+                "color": {
+                  "fixed": "transparent"
+                }
+              },
+              "config": {
+                "path": {
+                  "mode": "fixed",
+                  "fixed": "../img/dmax/car.svg"
+                },
+                "fill": {
+                  "field": "vehicle_state"
+                }
+              }
+            },
+            {
+              "name": "VeiculoNome",
+              "type": "metric-value",
+              "placement": {
+                "left": 14,
+                "top": 240,
+                "width": 420,
+                "height": 30
+              },
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "background": {
+                "color": {
+                  "fixed": "transparent"
+                }
+              },
+              "config": {
+                "text": {
+                  "mode": "field",
+                  "field": "vehicle_label"
+                },
+                "color": {
+                  "fixed": "#dce8f4"
+                },
+                "size": 17,
+                "align": "left",
+                "valign": "middle"
+              }
+            },
+            {
+              "name": "PLabel",
+              "type": "text",
+              "placement": {
+                "left": 14,
+                "top": 285,
+                "width": 140,
+                "height": 25
+              },
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "background": {
+                "color": {
+                  "fixed": "transparent"
+                }
+              },
+              "config": {
+                "text": {
+                  "mode": "fixed",
+                  "fixed": "POTÊNCIA · kW"
+                },
+                "color": {
+                  "fixed": "#dce8f4"
+                },
+                "size": 11,
+                "align": "left",
+                "valign": "middle"
+              }
+            },
+            {
+              "name": "P",
+              "type": "metric-value",
+              "placement": {
+                "left": 14,
+                "top": 310,
+                "width": 140,
+                "height": 34
+              },
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "background": {
+                "color": {
+                  "fixed": "transparent"
+                }
+              },
+              "config": {
+                "text": {
+                  "mode": "field",
+                  "field": "power_kw"
+                },
+                "color": {
+                  "fixed": "#dce8f4"
+                },
+                "size": 26,
+                "align": "left",
+                "valign": "middle"
+              }
+            },
+            {
+              "name": "LLabel",
+              "type": "text",
+              "placement": {
+                "left": 164,
+                "top": 285,
+                "width": 140,
+                "height": 25
+              },
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "background": {
+                "color": {
+                  "fixed": "transparent"
+                }
+              },
+              "config": {
+                "text": {
+                  "mode": "fixed",
+                  "fixed": "LIMITE · kW"
+                },
+                "color": {
+                  "fixed": "#dce8f4"
+                },
+                "size": 11,
+                "align": "left",
+                "valign": "middle"
+              }
+            },
+            {
+              "name": "Limite",
+              "type": "metric-value",
+              "placement": {
+                "left": 164,
+                "top": 310,
+                "width": 140,
+                "height": 34
+              },
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "background": {
+                "color": {
+                  "fixed": "transparent"
+                }
+              },
+              "config": {
+                "text": {
+                  "mode": "field",
+                  "field": "applied_kw"
+                },
+                "color": {
+                  "fixed": "#dce8f4"
+                },
+                "size": 26,
+                "align": "left",
+                "valign": "middle"
+              }
+            },
+            {
+              "name": "ELabel",
+              "type": "text",
+              "placement": {
+                "left": 314,
+                "top": 285,
+                "width": 140,
+                "height": 25
+              },
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "background": {
+                "color": {
+                  "fixed": "transparent"
+                }
+              },
+              "config": {
+                "text": {
+                  "mode": "fixed",
+                  "fixed": "SESSÃO · kWh"
+                },
+                "color": {
+                  "fixed": "#dce8f4"
+                },
+                "size": 11,
+                "align": "left",
+                "valign": "middle"
+              }
+            },
+            {
+              "name": "Energia",
+              "type": "metric-value",
+              "placement": {
+                "left": 314,
+                "top": 310,
+                "width": 140,
+                "height": 34
+              },
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "background": {
+                "color": {
+                  "fixed": "transparent"
+                }
+              },
+              "config": {
+                "text": {
+                  "mode": "field",
+                  "field": "energy_kwh"
+                },
+                "color": {
+                  "fixed": "#dce8f4"
+                },
+                "size": 26,
+                "align": "left",
+                "valign": "middle"
+              }
+            },
+            {
+              "name": "Erro",
+              "type": "metric-value",
+              "placement": {
+                "left": 14,
+                "top": 360,
+                "width": 420,
+                "height": 23
+              },
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "background": {
+                "color": {
+                  "fixed": "transparent"
+                }
+              },
+              "config": {
+                "text": {
+                  "mode": "field",
+                  "field": "fault_label"
+                },
+                "color": {
+                  "field": "equipment_state"
+                },
+                "size": 12,
+                "align": "left",
+                "valign": "middle"
+              }
+            },
+            {
+              "name": "Qualidade",
+              "type": "metric-value",
+              "placement": {
+                "left": 14,
+                "top": 390,
+                "width": 420,
+                "height": 25
+              },
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "background": {
+                "color": {
+                  "fixed": "transparent"
+                }
+              },
+              "config": {
+                "text": {
+                  "mode": "field",
+                  "field": "freshness_label"
+                },
+                "color": {
+                  "fixed": "#8a9eb4"
+                },
+                "size": 11,
+                "align": "left",
+                "valign": "middle"
+              }
+            }
+          ]
+        },
+        "tooltip": {
+          "mode": "single"
+        }
+      },
+      "repeat": "port",
+      "repeatDirection": "h",
+      "maxPerRow": 3
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "Demanda da instalação · média e pico por minuto",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "${DS_DMAX}"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 24,
+        "w": 24,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "${DS_DMAX}"
+          },
+          "rawSql": "select time,avg_kw as \"Média · kW\",max_kw as \"Pico · kW\" from dmax.minutes where controller_id=${site:sqlstring} and source='site' and $__timeFilter(time) order by time",
+          "format": "time_series",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "kwatt",
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        }
+      }
+    }
+  ],
+  "templating": {
+    "list": [
+      {
+        "name": "DS_DMAX",
+        "label": "Banco D-Max",
+        "type": "datasource",
+        "query": "grafana-postgresql-datasource",
+        "current": {
+          "text": "D-Max PostgreSQL",
+          "value": "dmax-pg"
+        },
+        "hide": 2
+      },
+      {
+        "name": "site",
+        "type": "query",
+        "datasource": {
+          "type": "grafana-postgresql-datasource",
+          "uid": "${DS_DMAX}"
+        },
+        "query": "select site_name as __text,controller_id as __value from dmax.v_sites order by site_name",
+        "definition": "select site_name as __text,controller_id as __value from dmax.v_sites order by site_name",
+        "refresh": 2,
+        "sort": 1,
+        "label": "Planta",
+        "multi": false,
+        "includeAll": false,
+        "current": {}
+      },
+      {
+        "name": "port",
+        "type": "query",
+        "datasource": {
+          "type": "grafana-postgresql-datasource",
+          "uid": "${DS_DMAX}"
+        },
+        "query": "select charger_name || ' · Conector ' || connector as __text,port_id as __value from dmax.v_ports where controller_id=${site:sqlstring} order by charger_name,connector",
+        "definition": "select charger_name || ' · Conector ' || connector as __text,port_id as __value from dmax.v_ports where controller_id=${site:sqlstring} order by charger_name,connector",
+        "refresh": 2,
+        "sort": 1,
+        "label": "Conectores",
+        "multi": true,
+        "includeAll": true,
+        "current": {
+          "text": "All",
+          "value": "$__all"
+        },
+        "hide": 0
+      }
+    ]
+  },
+  "annotations": {
+    "list": []
+  }
+}
