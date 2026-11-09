@@ -1,3 +1,9 @@
+# D-Max 0.9.0 · Relatórios, frota e assinaturas
+
+[Atualizar no Raspberry](docs/release-v090.md) · [Configurar a aba Assinaturas no Google](docs/assinaturas-v090.md). PDF local por período/veículo/carregador, exclusão de veículos com histórico, multimedidor ampliado, porta 80 opcional e avisos de mensalidade com prazo offline e solicitação de funcionamento nativo OCPP. Instalar sem desinstalar.
+
+Validação: 180 testes automatizados com PostgreSQL e ciclo de instalação isolado; Chromium verificou PDF, exclusão, avisos sem recarregar a página e leitura do multimedidor no desktop/celular. OCPP foi testado por WebSocket com equipamentos simulados. Homologação de cada modelo físico e RTC para tempo desligado/offline continuam necessários.
+
 # D-Max 0.8.5 · Portas, leituras e cadastro
 
 Consulte NOVIDADES-0.8.5.md no pacote. Seleção de porta serial, leituras habilitadas nas duas telas, exclusão com histórico, separação de simulados e tentativa imediata de sincronizar técnicos. Atualize sem desinstalar.

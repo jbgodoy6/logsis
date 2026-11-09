@@ -19,7 +19,7 @@ from .meter import MEASUREMENTS, FORMATS, normalize_serial_port
 from .plant_view import render_plant
 from .live_dom import view_tree
 
-VERSION = '0.8.5'
+VERSION = '0.9.0'
 PAGES = {
     'overview': 'Visão geral', 'chargers': 'Carregadores', 'vehicles': 'Veículos',
     'schedule': 'Horários', 'history': 'Histórico', 'meter': 'Multimedidor',
@@ -81,6 +81,25 @@ def link(page, text, **query):
     if query:
         path += '?' + urlencode(query)
     return '<a class="secondary" href="' + esc(path) + '">' + esc(text) + '</a>'
+
+
+def subscription_banner(state):
+    subscription = state.get('subscription', {})
+    result = '<div class="subscription-banner" id="subscription-banner" role="status">'
+    if subscription.get('state') in ('pending', 'native'):
+        title = ('Controle de demanda desativado · funcionamento nativo solicitado' if subscription.get('native')
+                 else 'Assinatura pendente · ' + str(subscription['remaining_days']) + ' dia(s) restantes')
+        result += '<div class="notice"><strong>' + esc(title) + '</strong><p>' + esc(subscription['message']) + '</p>'
+        if subscription.get('deadline'):
+            from datetime import datetime
+            from zoneinfo import ZoneInfo
+            result += '<p>Prazo: ' + esc(datetime.fromtimestamp(subscription['deadline'], ZoneInfo(state['settings']['timezone'])).strftime('%d/%m/%Y %H:%M')) + '. A contagem continua sem internet.</p>'
+        if subscription.get('native'):
+            result += '<p>Confira a confirmação de liberação de cada carregador. O D-Max não gerencia demanda nem horário de ponta neste modo.</p>'
+        if subscription.get('clock_suspect'):
+            result += '<p>Relógio retrocedeu; prazo não prorrogado. Regularize a assinatura e confira o relógio do equipamento.</p>'
+        result += '</div>'
+    return result + '</div>'
 
 
 def install(app):
@@ -247,7 +266,7 @@ def install(app):
                     + esc(ROLES[self.user['role']]) + '</p>' + self.form('logout', submit='Sair') + '</div></aside>'
                     '<main><header><div><div class="eyebrow" data-live-site>' + esc(self.state['settings']['site_name']) + '</div>'
                     '<h1>' + esc(PAGES[page]) + '</h1></div><a class="secondary" href="/ui/' + page + '">Atualizar</a></header>'
-                    + note + content + '<footer class="app-footer"><span>EnergyCube D-Max · Controle local</span><span>Versão instalada: <b data-dmax-version>v' + VERSION + '</b></span></footer></main></div>')
+                    + subscription_banner(self.state) + note + content + '<footer class="app-footer"><span>EnergyCube D-Max · Controle local</span><span>Versão instalada: <b data-dmax-version>v' + VERSION + '</b></span></footer></main></div>')
             response = self.finish(HTMLResponse(self.document(body, PAGES[page], live=live), status_code=status))
             if live:
                 response.headers['X-DMax-Live'] = '1'
@@ -333,15 +352,16 @@ def install(app):
             vehicle = next((v for v in self.state['vehicles'] if v['id'] == port['vehicle_id']), None)
             content = '<h3>' + esc(charger['name']) + '</h3><small>' + esc(port['key']) + '</small>'
             content += '<div class="charger-vehicle">' + esc(vehicle['name'] if vehicle else 'Veículo não identificado') + (' ★ PRIORITÁRIO' if vehicle and vehicle['priority'] else '') + '</div>'
-            content += '<div class="charger-power"><strong>' + number(port['power_kw']) + ' kW</strong><small>Limite ' + number(port['limit_kw']) + ' kW</small></div>'
+            content += '<div class="charger-power"><strong>' + number(port['power_kw']) + ' kW</strong><small>' + ('Potência definida pelo carregador' if port.get('native_mode') else 'Limite ' + number(port['limit_kw']) + ' kW') + '</small></div>'
             content += '<p>' + esc(port['status']) + '</p>'
             if controls:
                 if port['connected']:
-                    content += self.form('port', submit='Retomar' if port['manual_pause'] else 'Pausar',
-                                         page='chargers', key=port['key'], command='resume' if port['manual_pause'] else 'pause')
+                    if not self.state.get('subscription', {}).get('native'):
+                        content += self.form('port', submit='Retomar' if port['manual_pause'] else 'Pausar',
+                                             page='chargers', key=port['key'], command='resume' if port['manual_pause'] else 'pause')
                     content += self.form('port', select('Veículo', 'vehicle_id', self.vehicle_options(), port['vehicle_id'] or ''),
                                          'Associar veículo', page='chargers', key=port['key'], command='assign_vehicle')
-                    if self.manager or self.user['can_emergency']:
+                    if (self.manager or self.user['can_emergency']) and not self.state.get('subscription', {}).get('native'):
                         if port['emergency_until'] > self.state['time']:
                             content += self.form('port', submit='Encerrar emergência', page='chargers', key=port['key'], command='cancel_emergency')
                         else:
@@ -357,7 +377,7 @@ def install(app):
                                          page='chargers', key=port['key'], command='disconnect' if port['connected'] else 'connect')
                 if self.technical:
                     content += link('chargers', 'Configurar carregador', edit=charger['id'])
-                    if port['running']:
+                    if port['running'] and not self.state.get('subscription', {}).get('native'):
                         content += '<details><summary>Aprendizado assistido</summary>' + self.form('learn',
                             field('Limite de teste · kW', 'cap_kw', port['limit_kw'] / 2, 'number', min=0, step='any', required='')
                             + field('Duração · segundos', 'seconds', 30, 'number', min=10, max=300, required=''),
@@ -395,7 +415,8 @@ def install(app):
 
         def vehicles(self):
             rows = [[esc(v['name']), esc(v.get('plate', '')), '★' if v['priority'] else 'Normal', esc(', '.join(v['identifiers'])),
-                     link('vehicles', 'Editar', edit=v['id']) if self.manager else ''] for v in self.state['vehicles']]
+                     (link('vehicles', 'Editar', edit=v['id']) + '<details><summary>Excluir da frota</summary><p>O histórico de recargas será preservado.</p>'
+                      + self.form('delete_vehicle', checkbox('Confirmo a exclusão', 'confirm'), 'Excluir veículo', page='vehicles', id=v['id']) + '</details>') if self.manager else ''] for v in self.state['vehicles']]
             content = panel('Veículos', table(['Nome', 'Placa', 'Prioridade', 'Identificadores', ''], rows))
             identifiers = [[esc(x['id']), esc(x['source']), link('vehicles', 'Associar', identifier=x['id']) if self.manager else ''] for x in self.state['identifiers']]
             content += panel('Identificadores observados', table(['Identificador', 'Origem', ''], identifiers))
@@ -498,12 +519,19 @@ def install(app):
             zone = ZoneInfo(self.state['settings']['timezone'])
             def stamp(value):
                 return esc(datetime.fromtimestamp(value, zone).strftime('%d/%m/%Y %H:%M:%S')) if value else 'Em andamento'
-            names = {v['id']: v['name'] for v in self.state['vehicles']}
+            names = {v['id']: v['name'] for v in app.state.store.entities('vehicle')}
             sessions = [[stamp(s['started_at']), stamp(s.get('ended_at')), esc(s['port']),
                          esc(names.get(s.get('vehicle_id'), 'Não identificado')), number(s['energy_kwh'], 3) + ' kWh',
                          number(s.get('peak_kw', 0)) + ' kW', esc(s.get('reason', ''))] for s in history['sessions']]
             events = [[stamp(e['ts']), esc(e['kind']), esc(e['payload'])] for e in history['events']]
-            return panel('Sessões', table(['Início', 'Término', 'Conector', 'Veículo', 'Energia', 'Pico', 'Estado'], sessions)) + panel('Eventos', table(['Horário', 'Evento', 'Detalhes'], events))
+            vehicles = [('', 'Todos os veículos')] + [(v['id'], v['name'] + (' · excluído' if v.get('archived') else '')) for v in app.state.store.entities('vehicle')]
+            chargers = [('', 'Todos os carregadores')] + [(c['id'], c['name'] + (' · excluído' if c.get('archived') else '')) for c in app.state.store.entities('charger')]
+            filters = (field('Início do período · horário da instalação', 'start', kind='datetime-local')
+                       + field('Fim do período · horário da instalação', 'end', kind='datetime-local')
+                       + select('Veículo', 'vehicle_id', vehicles) + select('Carregador', 'charger_id', chargers))
+            export = '<form method="get" action="/api/reports/sessions.pdf">' + filters + '<button class="primary" type="submit">Baixar relatório PDF</button></form>'
+            guidance = '<p class="hint">Fuso: ' + esc(str(zone)) + '. Seleção pelo início da sessão, com término do filtro exclusivo. O PDF inclui todas as sessões encontradas, inclusive veículos e carregadores excluídos. Sessões abertas têm valores parciais.</p>'
+            return panel('Relatório de recargas em PDF', export + guidance) + panel('Últimas sessões', table(['Início', 'Término', 'Conector', 'Veículo', 'Energia', 'Pico', 'Estado'], sessions)) + panel('Eventos', table(['Horário', 'Evento', 'Detalhes'], events))
 
         async def users(self):
             users = (await self.api('GET', '/api/users'))['users']
@@ -535,7 +563,9 @@ def install(app):
             status = table(['Informação', 'Valor'], [[esc('Identificador do D-Max'), esc(data['controller_id'])],
                 [esc('Situação'), esc(data['status']['message'])], [esc('Chave'), 'Configurada' if data['token_present'] else 'Pendente'],
                 [esc('Alterações locais pendentes'), esc(data['pending'])]])
-            return (panel('Google Planilhas e Apps Script', self.form('directory', fields, page='directory'))
+            subscription = self.state.get('subscription', {})
+            billing = panel('Assinatura deste equipamento', '<p>Estado: <b>' + esc(subscription.get('state')) + '</b> · Revisão ' + esc(subscription.get('revision')) + '</p><p>O controle comercial usa a aba Assinaturas da mesma planilha. Configure uma linha com o identificador acima e situação regular ou pendente. O aviso recebido continua válido sem internet; apagar a linha não cancela a pendência.</p><p class="hint">Exige o Apps Script atualizado fornecido com a v0.9.0. Para medir tempo desligado sem internet, use RTC com bateria. Administradores do sistema operacional podem alterar o banco: este mecanismo não é proteção contra acesso root ao Linux.</p>')
+            return (billing + panel('Google Planilhas e Apps Script', self.form('directory', fields, page='directory'))
                     + panel('Sincronização', status + self.form('sync', submit='Sincronizar agora', page='directory'))
                     + '<p class="hint">Sem internet, permanece exatamente a validade recebida na última consulta.</p>')
 
@@ -555,6 +585,7 @@ def install(app):
             content = console.overview() if page == 'overview' else render_plant(console.state)
             return console.finish(JSONResponse({'schema_version': 1, 'version': VERSION,
                 'observed_at': console.state['time'], 'site_name': console.state['settings']['site_name'],
+                'subscription_nodes': view_tree(subscription_banner(console.state)),
                 'colors': console.state['settings']['display_colors'], 'nodes': view_tree(content)}))
         except UIError as exc:
             return JSONResponse({'detail': exc.message}, status_code=exc.status, headers={'Cache-Control': 'no-store'})
@@ -642,6 +673,10 @@ def install(app):
                     if value('confirm') != 'yes':
                         raise UIError('Confirme a exclusão do carregador.')
                     await api('DELETE', '/api/chargers/' + quote(value('id'), safe=''))
+                elif action == 'delete_vehicle':
+                    if 'confirm' not in form:
+                        raise UIError('Confirme a exclusão do veículo.')
+                    await api('DELETE', '/api/vehicles/' + quote(value('id'), safe=''))
                 elif action == 'vehicle':
                     data = dict(name=value('name'), plate=value('plate'), identifiers=[x.strip() for x in value('identifiers').split(',') if x.strip()], priority='priority' in form)
                     if value('id'):

@@ -45,7 +45,10 @@ if [[ -e "$app_dir" && ! -f "$app_dir/.dmax-managed" ]]; then
 fi
 if [[ -f "$service_file" ]] && ! cmp -s "$source_dir/deploy/d-max.service" "$service_file"; then
     old_unit_hash=$(sha256sum "$service_file")
-    [[ ${old_unit_hash%% *} == be191077ba07aee4d8cb079a384f98f63cd9712f0625fa9cb68d143201b14e40 ]] || fail 'Unidade systemd personalizada; preserve e revise suas alterações antes de atualizar.'
+    case ${old_unit_hash%% *} in
+        be191077ba07aee4d8cb079a384f98f63cd9712f0625fa9cb68d143201b14e40|4c2507cdd807fafaa1b4d390055817b469b1ca3e3b25d745eb550d67cb932bdb) ;;
+        *) fail 'Unidade systemd personalizada; preserve e revise suas alterações antes de atualizar.' ;;
+    esac
 fi
 if [[ -x "$app_dir/.venv/bin/python" ]]; then
     current_python=$("$app_dir/.venv/bin/python" -I -c 'import sys;print("%s.%s" % sys.version_info[:2])')
@@ -66,6 +69,9 @@ if id dmax >/dev/null 2>&1; then
 else
     useradd --system --user-group --home-dir "$state_dir" --shell /usr/sbin/nologin dmax
 fi
+usermod -aG dialout dmax
+# Some Raspberry desktop images assign USB serial devices to plugdev.
+if getent group plugdev >/dev/null; then usermod -aG plugdev dmax; fi
 install -d -m 0755 "$app_dir"
 install -d -o dmax -g dmax -m 0750 "$state_dir"
 install -d -o root -g dmax -m 0750 "$config_dir"

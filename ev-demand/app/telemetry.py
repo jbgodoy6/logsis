@@ -61,7 +61,7 @@ def plant_snapshot(state):
             ports.append(dict(id=port['key'], connector=port['connector'], online=online,
                 plugged=plugged, charging=charging, display_state=display_state, running=bool(port.get('running')), alarm=alarm, error_code=error,
                 status=status, ocpp_status=port.get('ocpp_status', ''), power_kw=finite(port.get('power_kw')) if fresh else None,
-                telemetry_fresh=fresh, sample_at=port.get('sample_at', 0), limit_kw=finite(port.get('limit_kw')),
+                telemetry_fresh=fresh, sample_at=port.get('sample_at', 0), limit_kw=None if port.get('native_mode') else finite(port.get('limit_kw')),
                 vehicle_id=vehicle.get('id'), vehicle_name=vehicle.get('name') if plugged else None,
                 session_id=port.get('session_id'), energy_kwh=finite(session.get('energy_kwh')),
                 soc=finite(port.get('soc')) if plugged and fresh else None))

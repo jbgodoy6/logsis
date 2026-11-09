@@ -7,6 +7,7 @@ const DMAX_DEFAULT_HASH = 'pbkdf2_sha256$600000$0cc644386557630153579d018267d636
 function onOpen() {
   SpreadsheetApp.getUi().createMenu('D-Max')
     .addItem('Preparar aba Tecnicos', 'prepararTecnicos')
+    .addItem('Preparar aba Assinaturas', 'prepararAssinaturas')
     .addItem('Autorizar um D-Max', 'autorizarDMax')
     .addItem('Revogar chave de um D-Max', 'revogarDMax').addToUi();
 }
@@ -74,7 +75,12 @@ function doPost(event) {
     lock=LockService.getScriptLock();
     acquired=lock.tryLock(5000);
     if(!acquired)error_(503,'Consulta ocupada; tente novamente');
-    if(data.action==='snapshot')return json_(snapshot_(props));
+    if(data.action==='snapshot'){
+      const result=snapshot_(props);
+      const notice=subscription_(props,data.controller_id);
+      if(notice)result.subscription=notice;
+      return json_(result);
+    }
     if(data.action==='update')return json_(update_(props,data.record));
     error_(422,'Ação desconhecida');
   } catch(e) {
@@ -184,4 +190,48 @@ function update_(props,r) {
   if(register||r.operations.includes('credential'))Object.assign(record,{password:r.password,activation_hash:null,must_change:Boolean(r.must_change),credential_version:r.credential_version});
   props.setProperty('user.'+r.id,JSON.stringify(record));props.deleteProperty('pending.'+r.id);
   return {ok:true,acknowledged_id:r.id};
+}
+
+/** Optional per-installation billing. Missing/deleted rows never cancel a notice. */
+const DMAX_SUB_HEADERS=['controller_id','instalacao','situacao','aviso_em','prazo_final','mensagem'];
+function prepararAssinaturas() {
+  const book=SpreadsheetApp.openById(DMAX_SHEET_ID);
+  let sheet=book.getSheetByName('Assinaturas');
+  if(!sheet)sheet=book.insertSheet('Assinaturas');
+  if(sheet.getLastRow()===0){
+    sheet.getRange(1,1,1,6).setValues([DMAX_SUB_HEADERS]);sheet.setFrozenRows(1);
+    sheet.getRange(1,1,1,6).setBackground('#06264a').setFontColor('#ffffff').setFontWeight('bold');
+    sheet.autoResizeColumns(1,6);
+  }else if(JSON.stringify(sheet.getRange(1,1,1,6).getValues()[0])!==JSON.stringify(DMAX_SUB_HEADERS)){
+    throw new Error('Cabeçalhos diferentes. Nenhum dado foi substituído.');
+  }
+  SpreadsheetApp.getUi().alert('Use uma linha por D-Max. Situação: regular ou pendente. O prazo é fixo de dez dias; aviso_em e prazo_final são preenchidos pelo serviço. Para liberar, altere para regular. Apagar a linha não libera o equipamento.');
+}
+function subscription_(props,id) {
+  const book=SpreadsheetApp.openById(DMAX_SHEET_ID),sheet=book.getSheetByName('Assinaturas');
+  if(!sheet||sheet.getLastRow()<2)return null;
+  if(JSON.stringify(sheet.getRange(1,1,1,6).getValues()[0])!==JSON.stringify(DMAX_SUB_HEADERS))error_(422,'Cabeçalhos de assinaturas inválidos');
+  const matches=sheet.getRange(2,1,sheet.getLastRow()-1,6).getValues().map((v,i)=>({v:v,row:i+2})).filter(r=>String(r.v[0]).trim()===id);
+  if(!matches.length)return null;
+  if(matches.length!==1)error_(422,'Assinatura duplicada');
+  const row=matches[0],status=String(row.v[2]).trim().toLowerCase();
+  if(!['regular','pendente'].includes(status))error_(422,'Situação de assinatura inválida');
+  const state=status==='pendente'?'pending':'regular',now=Math.floor(Date.now()/1000);
+  const message=String(row.v[5]||'Regularize sua assinatura com o fornecedor.').trim();
+  if(message.length>300)error_(422,'Mensagem muito longa');
+  const property='subscription.'+id,old=JSON.parse(props.getProperty(property)||'null');
+  let record=old;
+  if(!old||old.state!==state||old.message!==message){
+    // Editing a message cannot restart an existing pending grace period.
+    const issued=old&&old.state==='pending'&&state==='pending'?old.issued_at:now;
+    record={controller_id:id,revision:old?old.revision+1:1,state:state,issued_at:issued,
+      deadline:state==='pending'?issued+864000:null,message:message};
+    props.setProperty(property,JSON.stringify(record));
+  }
+  const dates=[new Date(record.issued_at*1000).toISOString(),record.deadline?new Date(record.deadline*1000).toISOString():''];
+  sheet.getRange(row.row,4,1,2).setValues([dates]);
+  const payload=JSON.stringify(Object.assign({},record,{server_time:now}));
+  const signature=Utilities.computeHmacSha256Signature('DMAX-LICENSE-1\n'+payload,props.getProperty('device.'+id),Utilities.Charset.UTF_8)
+    .map(b=>('0'+((b+256)%256).toString(16)).slice(-2)).join('');
+  return {payload:payload,signature:signature};
 }

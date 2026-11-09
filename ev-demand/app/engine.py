@@ -6,11 +6,14 @@ import time
 import uuid
 
 from .control import Demand, admission_ready, allocate, blocked_at
+from .licensing import Subscription
 
 
 class Engine:
     def __init__(self, store):
         self.store = store
+        self.subscription = Subscription(store)
+        self.was_native = False
         self.ports = {}
         self.connections = {}
         self.meter = {'total_kw': 0.0, 'at': 0.0, 'error': '', 'readings': [], 'energy_kwh': None}
@@ -56,7 +59,7 @@ class Engine:
 
     def identify(self, p, identifier):
         p['identifier'] = identifier
-        vehicle = next((v for v in self.store.entities('vehicle') if identifier in v.get('identifiers', [])), None)
+        vehicle = next((v for v in self.store.entities('vehicle') if not v.get('archived') and identifier in v.get('identifiers', [])), None)
         p['vehicle_id'] = vehicle['id'] if vehicle else None
         if identifier and not identifier.startswith('EVSYS-'):
             known = {x['id']: x for x in self.store.entities('identifier')}
@@ -152,6 +155,8 @@ class Engine:
         self.bucket_minute = int(time.time() // 60)
 
     async def set_limit(self, p, value):
+        if self.subscription.status()['native']:
+            return False
         value = round(max(0.0, value), 3)
         if abs(p['limit_kw'] - value) < 0.01 and p.get('profile_initialized', False):
             return True
@@ -183,6 +188,14 @@ class Engine:
         self.last_tick = now
         settings = self.store.settings()
         simulation = settings['mode'] == 'simulation'
+        native = self.subscription.status()['native']
+        if not native and self.was_native:
+            for p in ports:
+                p.update(profile_initialized=False, limit_kw=0.0, target_kw=0.0, native_mode=False, native_released=False, native_attempt=0)
+        self.was_native = native
+        if native:
+            await self.native_tick(ports, simulation, now, elapsed)
+            return
         for p in ports:
             c = self.config(p['charger'])
             if p.get('test') and now >= p['test']['until']:
@@ -262,6 +275,9 @@ class Engine:
         # Current high authorizations are retained in reservations even if consumption is low.
         headroom = max(0.0, settings['limit_kw'] - settings['margin_kw'] - self.meter['total_kw'])
         for p in sorted(ports, key=lambda q: (not vehicles.get(q['vehicle_id'], {}).get('priority', False), q['arrival'])):
+            if self.subscription.status()['native']:
+                self.control_progress_at = time.monotonic()
+                return
             c = chargers[p['charger']]
             target = p['target_kw']
             if target > p['limit_kw'] + 0.01 and ready:
@@ -321,13 +337,70 @@ class Engine:
                         'blocked': blocked, 'meter_fresh': fresh, 'total_kw': self.meter['total_kw']}
         self.control_progress_at = time.monotonic()
 
+    async def native_tick(self, ports, simulation, now, elapsed):
+        """Release only D-Max profiles; never send maximum-power profiles or resets."""
+        slots = asyncio.Semaphore(8)
+
+        async def release(p):
+            c = self.config(p['charger'])
+            if (c['transport'] == 'simulator') != simulation:
+                return
+            p['native_mode'] = True
+            cp = self.connections.get(c['id'])
+            if c['transport'] == 'simulator':
+                p['native_released'] = True
+                if p['connected'] and not p['running'] and not p['manual_pause'] and c['enabled'] and c['commissioned']:
+                    self.start_session(p)
+                peers = sum(q['charger'] == c['id'] and q['connected'] and not q['manual_pause'] for q in ports)
+                power = min(c['connector_max_kw'], c['max_kw'] / max(1, peers), p.get('acceptance_kw', c['max_kw'])) if p['running'] else 0.0
+                self.telemetry(p, power, (p.get('meter_kwh') or 0) + power * elapsed / 3600)
+            elif cp:
+                async with slots:
+                    if not p.get('native_released') and now - p.get('native_attempt', 0) >= 30:
+                        p['native_attempt'] = now
+                        try:
+                            p['native_released'] = await cp.release_native(p['connector'])
+                            self.store.record('native_release', {'port': p['key'], 'confirmed': p['native_released']})
+                        except Exception:
+                            p['native_released'] = False
+                            self.store.record('native_release', {'port': p['key'], 'confirmed': False})
+                    if (p.get('native_released') and p['connected'] and not p['running'] and not p['manual_pause']
+                            and c['enabled'] and c['commissioned'] and p['ocpp_status'] not in ('Faulted', 'Unavailable', 'SuspendedEV')
+                            and not p.get('station_alarm') and p.get('error_code', 'NoError') == 'NoError'
+                            and now - p['start_pending_at'] > 45 and self.subscription.status()['native']):
+                        p['start_pending_at'] = now
+                        try:
+                            await cp.remote_start(p, native=True)
+                        except Exception:
+                            self.store.record('start_failed', {'port': p['key'], 'mode': 'native'})
+                    self.control_progress_at = time.monotonic()
+            p['limit_kw'] = p['target_kw'] = 0.0
+            p.pop('test', None)
+            p['status'] = ('Modo nativo' if p.get('native_released') else 'Liberação nativa pendente de confirmação')
+            if c['transport'] == 'ocpp' and not cp:
+                p['status'] = 'Sem comunicação OCPP; liberação pendente'
+            self.control_progress_at = time.monotonic()
+
+        await asyncio.gather(*(release(p) for p in ports))
+        if simulation:
+            self.meter.update(total_kw=self.other_kw + sum(p['power_kw'] for p in ports), at=now, error='')
+        ev = sum(p['power_kw'] for p in ports if p['sample_at'] and now - p['sample_at'] <= self.store.settings()['freshness_s'])
+        self.summary = {'budget_kw': None, 'other_kw': max(0, self.meter['total_kw'] - ev), 'ev_kw': ev,
+                        'blocked': False, 'meter_fresh': bool(self.meter['at']) and now - self.meter['at'] <= self.store.settings()['freshness_s'],
+                        'total_kw': self.meter['total_kw'], 'native': True}
+        self.trace.append({'ts': now, 'total': self.meter['total_kw'], 'ev': ev, 'limit': self.store.settings()['limit_kw']})
+        self.trace = self.trace[-180:]
+        if int(now // 60) != self.bucket_minute:
+            self.flush()
+        self.control_progress_at = time.monotonic()
+
     def snapshot(self):
         mode = self.store.settings()['mode']
         active = [c for c in self.store.entities('charger') if not c.get('archived')]
         visible = [c for c in active if (c['transport'] == 'simulator') == (mode == 'simulation')]
         inactive = [{k: v for k, v in c.items() if k != 'password_hash'} for c in active if c not in visible]
         chargers = [{k: v for k, v in c.items() if k != 'password_hash'} | {'online': (c['transport'] == 'simulator' and self.store.settings()['mode'] == 'simulation') or c['id'] in self.connections} for c in visible]
-        return {'settings': self.store.settings(), 'chargers': chargers, 'inactive_chargers': inactive, 'vehicles': self.store.entities('vehicle'),
+        return {'settings': self.store.settings(), 'subscription': self.subscription.status(), 'chargers': chargers, 'inactive_chargers': inactive, 'vehicles': [v for v in self.store.entities('vehicle') if not v.get('archived')],
                 'sessions': [session for identifier in {p.get('session_id') for p in self.ports.values()} if identifier and (session := self.store.get('session', identifier))], 'identifiers': self.store.entities('identifier'), 'ports': [p for p in self.ports.values() if p['charger'] in {c['id'] for c in chargers}],
                 'meter': self.meter, 'summary': getattr(self, 'summary', {}), 'trace': self.trace,
                 'cloud': self.cloud | {'pending': self.store.pending_count(), 'controller_id': os.getenv('EV_CONTROLLER_ID') or self.store.entities('system')[0]['controller_id']}, 'fault': self.fault,

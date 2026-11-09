@@ -40,7 +40,7 @@ class Station(ChargePoint):
     async def boot(self, charge_point_vendor, charge_point_model, **kwargs):
         for p in self.engine.ports.values():
             if p['charger'] == self.id:
-                p.update(profile_initialized=False, sample_at=0, start_pending_at=0)
+                p.update(profile_initialized=False, sample_at=0, start_pending_at=0, native_released=False, native_attempt=0)
         self.engine.store.record('ocpp_boot', {'charger': self.id, 'vendor': charge_point_vendor,
                                              'model': charge_point_model, 'firmware': kwargs.get('firmware_version')})
         return call_result.BootNotification(current_time=utc(), interval=30, status='Accepted')
@@ -83,7 +83,8 @@ class Station(ChargePoint):
                                                            'association': 'unambiguous' if len(candidates) == 1 else 'unknown'})
         reserved = [p for p in candidates if p['start_pending_at'] and time.time() - p['start_pending_at'] < 45
                     and p['limit_kw'] > 0 and id_tag == (p['identifier'] or ('EVSYS-' + self.id[:8] + '-' + str(p['connector']))[:20])]
-        return call_result.Authorize(id_tag_info={'status': 'Accepted' if reserved else 'Blocked'})
+        native = self.engine.subscription.status()['native'] and self.engine.config(self.id)['enabled'] and self.engine.config(self.id)['commissioned']
+        return call_result.Authorize(id_tag_info={'status': 'Accepted' if reserved or native else 'Blocked'})
 
     @on(Action.start_transaction)
     async def start_transaction(self, connector_id, id_tag, meter_start, timestamp, **kwargs):
@@ -100,6 +101,8 @@ class Station(ChargePoint):
                        and self.engine.meter['at'] and now - self.engine.meter['at'] <= settings['freshness_s']
                        and self.engine.meter['total_kw'] <= settings['limit_kw'] - settings['margin_kw'] + 0.001
                        and (not blocked or p['emergency_until'] > now))
+        if self.engine.subscription.status()['native']:
+            allowed = self.engine.config(self.id)['enabled'] and self.engine.config(self.id)['commissioned']
         if not allowed:
             self.engine.store.record('unexpected_start', {'port': p['key'], 'action': 'rejected; inspect physical equipment'})
             # Run after sending the response, never await a call from inside an OCPP request handler.
@@ -167,7 +170,7 @@ class Station(ChargePoint):
                     power = sum(phases.values())
                 self.engine.telemetry(p, power, energy, soc, sampled_at=sampled_at)
                 if transaction_id is not None and not p['running'] and p['connected']:
-                    p['manual_pause'] = True
+                    p['manual_pause'] = not self.engine.subscription.status()['native']
                     self.engine.start_session(p, transaction_id)
                     p['profile_initialized'] = False
                     self.engine.store.record('session_reconciled', {'port': p['key'], 'transaction': transaction_id,
@@ -203,9 +206,21 @@ class Station(ChargePoint):
                                    cs_charging_profiles=profile))
         return response.status == 'Accepted'
 
-    async def remote_start(self, p):
+    async def release_native(self, connector):
+        # IDs used by previous D-Max releases are connector numbers. Clearing by
+        # ID preserves unrelated local/operator profiles; never issue a broad clear.
+        result = await self.call(call.ClearChargingProfile(id=connector))
+        if result.status == 'Accepted':
+            return True
+        # Unknown is ambiguous in 1.6 (absent or failed). Keep it pending for
+        # commissioning rather than claiming that native operation is confirmed.
+        return False
+
+    async def remote_start(self, p, native=False):
+        if not native and self.engine.subscription.status()['native']:
+            return
         identifier = p['identifier'] or ('EVSYS-' + self.id[:8] + '-' + str(p['connector']))[:20]
-        result = await self.call(call.RemoteStartTransaction(connector_id=p['connector'], id_tag=identifier,
-                                 charging_profile=self.profile(p['connector'], p['limit_kw'], 'TxProfile')))
+        options = {} if native else {'charging_profile': self.profile(p['connector'], p['limit_kw'], 'TxProfile')}
+        result = await self.call(call.RemoteStartTransaction(connector_id=p['connector'], id_tag=identifier, **options))
         if result.status != 'Accepted':
             self.engine.store.record('start_rejected', {'port': p['key']})

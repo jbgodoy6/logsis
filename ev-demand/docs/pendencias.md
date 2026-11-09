@@ -1,3 +1,7 @@
+# Atualização 0.9.0
+
+Incluídos: exclusão de veículos preservando histórico, relatórios PDF por período/veículo/carregador, multimedidor ampliado, suporte à porta 80 e avisos de assinatura por instalação com contagem offline e solicitação de funcionamento nativo. Ver release-v090.md e assinaturas-v090.md. Homologação física por modelo OCPP permanece necessária.
+
 # Melhoria solicitada: incluída na atualização 0.8.5
 
 Envio imediato implementado com fila durável e proteção de edições durante envio. Versão instalada permanece fixa no rodapé. Veja release-v085.md para validação e limites.

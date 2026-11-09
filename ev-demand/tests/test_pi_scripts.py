@@ -79,7 +79,7 @@ elif name=='fake-python' or name=='python':
  else:sys.exit(subprocess.call([os.environ['DMAX_FIXTURE_PYTHON'],*args]))
 ''')
             helper.chmod(0o755)
-            for name in ('uname', 'systemctl', 'id', 'useradd', 'userdel', 'getent', 'chown', 'install', 'fake-python'):
+            for name in ('uname', 'systemctl', 'id', 'useradd', 'usermod', 'userdel', 'getent', 'chown', 'install', 'fake-python'):
                 (commands / name).symlink_to(helper)
             env = dict(os.environ, PATH=str(commands) + ':' + os.environ['PATH'],
                        PYTHON_BIN=str(commands / 'fake-python'), DMAX_FIXTURE_ROOT=str(fixture), DMAX_FIXTURE_PYTHON=sys.executable)

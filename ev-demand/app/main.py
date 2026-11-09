@@ -217,6 +217,7 @@ def create_app(database=None, background=True, recovery_public_key=None, root_pa
             root_password_hash = ''
             root_hash_error = True
     access = Access(store, root_password_hash=root_password_hash)
+    access.subscription = engine.subscription
     recovery = Recovery(store, recovery_public_key)
     recovery_issues = AttemptLimiter()
     recovery_attempts = AttemptLimiter()
@@ -262,7 +263,7 @@ def create_app(database=None, background=True, recovery_public_key=None, root_pa
                 await asyncio.to_thread(network.close)
             store.db.close()
 
-    app = FastAPI(title='EnergyCube D-Max · Controle de demanda', version='0.8.5', lifespan=lifespan,
+    app = FastAPI(title='EnergyCube D-Max · Controle de demanda', version='0.9.0', lifespan=lifespan,
                   docs_url=None, redoc_url=None, openapi_url=None)
     app.state.store, app.state.engine, app.state.access = store, engine, access
     app.state.recovery = recovery
@@ -526,6 +527,20 @@ def create_app(database=None, background=True, recovery_public_key=None, root_pa
     async def history(u=Depends(user)):
         return store.history()
 
+    @app.get('/api/reports/sessions.pdf')
+    async def sessions_pdf(start: str = '', end: str = '', vehicle_id: str = '', charger_id: str = '', u=Depends(user)):
+        from .reports import report_data, build_pdf
+        from .server_ui import VERSION
+        try:
+            data = report_data(store, start, end, vehicle_id, charger_id)
+        except (ValueError, OverflowError) as exc:
+            raise HTTPException(422, str(exc))
+        payload = await asyncio.to_thread(build_pdf, data, VERSION)
+        store.record('report_generated', {'actor': u['name'], 'sessions': len(data['sessions']), 'start': data['start'], 'end': data['end'],
+                                        'vehicle': vehicle_id, 'charger': charger_id})
+        return Response(payload, media_type='application/pdf', headers={
+            'Content-Disposition': 'attachment; filename="D-Max-relatorio-recargas.pdf"', 'Cache-Control': 'no-store'})
+
     @app.put('/api/settings')
     async def settings(data: Settings, u=Depends(administrator)):
         current = store.settings()
@@ -620,7 +635,9 @@ def create_app(database=None, background=True, recovery_public_key=None, root_pa
 
     @app.post('/api/vehicles')
     async def vehicle(data: Vehicle, u=Depends(administrator)):
-        others = [v for v in store.entities('vehicle') if v['id'] != data.id]
+        if (store.get('vehicle', data.id) or {}).get('archived'):
+            raise HTTPException(409, 'Identificador de veículo excluído; cadastre com um novo identificador')
+        others = [v for v in store.entities('vehicle') if v['id'] != data.id and not v.get('archived')]
         if any(set(v['identifiers']) & set(data.identifiers) for v in others):
             raise HTTPException(409, 'Identificador já associado a outro veículo')
         store.put('vehicle', data.model_dump())
@@ -630,8 +647,26 @@ def create_app(database=None, background=True, recovery_public_key=None, root_pa
         store.record('vehicle_configured', {'actor': u['name'], 'vehicle': data.id, 'priority': data.priority})
         return {'ok': True}
 
+    @app.delete('/api/vehicles/{identifier}')
+    async def delete_vehicle(identifier: str, u=Depends(administrator)):
+        row = store.get('vehicle', identifier)
+        if not row or row.get('archived'):
+            raise HTTPException(404, 'Veículo não encontrado')
+        if any(p.get('vehicle_id') == identifier and (p['connected'] or p['running'] or p.get('session_id')) for p in engine.ports.values()):
+            raise HTTPException(409, 'Desconecte o veículo e encerre a recarga antes de excluí-lo')
+        row.update(archived=True, archived_at=time.time())
+        store.put('vehicle', row)
+        for item in store.entities('identifier'):
+            if item.get('vehicle_id') == identifier:
+                item['vehicle_id'] = None
+                store.put('identifier', item)
+        store.record('vehicle_removed', {'actor': u['name'], 'vehicle': identifier, 'history_preserved': True})
+        return {'ok': True}
+
     @app.post('/api/ports/{key}/action')
     async def action(key: str, data: PortAction, u=Depends(user)):
+        if engine.subscription.status()['native'] and data.action in ('pause', 'resume', 'emergency', 'cancel_emergency'):
+            raise HTTPException(409, 'Controle de recarga desativado pela assinatura; funcionamento nativo')
         if data.action in ('emergency', 'cancel_emergency') and u['role'] == 'operator' and not u['can_emergency']:
             raise HTTPException(403, 'Operador sem permissão de emergência')
         if data.action in ('connect', 'disconnect') and u['role'] not in MANAGERS:
@@ -642,7 +677,7 @@ def create_app(database=None, background=True, recovery_public_key=None, root_pa
         c = engine.config(p['charger'])
         if c.get('archived'):
             raise HTTPException(404, 'Carregador excluído')
-        if data.vehicle_id and not any(v['id'] == data.vehicle_id for v in store.entities('vehicle')):
+        if data.vehicle_id and not any(v['id'] == data.vehicle_id and not v.get('archived') for v in store.entities('vehicle')):
             raise HTTPException(422, 'Veículo desconhecido')
         if data.action in ('connect', 'disconnect'):
             if store.settings()['mode'] != 'simulation' or c['transport'] != 'simulator':
@@ -687,6 +722,8 @@ def create_app(database=None, background=True, recovery_public_key=None, root_pa
 
     @app.post('/api/ports/{key}/learn')
     async def learn(key: str, data: Learning, u=Depends(technician)):
+        if engine.subscription.status()['native']:
+            raise HTTPException(409, 'Aprendizado indisponível durante funcionamento nativo')
         p = engine.ports.get(key)
         if not p or not p['running'] or data.cap_kw > p['limit_kw']:
             raise HTTPException(409, 'É necessário estar em recarga; o teste só pode reduzir o limite atual')
@@ -752,6 +789,9 @@ def create_app(database=None, background=True, recovery_public_key=None, root_pa
             await ws.close(code=1008)
             return
         await ws.accept(subprotocol='ocpp1.6')
+        for p in engine.ports.values():
+            if p['charger'] == identifier:
+                p.update(native_released=False, native_attempt=0, profile_initialized=False)
         station = Station(identifier, Socket(ws), engine)
         engine.connections[identifier] = station
         store.record('ocpp_connected', {'charger': identifier})

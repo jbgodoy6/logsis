@@ -5,11 +5,11 @@ from pathlib import Path
 import re
 import zipfile
 
-VERSION = '0.8.5'
+VERSION = '0.9.0'
 PYTHON = ('__init__.py', 'access.py', 'control.py', 'directory.py', 'engine.py', 'main.py',
           'meter.py', 'network.py', 'ocpp_server.py', 'recovery.py', 'root_auth.py',
-          'security.py', 'server_ui.py', 'services.py', 'store.py', 'live_dom.py', 'supervision.py', 'plant_view.py', 'telemetry.py')
-STATIC = ('style.css', 'energycube.css', 'server.css', 'plant.css', 'live.css', 'live.js', 'd-max-logo.png', 'energycube-logo.png')
+          'security.py', 'server_ui.py', 'services.py', 'store.py', 'live_dom.py', 'licensing.py', 'reports.py', 'supervision.py', 'plant_view.py', 'telemetry.py')
+STATIC = ('style.css', 'energycube.css', 'server.css', 'plant.css', 'live.css', 'live.js', 'd-max-logo.png', 'energycube-logo.png', 'd-max-report.jpg', 'energycube-report.jpg')
 
 
 def package(root, wheels, output):
@@ -40,6 +40,9 @@ def package(root, wheels, output):
     include(root / 'docs/layout-v083.md', 'PLANTA-EM-LARGURA-COMPLETA.md')
     include(root / 'docs/live-v084.md', 'ATUALIZACAO-SEM-PISCAR.md')
     include(root / 'docs/release-v085.md', 'NOVIDADES-0.8.5.md')
+    include(root / 'docs/release-v090.md', 'NOVIDADES-0.9.0.md')
+    include(root / 'docs/assinaturas-v090.md', 'ASSINATURAS-GOOGLE.md')
+    include(root / 'google-apps-script/Code.gs', 'google-apps-script/Code.gs')
     include(root / 'docs/raspberry-acesso.md', 'ACESSO-RAIZ.txt')
     include(root / 'docs/raspberry-ocpp.md', 'OCPP-E-MULTIMEDIDOR.txt')
     lock = (root / 'requirements.lock').read_text()

@@ -33,7 +33,8 @@ class FakeCharger(ChargePoint):
         return call_result.SetChargingProfile(status='Accepted')
 
     @on(Action.remote_start_transaction)
-    async def remote(self, id_tag, connector_id, charging_profile, **kwargs):
+    async def remote(self, id_tag, connector_id, charging_profile=None, **kwargs):
+        self.last_start_profile = charging_profile
         self.actions.append(('start', self.limit_kw, time.time()))
         async def start():
             await asyncio.sleep(.05)
@@ -43,6 +44,12 @@ class FakeCharger(ChargePoint):
             self.transaction = result.transaction_id
         self.tasks.append(asyncio.create_task(start()))
         return call_result.RemoteStartTransaction(status='Accepted')
+
+    @on(Action.clear_charging_profile)
+    async def clear_profile(self, id=None, **kwargs):
+        self.actions.append(('clear', id, time.time()))
+        self.limit_kw = 320
+        return call_result.ClearChargingProfile(status='Accepted')
 
     async def measurements(self):
         while True:
@@ -117,6 +124,22 @@ class OCPPFlowTest(unittest.IsolatedAsyncioTestCase):
                     self.assertLessEqual(a.limit_kw + b.limit_kw, 380.1)
                     self.assertTrue(engine.ports['a:1']['session_id'])
                     self.assertTrue(engine.ports['b:1']['session_id'])
+                    # Exercise the new commercial transition over actual OCPP
+                    # WebSocket frames after the regular admission regression.
+                    from test_v090 import envelope, TOKEN, NOTICE_SECONDS
+                    engine.subscription.receive(envelope(store, issued=time.time()-NOTICE_SECONDS-10), TOKEN)
+                    await wait_for(lambda: all(p.get('native_released') for p in engine.ports.values()))
+                    for device in (a, b):
+                        self.assertEqual([x[1] for x in device.actions if x[0] == 'clear'], [1])
+                    limits = sum(x[0] == 'limit' for device in (a, b) for x in device.actions)
+                    await b.call(call.StopTransaction(meter_stop=round(b.energy*1000), transaction_id=b.transaction,
+                                                     timestamp=datetime.now(timezone.utc).isoformat()))
+                    b.running = False
+                    await b.call(call.StatusNotification(connector_id=1, error_code='NoError', status='Available'))
+                    await b.call(call.StatusNotification(connector_id=1, error_code='NoError', status='Preparing'))
+                    await wait_for(lambda: b.running)
+                    self.assertIsNone(b.last_start_profile)
+                    self.assertEqual(sum(x[0] == 'limit' for device in (a, b) for x in device.actions), limits)
         finally:
             for c in clients:
                 tasks.extend(c.tasks)

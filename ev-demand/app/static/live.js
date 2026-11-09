@@ -8,7 +8,7 @@
   if (!['overview', 'monitor'].includes(page)) return;
   const svgNS = 'http://www.w3.org/2000/svg';
   const tags = new Set('section article div span p b strong em small h2 h3 h4 a svg g path rect circle ellipse line polyline text i'.split(' '));
-  const attrs = new Set('class id role aria-label data-live-key viewbox x y x1 x2 y1 y2 cx cy r rx ry width height d points fill stroke stroke-width stroke-opacity fill-opacity stroke-linecap stroke-linejoin stroke-dasharray text-anchor opacity transform href target'.split(' '));
+  const attrs = new Set('class id role aria-label data-live-key viewbox x y x1 x2 y1 y2 cx cy r rx ry width height d points fill stroke stroke-width stroke-opacity fill-opacity stroke-linecap stroke-linejoin stroke-dasharray text-anchor font-size opacity transform href target'.split(' '));
   const key = item => typeof item === 'string' ? null : item.attrs?.['data-live-key'];
   const nodeKey = node => node.nodeType === 1 ? node.getAttribute('data-live-key') : null;
   function reconcile(parent, descriptions, inSVG = false) {
@@ -57,6 +57,8 @@
       const data = await response.json();
       if (data.schema_version !== 1 || !Array.isArray(data.nodes)) throw new Error('Invalid data');
       reconcile(root, data.nodes);
+      const banner = document.getElementById('subscription-banner');
+      if (banner && Array.isArray(data.subscription_nodes) && data.subscription_nodes[0]?.tag === 'div') reconcile(banner, data.subscription_nodes[0].children);
       for (const name of ['charging', 'connected', 'alarm', 'disconnected', 'communication']) {
         const color = data.colors?.[name];
         if (typeof color === 'string' && /^#[0-9a-f]{6}$/i.test(color) && document.documentElement.style.getPropertyValue('--plant-' + name) !== color) document.documentElement.style.setProperty('--plant-' + name, color);

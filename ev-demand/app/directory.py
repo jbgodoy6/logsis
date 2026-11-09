@@ -119,6 +119,9 @@ async def synchronize(access, client=None):
             data = response.json()
             if data.get('complete') is not True:
                 raise ValueError('Uma lista parcial não pode atualizar os acessos')
+            subscription = getattr(access, 'subscription', None)
+            if data.get('subscription') is not None and subscription is not None:
+                subscription.receive(data['subscription'], token)
             access.apply_snapshot(data['technicians'])
             if any(row['payload'].get('_acknowledged_base') for row in access.pending()):
                 rebase_acknowledged(access, data['technicians'])
