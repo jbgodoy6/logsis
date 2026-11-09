@@ -1,3 +1,7 @@
+# D-Max 0.8.3 · Planta ao vivo em largura completa
+
+Leia PLANTA-EM-LARGURA-COMPLETA.md. Atualize sem desinstalar; feche a aba antiga do navegador e abra o D-Max novamente depois da atualização.
+
 # D-Max 0.8.2 · Correção do menu e cores locais
 
 Veja NAVEGACAO-E-CORES.md. O menu não recarrega com os dados. Escolha a paleta em Configurações > Cores da planta local. Atualize sem desinstalar.

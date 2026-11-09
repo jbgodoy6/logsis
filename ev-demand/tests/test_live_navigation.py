@@ -19,6 +19,7 @@ class LiveNavigationTests(unittest.TestCase):
             shell=self.client.get('/ui/'+page)
             self.assertEqual(shell.status_code,200)
             self.assertNotIn('http-equiv="refresh"',shell.text)
+            self.assertIn('width="100%" height="720"',shell.text)
             self.assertIn('src="/ui-live/'+page+'"',shell.text)
             self.assertIn('referrerpolicy="same-origin"',shell.text)
             self.assertEqual(shell.headers['x-frame-options'],'DENY')
@@ -80,3 +81,12 @@ class LiveNavigationTests(unittest.TestCase):
         self.client.post('/api/change-password',json={'current_password':'12345678','new_password':'test-new-operator-password'})
         self.client.post('/api/login',json={'username':'operator-ui','password':'test-new-operator-password'})
         self.assertEqual(self.client.put('/api/appearance',json={}).status_code,403)
+
+    def test_static_styles_use_versioned_urls_on_shell_and_live_document(self):
+        from app.server_ui import VERSION
+        for path in ['/ui/monitor','/ui-live/monitor','/ui/settings']:
+            response=self.client.get(path)
+            for name in ['style.css','energycube.css','server.css','plant.css']:
+                self.assertIn('/static/'+name+'?v='+VERSION,response.text)
+            self.assertEqual(response.headers['cache-control'],'no-store')
+        self.assertIn('/static/live.css?v='+VERSION,self.client.get('/ui-live/monitor').text)

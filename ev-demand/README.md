@@ -1,3 +1,7 @@
+# D-Max 0.8.3 · Correção da área de visualização
+
+[Guia de atualização](docs/layout-v083.md). Estilos versionados e largura completa do quadro de dados, mantendo a navegação estável.
+
 # D-Max 0.8.2 · Navegação estável e paleta local
 
 [Correção e atualização](docs/navigation-v082.md). Os dados ao vivo se atualizam mantendo o menu estável. A paleta local pode ser alterada em Configurações.

@@ -18,7 +18,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from .meter import MEASUREMENTS, FORMATS
 from .plant_view import render_plant
 
-VERSION = '0.8.2'
+VERSION = '0.8.3'
 PAGES = {
     'overview': 'Visão geral', 'chargers': 'Carregadores', 'vehicles': 'Veículos',
     'schedule': 'Horários', 'history': 'Histórico', 'meter': 'Multimedidor',
@@ -141,16 +141,14 @@ def install(app):
 
         def document(self, content, title='D-Max', refresh=False, live=False):
             update = '<meta http-equiv="refresh" content="2">' if refresh else ''
+            styles = ('style.css', 'energycube.css', 'server.css', 'plant.css') + (('live.css',) if live else ())
+            styles = ''.join('<link rel="stylesheet" href="/static/' + name + '?v=' + VERSION + '">' for name in styles)
             return ('<!doctype html><html lang="pt-BR"><head><meta charset="utf-8">'
                     '<meta name="viewport" content="width=device-width,initial-scale=1">'
                     '<title>' + esc(title) + ' · EnergyCube D-Max</title>' + update
                     + '<link rel="icon" type="image/png" href="/static/energycube-logo.png">'
-                    '<link rel="stylesheet" href="/static/style.css">'
-                    '<link rel="stylesheet" href="/static/energycube.css">'
-                    '<link rel="stylesheet" href="/static/server.css">'
-                    '<link rel="stylesheet" href="/static/plant.css">'
+                    + styles
                     + ('<link rel="stylesheet" href="/ui-colors.css">' if self.user and not self.user['must_change'] else '')
-                    + ('<link rel="stylesheet" href="/static/live.css">' if live else '')
                     + '</head><body>' + content + '</body></html>')
 
         async def render(self, page='overview', message='', diagnostic=None, status=200, recovery_data=None):
@@ -200,7 +198,7 @@ def install(app):
                 page, note, status = 'overview', '<div class="notice">Acesso não permitido para seu perfil.</div>', 403
             self.state = await self.api('GET', '/api/state')
             if page in ('overview', 'monitor') and status == 200:
-                content = ('<iframe class="live-data" title="' + esc(PAGES[page]) + ' · dados ao vivo" src="/ui-live/' + page
+                content = ('<iframe class="live-data" width="100%" height="720" frameborder="0" title="' + esc(PAGES[page]) + ' · dados ao vivo" src="/ui-live/' + page
                            + '" referrerpolicy="same-origin"></iframe>'
                            '<p class="hint">Os dados se atualizam automaticamente; o menu permanece disponível.</p>')
             elif page == 'overview':
