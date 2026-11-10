@@ -6,7 +6,7 @@ from pathlib import Path
 import re
 import zipfile
 
-VERSION = '0.12.0'
+VERSION = '0.12.1'
 PYTHON = ('__init__.py', 'access.py', 'control.py', 'directory.py', 'engine.py', 'main.py',
           'meter.py', 'network.py', 'ocpp_server.py', 'recovery.py', 'root_auth.py',
           'security.py', 'server_ui.py', 'services.py', 'store.py', 'live_dom.py', 'licensing.py', 'reports.py', 'maintenance.py', 'remote_gateway.py', 'remote_tunnel.py', 'remote_registry.py', 'curve.py', 'supervision.py', 'plant_view.py', 'telemetry.py')
@@ -57,6 +57,7 @@ def package(root, wheels, output, signing_key=None, cloudflared=None):
     include(root / 'docs/release-v0110.md', 'NOVIDADES-0.11.0.md')
     include(root / 'docs/release-v0120.md', 'NOVIDADES-0.12.0.md')
     include(root / 'docs/validation-v0120.md', 'VALIDACAO-0.12.0.md')
+    include(root / 'docs/remote-v0121.md', 'NOVIDADES-0.12.1.md')
     include(root / 'docs/assinaturas-v090.md', 'ASSINATURAS-GOOGLE.md')
     include(root / 'google-apps-script/Code.gs', 'google-apps-script/Code.gs')
     include(root / 'docs/raspberry-acesso.md', 'ACESSO-RAIZ.txt')

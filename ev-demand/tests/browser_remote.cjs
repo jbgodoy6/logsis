@@ -22,7 +22,7 @@ const {chromium}=require('playwright');
   r=await remote('/ocpp/REAL');assert.equal(r.status,404);
   r=await remote('/api/setup','POST',{admin_password:'blocked-fixture-password'});assert.equal(r.status,404);
   await page.goto(base+'/ui/remote');await page.waitForTimeout(1200);assert((await page.locator('main').textContent()).includes('Grafana'));
-  assert.equal(await page.locator('[data-dmax-version]').textContent(),'v0.12.0');
+  assert.equal(await page.locator('[data-dmax-version]').textContent(),'v0.12.1');
   await page.screenshot({path:'/tmp/dmax-remote-v0110.png',fullPage:true});
   await page.setViewportSize({width:390,height:844});await page.goto(base+'/ui/overview');
   await page.waitForFunction(()=>document.querySelector('[data-live-status]').textContent.startsWith('Atualizado'));

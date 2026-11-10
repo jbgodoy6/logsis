@@ -16,7 +16,7 @@ from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 from app.main import create_app
 from app.store import password_hash
 from app.remote_gateway import create_gateway,backend,permitted,MAX_BODY
-from app.remote_tunnel import command,ssh_command,cloudflare_session,valid_url,public_status,write_status,session,supervise
+from app.remote_tunnel import command,ssh_command,cloudflare_session,connector_ready,valid_url,public_status,write_status,session,supervise
 
 class GatewayTests(unittest.TestCase):
     def setUp(self):
@@ -150,13 +150,19 @@ if __name__=='__main__':unittest.main()
 
 class CloudflareTests(unittest.IsolatedAsyncioTestCase):
     async def run_lines(self,lines):
-        outputs=[]
+        outputs=[];active=set();lines=iter(lines)
+        async def readline():
+            line=next(lines,'')
+            match=__import__('re').search(r'connIndex=(\d+)',line);index=match.group(1) if match else '0'
+            if 'Registered tunnel connection' in line:active.add(index)
+            elif 'Failed to serve tunnel connection' in line or 'Lost connection with the edge' in line:active.discard(index)
+            return line.encode()+b'\n' if line else b''
         class Process:
             returncode=0
-            stdout=type('Stream',(),{'readline':AsyncMock(side_effect=[*(x.encode()+b'\n' for x in lines),b''])})()
+            stdout=type('Stream',(),{'readline':AsyncMock(side_effect=readline)})()
             wait=AsyncMock(return_value=0)
         spawn=AsyncMock(return_value=Process());state=dict(url='https://old.tunnl.gg',connected=False)
-        await cloudflare_session(state,asyncio.Event(),spawn,lambda data:outputs.append(dict(data)))
+        await cloudflare_session(state,asyncio.Event(),spawn,lambda data:outputs.append(dict(data)),ready=lambda:bool(active))
         self.assertEqual(spawn.call_args.args,tuple(command()));return outputs
     async def test_url_requires_registered_connection_and_disconnect_is_visible(self):
         states=await self.run_lines(['https://new-place.trycloudflare.com','2026-11-10 INF Registered tunnel connection connIndex=0','2026-11-10 ERR Failed to serve tunnel connection connIndex=0'])
@@ -169,3 +175,59 @@ class CloudflareTests(unittest.IsolatedAsyncioTestCase):
     async def test_all_registered_connections_must_drop_before_offline(self):
         states=await self.run_lines(['https://new-place.trycloudflare.com','INF Registered tunnel connection connIndex=0','INF Registered tunnel connection connIndex=1','ERR Failed to serve tunnel connection connIndex=0','ERR Failed to serve tunnel connection connIndex=1'])
         self.assertTrue(states[4]['connected']);self.assertFalse(states[5]['connected'])
+
+    async def test_api_url_in_error_is_not_a_public_tunnel(self):
+        states=await self.run_lines(['ERR Post "https://api.trycloudflare.com/tunnel": context deadline exceeded'])
+        self.assertTrue(all(p.get('url') is None for p in states))
+        self.assertFalse(valid_url('https://api.trycloudflare.com'))
+        self.assertFalse(valid_url('https://www.trycloudflare.com'))
+    async def test_lost_edge_log_clears_connection(self):
+        states=await self.run_lines(['https://real-site.trycloudflare.com','INF Registered tunnel connection connIndex=0','INF Lost connection with the edge connIndex=0'])
+        self.assertTrue(states[2]['connected']);self.assertFalse(states[3]['connected'])
+    async def test_defaults_allow_native_protocol_fallback_without_disabling_tls(self):
+        args=command();self.assertEqual(args[args.index('--protocol')+1],'auto')
+        self.assertEqual(args[args.index('--edge-ip-version')+1],'4')
+        self.assertEqual(args[args.index('--output')+1],'json')
+        with patch.dict('os.environ',{'DMAX_REMOTE_PROTOCOL':'http2'}):self.assertIn('http2',command())
+        with patch.dict('os.environ',{'DMAX_REMOTE_PROTOCOL':'bad'}):
+            with self.assertRaises(ValueError):command()
+    async def test_registered_log_does_not_override_failed_readiness(self):
+        lines=iter([b'https://ready-check.trycloudflare.com\n',b'INF Registered tunnel connection connIndex=0\n',b''])
+        class Process:
+            returncode=0
+            stdout=type('Stream',(),{'readline':AsyncMock(side_effect=lambda:next(lines))})()
+        states=[]
+        await cloudflare_session({},asyncio.Event(),AsyncMock(return_value=Process()),lambda data:states.append(dict(data)),ready=lambda:False)
+        self.assertTrue(all(not p['connected'] for p in states))
+    async def test_readiness_is_http_status_not_merely_open_port(self):
+        from http.server import BaseHTTPRequestHandler,ThreadingHTTPServer
+        import threading
+        class Handler(BaseHTTPRequestHandler):
+            code=503
+            def do_GET(self):self.send_response(self.code);self.end_headers()
+            def log_message(self,*args):pass
+        server=ThreadingHTTPServer(('127.0.0.1',0),Handler);thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
+        try:
+            with patch('app.remote_tunnel.READY_URL','http://127.0.0.1:'+str(server.server_port)+'/ready'):
+                self.assertFalse(await asyncio.to_thread(connector_ready));Handler.code=200
+                self.assertTrue(await asyncio.to_thread(connector_ready))
+        finally:await asyncio.to_thread(server.shutdown);server.server_close();thread.join(timeout=2)
+    async def test_silent_process_is_recycled_and_stop_does_not_wait_for_log_line(self):
+        import sys
+        processes=[]
+        async def spawn(*args,**kwargs):
+            child=await asyncio.create_subprocess_exec(sys.executable,'-u','-c','import time; time.sleep(60)',**kwargs);processes.append(child);return child
+        states=[]
+        await asyncio.wait_for(cloudflare_session({},asyncio.Event(),spawn,lambda x:states.append(dict(x)),ready=lambda:False,stall_s=.08,check_s=.02),3)
+        self.assertIn('recriando',states[-1]['message']);self.assertIsNotNone(processes[-1].returncode)
+        stop=asyncio.Event();task=asyncio.create_task(cloudflare_session({},stop,spawn,lambda x:None,ready=lambda:False,check_s=10))
+        await asyncio.sleep(.05);stop.set();await asyncio.wait_for(task,3)
+        self.assertIsNotNone(processes[-1].returncode)
+    async def test_connectivity_errors_are_logged_without_echoing_secrets(self):
+        import io
+        output=io.StringIO()
+        with patch('sys.stdout',output):
+            await self.run_lines(['{"message":"precheck", "component":"TCP Connectivity", "target":"region2.v2.argotunnel.com", "status":"fail", "error":"fixture-private-secret"}',
+                                  '{"message":"precheck complete", "hard_fail":true}',
+                                  'ERR x509: fixture-private-secret'])
+        text=output.getvalue();self.assertIn('region2.v2.argotunnel.com',text);self.assertIn('certificado recusado',text);self.assertNotIn('fixture-private-secret',text)

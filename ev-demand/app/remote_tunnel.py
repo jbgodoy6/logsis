@@ -8,6 +8,7 @@ import re
 import signal
 import tempfile
 import time
+import urllib.request
 from urllib.parse import urlsplit
 
 HOME=Path('/var/lib/d-max-remote')
@@ -21,6 +22,7 @@ def valid_url(value):
     try:
         url=urlsplit(value)
         return (url.scheme=='https' and not url.username and not url.password and url.port is None
+                and url.hostname not in ('api.trycloudflare.com','www.trycloudflare.com')
                 and url.path in ('','/') and not url.query and not url.fragment
                 and bool(re.fullmatch(r'[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.(?:trycloudflare\.com|tunnl\.gg)',url.hostname or '')))
     except ValueError:return False
@@ -59,9 +61,35 @@ def ssh_command():
             '-o','ConnectTimeout=20','-R','80:127.0.0.1:8766',
             'stable@proxy.tunnl.gg','output=json']
 
+READY_URL='http://127.0.0.1:20246/ready'
+
 def command():
+    protocol=os.getenv('DMAX_REMOTE_PROTOCOL','auto')
+    if protocol not in ('auto','http2','quic'):raise ValueError('Protocolo Cloudflare inválido')
     return [os.getenv('DMAX_CLOUDFLARED_BIN','/opt/d-max/bin/cloudflared'),'tunnel',
-            '--no-autoupdate','--protocol','http2','--url','http://127.0.0.1:8766']
+            '--no-autoupdate','--protocol',protocol,'--edge-ip-version','4',
+            '--output','json','--metrics','127.0.0.1:20246','--grace-period','5s',
+            '--url','http://127.0.0.1:8766']
+
+def connector_ready():
+    # This is cloudflared's local readiness, not a public availability guarantee.
+    opener=urllib.request.build_opener(urllib.request.ProxyHandler({}))
+    try:
+        with opener.open(READY_URL,timeout=2) as reply:return reply.status==200
+    except (OSError,ValueError):return False
+
+async def close_process(process):
+    if process.returncode is not None:return
+    try:process.terminate()
+    except ProcessLookupError:return
+    # communicate drains stderr/stdout: wait alone can deadlock on a full pipe.
+    try:await asyncio.wait_for(process.communicate(),8)
+    except TimeoutError:
+        try:process.kill()
+        except ProcessLookupError:pass
+        try:await asyncio.wait_for(process.communicate(),3)
+        except TimeoutError:pass
+
 
 
 async def session(state,stop,spawn=asyncio.create_subprocess_exec,status=write_status):
@@ -92,51 +120,88 @@ async def session(state,stop,spawn=asyncio.create_subprocess_exec,status=write_s
         state.update(connected=False,message='Conexão remota encerrada; reconexão automática em andamento')
         status(state)
 
-async def cloudflare_session(state,stop,spawn=asyncio.create_subprocess_exec,status=write_status):
+async def cloudflare_session(state,stop,spawn=asyncio.create_subprocess_exec,status=write_status,
+                             ready=connector_ready,stall_s=180,check_s=5):
     state.update(url=None,connected=False,provider='cloudflare',message='Cloudflare está criando um endereço automático')
-    status(state)
+    state.pop('last_error',None);status(state)
     process=await spawn(*command(),stdout=asyncio.subprocess.PIPE,stderr=asyncio.subprocess.STDOUT,limit=65536)
-    heartbeat=time.monotonic();connections=set()
+    line_task=asyncio.create_task(process.stdout.readline());stop_task=asyncio.create_task(stop.wait())
+    checked=time.monotonic();last_ready=checked;connections=set();last_note=None
+    def publish():
+        nonlocal last_note
+        note=(state.get('connected'),state.get('message'))
+        if note!=last_note:
+            print('D-Max remoto: '+state['message'],flush=True);last_note=note
+        status(state)
+    async def check():
+        nonlocal checked,last_ready
+        checked=time.monotonic()
+        available=await asyncio.to_thread(ready)
+        state['connected']=bool(available and state.get('url'))
+        if state['connected']:
+            last_ready=time.monotonic();state['last_connected_at']=time.time()
+            state.pop('last_error',None)
+            state['message']='Conector Cloudflare pronto; confirme o acesso público no navegador e faça login'
+        elif state.get('url'):
+            state['message']=state.get('last_error') or 'Cloudflare sem conexão pronta; tentativa automática em andamento'
+        publish()
     try:
         while not stop.is_set():
-            try:line=await asyncio.wait_for(process.stdout.readline(),timeout=15)
-            except TimeoutError:
-                status(state);continue
-            if not line:break
-            text=line.decode(errors='replace');lower=text.lower()
-            try:entry=json.loads(text)
-            except ValueError:entry={}
-            if not isinstance(entry,dict):entry={}
-            match=re.search(r'https://[a-z0-9-]+\.trycloudflare\.com',text)
-            changed=False
-            if match and valid_url(match.group()):
-                state.update(url=match.group(),connected=bool(connections),message='Cloudflare conectado; acesso exige login do D-Max' if connections else 'Endereço criado; aguardando conexão com a Cloudflare');changed=True
-                print('D-Max remoto: endereço Cloudflare '+match.group(),flush=True)
-            index=entry.get('connIndex',0)
-            if not entry:
-                found=re.search(r'connIndex=(\d+)',text);index=int(found.group(1)) if found else 0
-            if 'registered tunnel connection' in lower and 'unregistered' not in lower:
-                connections.add(str(index));state.update(connected=bool(state.get('url')),last_connected_at=time.time(),message='Cloudflare conectado; acesso exige login do D-Max');changed=True
-            elif any(x in lower for x in ('unregistered tunnel connection','failed to serve tunnel connection','connection terminated')):
-                connections.discard(str(index));state.update(connected=bool(connections and state.get('url')),message='Cloudflare reconectando; confira o último estado');changed=True
-            elif 'x509:' in lower or 'certificate verify failed' in lower:
-                state['message']='Cloudflare: certificado recusado; verificação TLS mantida. Confira a rede e a CA autorizada.';changed=True
-            elif 'no such host' in lower or 'lookup ' in lower:
-                state['message']='Cloudflare: falha de DNS; reconexão automática';changed=True
-            elif 'timeout' in lower or 'failed to dial' in lower:
-                state['message']='Cloudflare: sem conexão; confira saída TCP 7844 e a política da rede';changed=True
-            if changed or time.monotonic()-heartbeat>=15:
-                if state.get('connected'):state.pop('last_error',None)
-                elif changed:state['last_error']=state['message']
-                status(state);heartbeat=time.monotonic()
-        return await process.wait()
+            done,_=await asyncio.wait((line_task,stop_task),timeout=max(.001,check_s-(time.monotonic()-checked)),return_when=asyncio.FIRST_COMPLETED)
+            if stop_task in done:break
+            if line_task in done:
+                line=line_task.result()
+                if not line:break
+                line_task=asyncio.create_task(process.stdout.readline())
+                text=line.decode(errors='replace')
+                try:entry=json.loads(text)
+                except ValueError:entry={}
+                if not isinstance(entry,dict):entry={}
+                message=str(entry.get('message',text));lower=message.lower();details=text.lower()
+                changed=False
+                for match in re.finditer(r'https://[a-z0-9-]+\.trycloudflare\.com(?:[^\s"|<>]*)',message):
+                    candidate=match.group().rstrip('/')
+                    if valid_url(candidate):
+                        if candidate!=state.get('url'):print('D-Max remoto: endereço Cloudflare '+candidate,flush=True)
+                        state['url']=candidate;changed=True
+                found=re.search(r'connIndex=(\d+)',text)
+                index=str(entry.get('connIndex',found.group(1) if found else 0))
+                if re.search(r'\bregistered tunnel connection\b',lower):
+                    connections.add(index)
+                    print('D-Max remoto: conexão registrada com a Cloudflare; verificando prontidão local',flush=True)
+                    await check();changed=False
+                elif any(x in lower for x in ('unregistered tunnel connection','failed to serve tunnel connection','connection terminated','lost connection with the edge','connection with edge closed')):
+                    connections.discard(index)
+                    if not connections:state['connected']=False
+                    state['last_error']='Cloudflare perdeu conexão com a borda; reconexão automática'
+                    state['message']=state['last_error'];changed=True
+                elif 'x509:' in details or 'certificate verify failed' in details:
+                    state['last_error']='Cloudflare: certificado recusado; verificação TLS mantida. Confira a rede e a CA autorizada.';changed=True
+                elif 'no such host' in details or 'lookup ' in details:
+                    state['last_error']='Cloudflare: falha de consulta DNS; confira os servidores DNS da conexão';changed=True
+                elif 'timeout' in details or 'deadline exceeded' in details or 'failed to dial' in details:
+                    state['last_error']='Cloudflare: tempo limite na conexão ou requisição; confira os testes de conectividade';changed=True
+                elif 'hard_fail=true' in details or entry.get('hard_fail') is True:
+                    state['last_error']='Cloudflare: pré-teste encontrou falhas de conectividade; veja os destinos no registro';changed=True
+                if entry.get('status')=='fail' and entry.get('target') in ('region1.v2.argotunnel.com','region2.v2.argotunnel.com'):
+                    component=entry.get('component')
+                    if component in ('DNS Resolution','UDP Connectivity','TCP Connectivity'):
+                        print('D-Max remoto: pré-teste falhou: '+component+' / '+entry['target'],flush=True)
+                if changed:
+                    if not state.get('connected') and state.get('last_error'):state['message']=state['last_error']
+                    elif not state.get('connected'):state['message']='Endereço criado; aguardando conexão pronta com a Cloudflare'
+                    publish()
+            if time.monotonic()-checked>=check_s:await check()
+            if time.monotonic()-last_ready>=stall_s:
+                state.update(connected=False,last_error='Cloudflare sem prontidão por '+str(stall_s)+' s; recriando o túnel automaticamente')
+                state['message']=state['last_error'];publish();break
+        return process.returncode
     finally:
-        if process.returncode is None:
-            process.terminate()
-            try:await asyncio.wait_for(process.wait(),5)
-            except TimeoutError:process.kill();await process.wait()
-        state.update(connected=False,message=state.get('last_error') or 'Cloudflare desconectado; reconexão automática em andamento')
-        status(state)
+        line_task.cancel();stop_task.cancel()
+        await asyncio.gather(line_task,stop_task,return_exceptions=True)
+        await close_process(process)
+        state.update(connected=False,message='Acesso remoto parado' if stop.is_set() else state.get('last_error') or 'Cloudflare desconectado; reconexão automática em andamento')
+        publish()
 
 
 async def supervise(stop=None,connect=None,pause=None):

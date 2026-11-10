@@ -1,3 +1,7 @@
+# D-Max 0.12.1 · Correção do supervisor Cloudflare
+
+[Correção pontual e atualização completa](docs/remote-v0121.md): protocolo automático, prontidão local do conector, recuperação após travamento e diagnóstico sem credenciais. O acesso público na rede do cliente ainda precisa ser confirmado.
+
 # D-Max 0.12.0 · Cloudflare automático e curva histórica
 
 [Guia de atualização no Raspberry](docs/release-v0120.md). Túnel Quick Tunnel com URL automática e registro autenticado por instalação no Google Planilhas. Curva abaixo do multimedidor, histórico local de 30 dias, filtros, valores por instante e exportação PDF/CSV. Mantém usuários, configurações e Grafana. [Validação e limites](docs/validation-v0120.md).
