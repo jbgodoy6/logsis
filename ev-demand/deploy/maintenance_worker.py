@@ -45,7 +45,7 @@ def restore(source,backup_dir):
             identity=json.loads(current.execute("SELECT payload FROM entities WHERE kind='system' AND id='identity'").fetchone()[0])['controller_id']
             validate_backup(source,identity)
             with closing(sqlite3.connect(backup_dir/'controller.sqlite3')) as saved:current.backup(saved)
-            protected=list(current.execute("SELECT kind,id,payload FROM entities WHERE kind IN ('subscription','system')"))
+            protected=list(current.execute("SELECT kind,id,payload FROM entities WHERE kind IN ('subscription','system','remote_registration')"))
             root=current.execute("SELECT password FROM users WHERE name='root'").fetchone()[0]
             secret=list(current.execute('SELECT * FROM directory_secret'))
             directory=list(current.execute('SELECT * FROM directory_config'))

@@ -17,7 +17,7 @@ from starlette.middleware.gzip import GZipMiddleware
 from .network import load_config
 
 MAX_BODY = 64 * 1024 * 1024
-PUBLIC_HOST = re.compile(r'[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.tunnl\.gg')
+PUBLIC_HOST = re.compile(r'[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.(?:trycloudflare\.com|tunnl\.gg)')
 HOP_HEADERS = {'connection','keep-alive','proxy-authenticate','proxy-authorization','te','trailer','transfer-encoding','upgrade'}
 
 

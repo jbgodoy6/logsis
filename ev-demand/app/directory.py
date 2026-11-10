@@ -112,7 +112,9 @@ async def synchronize(access, client=None):
                 with access.db:
                     access.db.execute('DELETE FROM directory_pending WHERE user_id=?', (pending['user_id'],))
                     access.db.execute("UPDATE users SET source='directory' WHERE id=?", (pending['user_id'],))
-            response = await request('snapshot')
+            from .remote_registry import outgoing,acknowledge
+            remote=outgoing(access)
+            response = await request('snapshot',{'remote':remote} if remote else None)
             response.raise_for_status()
             if len(response.content) > 5_000_000:
                 raise ValueError('Snapshot excedeu o limite de tamanho')
@@ -123,6 +125,7 @@ async def synchronize(access, client=None):
             if data.get('subscription') is not None and subscription is not None:
                 subscription.receive(data['subscription'], token)
             access.apply_snapshot(data['technicians'])
+            acknowledge(access,remote,data.get('remote_ack'))
             if any(row['payload'].get('_acknowledged_base') for row in access.pending()):
                 rebase_acknowledged(access, data['technicians'])
                 access.apply_snapshot(data['technicians'])

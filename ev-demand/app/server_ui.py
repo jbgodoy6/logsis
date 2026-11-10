@@ -19,7 +19,7 @@ from .meter import MEASUREMENTS, FORMATS, normalize_serial_port
 from .plant_view import render_plant
 from .live_dom import view_tree
 
-VERSION = '0.11.0'
+VERSION = '0.12.0'
 PAGES = {
     'overview': 'Visão geral', 'chargers': 'Carregadores', 'vehicles': 'Veículos',
     'schedule': 'Horários', 'history': 'Histórico', 'meter': 'Multimedidor',
@@ -231,6 +231,7 @@ def install(app):
                 page, note, status = 'overview', '<div class="notice">Acesso não permitido para seu perfil.</div>', 403
             self.state = await self.api('GET', '/api/state')
             if page == 'overview':
+                await self.load_curve()
                 content = self.overview()
             elif page == 'chargers':
                 content = self.chargers()
@@ -247,7 +248,7 @@ def install(app):
                 content = await self.history()
             elif page == 'remote':
                 remote=await self.api('GET','/api/remote')
-                content=panel('Acesso remoto · piloto gratuito', '<p id="remote-state">'+esc('Conectado' if remote['connected'] else 'Sem conexão confirmada')+'</p><p id="remote-message">'+esc(remote['message'])+'</p><p><a id="remote-url" href="'+esc(remote.get('url') or '#')+'" target="_blank" rel="noopener noreferrer">'+esc(remote.get('url') or 'Endereço ainda não disponível')+'</a></p><p>Ative no Raspberry pelo instalador de acesso remoto. Cada equipamento usa sua própria identidade. O endereço é preservado nas reconexões enquanto as chaves do serviço forem mantidas.</p><p>O serviço gratuito tem limites de tráfego e disponibilidade. O D-Max local e a integração Grafana permanecem independentes.</p>')+'<script src="/static/remote.js?v='+VERSION+'" defer></script>'
+                content=panel('Cloudflare · acesso remoto e diretório', '<p id="remote-state">'+esc('Conectado' if remote['connected'] else 'Sem conexão confirmada')+'</p><p id="remote-message">'+esc(remote['message'])+'</p><p><a id="remote-url" href="'+esc(remote.get('url') or '#')+'" target="_blank" rel="noopener noreferrer">'+esc(remote.get('url') or 'Endereço ainda não disponível')+'</a></p><p>Identificador da instalação: <code>'+esc(remote['controller_id'])+'</code></p><p id="remote-publication">'+esc('Planilha: plataforma desativada; configure Técnicos globais para registrar o endereço' if not remote['publication']['directory_enabled'] else 'Planilha: envio pendente' if remote['publication']['pending'] else 'Planilha: consulte a última confirmação no diretório')+'</p><p>Ative no Raspberry pelo instalador de acesso remoto. Cada equipamento usa sua própria identidade. O Quick Tunnel gera um endereço automático que pode mudar. O novo endereço é enviado ao diretório da planilha quando a plataforma está configurada.</p><p>O serviço gratuito tem limites de tráfego e disponibilidade. O D-Max local e a integração Grafana permanecem independentes.</p>')+'<script src="/static/remote.js?v='+VERSION+'" defer></script>'
             elif page == 'audit':
                 actor=self.request.query_params.get('actor','')
                 try: offset=max(0,int(self.request.query_params.get('offset','0')))
@@ -317,13 +318,38 @@ def install(app):
                 + field('Confirme a nova senha', 'confirmation', kind='password', minlength=8, maxlength=200, required='', autocomplete='new-password'),
                 'Alterar senha e entrar novamente', page='profile')
 
-        def overview(self):
+        async def load_curve(self):
+            self.curve_params={name:self.request.query_params.get('curve_'+name,'') for name in ('start','end','mode')}
+            self.curve_error=''
+            try:self.curve=await self.api('GET','/api/curve?'+urlencode(self.curve_params))
+            except UIError as exc:
+                if exc.status!=422:raise
+                self.curve_error=exc.message+' · exibindo os últimos 15 minutos.'
+                self.curve_params={}
+                self.curve=await self.api('GET','/api/curve')
+
+        def curve_controls(self):
+            data=self.curve_params
+            fields=field('Início · horário da instalação','curve_start',data.get('start',''),'datetime-local')
+            fields+=field('Fim · vazio acompanha ao vivo','curve_end',data.get('end',''),'datetime-local')
+            fields+=select('Origem','curve_mode',[('physical','Real'),('simulation','Simulação')],data.get('mode') or self.state['settings']['mode'])
+            content='<form method="get" action="/ui/overview" class="curve-filters">'+fields+'<button class="primary">Aplicar período</button></form>'
+            query=urlencode(data)
+            content+='<p><a class="secondary" href="/api/curve/report.pdf?'+esc(query)+'">Relatório PDF da curva</a> <a class="secondary" href="/api/curve/export.csv?'+esc(query)+'">CSV com todos os registros</a> '+link('overview','Voltar ao vivo')+'</p>'
+            return content+'<p class="hint">Histórico local: até 30 dias · fuso '+esc(self.state['settings']['timezone'])+'. Aplique o período antes de exportar.</p>'
+
+        def overview(self,controls=True):
             summary = self.state['summary']
             content = render_plant(self.state)
+            from .curve import render as render_curve
+            chart='<div data-live-key="curve-controls">'+(self.curve_controls() if controls else '')+'</div>'
+            if self.curve_error:chart+='<p class="notice">'+esc(self.curve_error)+'</p>'
+            chart+=render_curve(self.curve)
+            chart=panel('Curva de demanda · consulta por período',chart).replace('<article class="panel">','<article class="panel" data-live-key="chart">',1)
+            content=content.replace('<div class="plant-section-title">',chart+'<div class="plant-section-title">',1)
             if self.state.get('fault') or not summary.get('meter_fresh'):
                 content += '<div class="notice">' + esc(self.state.get('fault') or 'Sem medição atual: novas liberações bloqueadas.') + '</div>'
             content += '<p>' + ('Horário bloqueado · novas conexões aguardam.' if summary.get('blocked') else 'Horário permitido para recarga.') + '</p>'
-            content += panel('Demanda da instalação · últimos minutos', self.chart()).replace('<article class="panel">', '<article class="panel" data-live-key="chart">', 1)
             return content
 
         def simulation(self):
@@ -334,33 +360,6 @@ def install(app):
                 'Aplicar carga', page='overview')
                 + (self.form('demo', submit='Carregar demonstração', page='overview') if not self.state['chargers'] else '')
                 + link('overview', 'Acompanhar distribuição de potência'))
-
-        def chart(self):
-            trace = self.state.get('trace', [])
-            if len(trace) < 2:
-                return '<p class="hint">Aguardando leituras para desenhar o gráfico.</p>'
-            def safe(value):
-                value = float(value)
-                return value if math.isfinite(value) else 0.0
-            limit = safe(self.state['settings']['limit_kw'])
-            maximum = max(1, limit, *(safe(p['total']) for p in trace)) * 1.12
-            def x(index):
-                return 55 + index * 820 / max(1, len(trace) - 1)
-            def y(value):
-                return 225 - safe(value) / maximum * 205
-            def points(key):
-                return ' '.join(f'{x(i):.2f},{y(p[key]):.2f}' for i, p in enumerate(trace))
-            elements = []
-            for i in range(4):
-                value = maximum * i / 3
-                elements.append(f'<line x1="55" x2="875" y1="{y(value):.2f}" y2="{y(value):.2f}" stroke="#e0e8f1"/>')
-                elements.append(f'<text x="45" y="{y(value) + 4:.2f}" text-anchor="end">{esc(number(value, 0))}</text>')
-            elements.append(f'<line x1="55" x2="875" y1="{y(limit):.2f}" y2="{y(limit):.2f}" stroke="#c58e3d" stroke-dasharray="5 5"/>')
-            elements.append('<polyline points="' + points('ev') + '" fill="none" stroke="#69b7ee" stroke-width="2"/>')
-            elements.append('<polyline points="' + points('total') + '" fill="none" stroke="#0879cf" stroke-width="3"/>')
-            return ('<p class="hint">Azul: consumo total · azul claro: recarga · tracejado: limite · kW</p>'
-                    '<svg class="server-chart" viewBox="0 0 900 250" role="img" aria-label="Gráfico da demanda">'
-                    + ''.join(elements) + '</svg>')
 
         def vehicle_options(self):
             return [('', 'Não identificado / associação manual')] + [(v['id'], v['name']) for v in self.state['vehicles']]
@@ -607,7 +606,8 @@ def install(app):
                                 headers={'Cache-Control': 'no-store'})
         try:
             console.state = await console.api('GET', '/api/state')
-            content = console.overview() if page == 'overview' else render_plant(console.state)
+            await console.load_curve()
+            content = console.overview(controls=False)
             return console.finish(JSONResponse({'schema_version': 1, 'version': VERSION,
                 'observed_at': console.state['time'], 'site_name': console.state['settings']['site_name'],
                 'subscription_nodes': view_tree(subscription_banner(console.state)),

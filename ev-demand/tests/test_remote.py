@@ -16,7 +16,7 @@ from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 from app.main import create_app
 from app.store import password_hash
 from app.remote_gateway import create_gateway,backend,permitted,MAX_BODY
-from app.remote_tunnel import command,valid_url,public_status,write_status,session,supervise
+from app.remote_tunnel import command,ssh_command,cloudflare_session,valid_url,public_status,write_status,session,supervise
 
 class GatewayTests(unittest.TestCase):
     def setUp(self):
@@ -25,12 +25,12 @@ class GatewayTests(unittest.TestCase):
         self.local.post('/api/setup',json={'admin_password':'fixture-remote-admin'})
         upstream=ProxyHeadersMiddleware(self.app,trusted_hosts=['127.0.0.1'])
         self.gateway=create_gateway('http://127.0.0.1:80',transport=httpx.ASGITransport(app=upstream,client=('127.0.0.1',45000)))
-        self.context=TestClient(self.gateway,base_url='https://fixture-123.tunnl.gg',client=('127.0.0.1',41000),headers={'X-Forwarded-Proto':'https','X-Forwarded-For':'203.0.113.12'})
+        self.context=TestClient(self.gateway,base_url='https://fixture-123.trycloudflare.com',client=('127.0.0.1',41000),headers={'X-Forwarded-Proto':'https','X-Forwarded-For':'203.0.113.12'})
         self.c=self.context.__enter__()
     def tearDown(self):
         self.context.__exit__(None,None,None);self.local.close();self.app.state.store.db.close()
     def login(self):
-        r=self.c.post('/api/login',json={'username':'root','password':'fixture-remote-root'},headers={'Origin':'https://fixture-123.tunnl.gg'})
+        r=self.c.post('/api/login',json={'username':'root','password':'fixture-remote-root'},headers={'Origin':'https://fixture-123.trycloudflare.com'})
         self.assertEqual(r.status_code,200,r.text)
         self.assertIn('Secure',r.headers['set-cookie']);self.assertIn('HttpOnly',r.headers['set-cookie'])
     def test_remote_login_session_live_updates_and_logout(self):
@@ -38,14 +38,14 @@ class GatewayTests(unittest.TestCase):
         self.login()
         self.assertEqual(self.c.get('/ui/overview').status_code,200)
         self.assertEqual(self.c.get('/ui-data/overview').json()['schema_version'],1)
-        self.assertEqual(self.c.post('/api/logout',json={},headers={'Origin':'https://fixture-123.tunnl.gg'}).status_code,200)
+        self.assertEqual(self.c.post('/api/logout',json={},headers={'Origin':'https://fixture-123.trycloudflare.com'}).status_code,200)
         self.assertEqual(self.c.get('/api/state').status_code,401)
     def test_signed_html_forms_keep_nonce_cookies_csrf_and_redirects(self):
         from test_server_ui import Forms
         self.login();self.c.post('/api/demo',json={})
         forms=Forms(self.c.get('/ui/overview').text)
         form=next(f for f in forms.forms if f.get('_action')=='load');form['other_kw']='480'
-        reply=self.c.post('/ui/post',data=form,headers={'Origin':'https://fixture-123.tunnl.gg'})
+        reply=self.c.post('/ui/post',data=form,headers={'Origin':'https://fixture-123.trycloudflare.com'})
         self.assertEqual(reply.status_code,200,reply.text);self.assertIn('Alteração aplicada.',reply.text)
         self.assertEqual(self.app.state.engine.other_kw,480)
     def test_ocpp_setup_and_traversal_never_forwarded(self):
@@ -61,16 +61,16 @@ class GatewayTests(unittest.TestCase):
             self.app.state.store.db.execute('DELETE FROM logins');self.app.state.store.db.execute('DELETE FROM users')
         form=next(f for f in Forms(self.c.get('/').text).forms if f.get('_action')=='setup')
         form['admin_password']='fixture-forbidden-setup'
-        self.assertEqual(self.c.post('/ui/post',data=form,headers={'Origin':'https://fixture-123.tunnl.gg'}).status_code,403)
+        self.assertEqual(self.c.post('/ui/post',data=form,headers={'Origin':'https://fixture-123.trycloudflare.com'}).status_code,403)
         self.assertIsNone(self.app.state.store.db.execute('SELECT 1 FROM users').fetchone())
     def test_cross_site_actions_are_still_rejected(self):
         self.login()
         self.assertEqual(self.c.post('/api/simulation',json={'other_kw':500},headers={'Origin':'https://other.tunnl.gg'}).status_code,403)
     def test_connection_header_cannot_rewrite_host_to_localhost(self):
         self.login()
-        response=self.c.get('/api/state',headers={'Connection':'host','Origin':'https://fixture-123.tunnl.gg'})
+        response=self.c.get('/api/state',headers={'Connection':'host','Origin':'https://fixture-123.trycloudflare.com'})
         self.assertEqual(response.status_code,200)
-        self.assertEqual(self.c.post('/api/logout',json={},headers={'Connection':'host','Origin':'https://fixture-123.tunnl.gg'}).status_code,200)
+        self.assertEqual(self.c.post('/api/logout',json={},headers={'Connection':'host','Origin':'https://fixture-123.trycloudflare.com'}).status_code,200)
     def test_only_relay_host_and_https_accepted(self):
         self.assertEqual(self.c.get('/api/setup',headers={'Host':'localhost'}).status_code,400)
         self.assertEqual(self.c.get('/api/setup',headers={'X-Forwarded-Proto':'http'}).status_code,400)
@@ -103,12 +103,12 @@ class RuntimeTests(unittest.TestCase):
             self.assertEqual(backend(config,{'DMAX_PORT':'8443','DMAX_TLS_CERT':'/fixture/cert.pem'})[0],'https://127.0.0.1:8443')
             with self.assertRaises(ValueError):backend(config,{'DMAX_HOST':'192.0.2.10'})
     def test_ssh_command_pins_host_and_reuses_identity(self):
-        args=command()
+        args=ssh_command()
         self.assertIn('StrictHostKeyChecking=yes',args);self.assertIn('BatchMode=yes',args)
         self.assertIn('GlobalKnownHostsFile=/dev/null',args);self.assertIn('UpdateHostKeys=no',args)
         self.assertIn('80:127.0.0.1:8766',args);self.assertIn('stable@proxy.tunnl.gg',args)
         self.assertNotIn('StrictHostKeyChecking=no',args)
-        self.assertEqual(args,command())
+        self.assertEqual(args,ssh_command())
     def test_url_validation_rejects_external_and_credential_urls(self):
         self.assertTrue(valid_url('https://happy-123.tunnl.gg'))
         for url in ('http://test.tunnl.gg','https://tunnl.gg.evil.test','https://evil.test','https://a:b@ok.tunnl.gg','https://ok.tunnl.gg:443','https://ok.tunnl.gg/?token=x'):
@@ -134,7 +134,7 @@ class ReconnectionTests(unittest.IsolatedAsyncioTestCase):
         await session(state,stop,spawn,lambda data:outputs.append(dict(data)))
         self.assertTrue(outputs[0]['connected']);self.assertFalse(outputs[-1]['connected'])
         self.assertEqual(outputs[-1]['url'],'https://client-1.tunnl.gg')
-        self.assertEqual(spawn.call_args.args,tuple(command()))
+        self.assertEqual(spawn.call_args.args,tuple(ssh_command()))
     async def test_supervisor_retries_without_creating_new_key(self):
         stop=asyncio.Event();calls=[];delays=[]
         async def connect(state,event):
@@ -147,3 +147,25 @@ class ReconnectionTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(len(calls),2);self.assertEqual(calls[0],calls[1]);self.assertGreater(delays[0],5)
 
 if __name__=='__main__':unittest.main()
+
+class CloudflareTests(unittest.IsolatedAsyncioTestCase):
+    async def run_lines(self,lines):
+        outputs=[]
+        class Process:
+            returncode=0
+            stdout=type('Stream',(),{'readline':AsyncMock(side_effect=[*(x.encode()+b'\n' for x in lines),b''])})()
+            wait=AsyncMock(return_value=0)
+        spawn=AsyncMock(return_value=Process());state=dict(url='https://old.tunnl.gg',connected=False)
+        await cloudflare_session(state,asyncio.Event(),spawn,lambda data:outputs.append(dict(data)))
+        self.assertEqual(spawn.call_args.args,tuple(command()));return outputs
+    async def test_url_requires_registered_connection_and_disconnect_is_visible(self):
+        states=await self.run_lines(['https://new-place.trycloudflare.com','2026-11-10 INF Registered tunnel connection connIndex=0','2026-11-10 ERR Failed to serve tunnel connection connIndex=0'])
+        self.assertIsNone(states[0]['url']);self.assertFalse(states[1]['connected']);self.assertTrue(states[2]['connected']);self.assertFalse(states[3]['connected'])
+        self.assertEqual(states[-1]['url'],'https://new-place.trycloudflare.com')
+        self.assertNotIn('--no-tls-verify',command())
+    async def test_certificate_failure_is_reported_without_accepting_certificate(self):
+        states=await self.run_lines(['[]','ERR x509: certificate signed by unknown authority'])
+        self.assertFalse(states[-1]['connected']);self.assertIn('TLS mantida',states[-1]['message'])
+    async def test_all_registered_connections_must_drop_before_offline(self):
+        states=await self.run_lines(['https://new-place.trycloudflare.com','INF Registered tunnel connection connIndex=0','INF Registered tunnel connection connIndex=1','ERR Failed to serve tunnel connection connIndex=0','ERR Failed to serve tunnel connection connIndex=1'])
+        self.assertTrue(states[4]['connected']);self.assertFalse(states[5]['connected'])

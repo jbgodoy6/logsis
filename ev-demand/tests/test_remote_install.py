@@ -1,7 +1,5 @@
-"""Run remote activation twice in a private tree, with a simulated SSH provider/systemd.
-
-Real OpenSSH key generation and fingerprint checks; no actual tunnel is opened.
-"""
+"""Activation lifecycle in a private tree; no public tunnel or system changes."""
+import hashlib
 from http.server import BaseHTTPRequestHandler,ThreadingHTTPServer
 import json
 import os
@@ -17,25 +15,23 @@ import unittest
 ROOT=Path(__file__).resolve().parents[1]
 
 class RemoteInstallTests(unittest.TestCase):
-    def test_repeat_activation_preserves_identity_rejects_changed_host_and_disables_cleanly(self):
+    def test_repeat_activation_preserves_old_identity_checks_client_and_disables_cleanly(self):
         with tempfile.TemporaryDirectory(prefix='dmax-remote-install-') as temporary:
             base=Path(temporary);tree=base/'root';app=tree/'opt/d-max';config=tree/'etc/d-max';units=tree/'etc/systemd/system'
-            for p in (app/'deploy',app/'app',app/'.venv/bin',config,units,base/'bin'):p.mkdir(parents=True,exist_ok=True)
+            for p in (app/'deploy',app/'bin',app/'app',app/'.venv/bin',config,units,base/'bin'):p.mkdir(parents=True,exist_ok=True)
             (app/'.dmax-managed').touch()
-            real_ssh_keygen=shutil.which('ssh-keygen')
-            server=base/'server-key'
-            subprocess.run([real_ssh_keygen,'-q','-t','ed25519','-N','','-f',str(server)],check=True)
-            fingerprint=subprocess.check_output([real_ssh_keygen,'-lf',str(server)+'.pub','-E','sha256'],text=True).split()[1]
-            public='proxy.tunnl.gg '+' '.join(Path(str(server)+'.pub').read_text().split()[:2])+'\n'
-            (base/'server-public').write_text(public)
             prefixes=('/run/d-max-maintenance','/var/lib/d-max-remote','/etc/systemd/system','/etc/d-max','/opt/d-max')
             def adapt(s):return re.sub('|'.join(map(re.escape,prefixes)),lambda m:str(tree)+m.group(),s)
             for name in ('remote_tunnel.py','remote_gateway.py','network.py','__init__.py'):
                 text=(ROOT/'app'/name).read_text()
-                text=text.replace('SHA256:5uQ6VobmUpY4wyMmm5jnAwFtt3aX06WYDDM4ER+2WUw',fingerprint)
                 (app/'app'/name).write_text(adapt(text))
             for name in ('remote.py','d-max-remote.service','d-max-remote-gateway.service'):
                 (app/'deploy'/name).write_text(adapt((ROOT/'deploy'/name).read_text()))
+            binary=b'\x7fELF\x02'+bytes(13)+(183).to_bytes(2,'little')+b'fixture client'
+            (app/'bin/cloudflared').write_bytes(binary)
+            (app/'deploy/cloudflared-release.json').write_text(json.dumps(dict(version='fixture',sha256=hashlib.sha256(binary).hexdigest())))
+            home=tree/'var/lib/d-max-remote';home.mkdir(parents=True)
+            (home/'.dmax-remote-managed').touch();(home/'id_ed25519').write_bytes(b'old identity preserved')
             script=app/'acesso-remoto.sh';script.write_text(adapt((ROOT/'acesso-remoto.sh').read_text()).replace('[[ $EUID -eq 0 ]]','[[ 1 -eq 1 ]]'))
             python=app/'.venv/bin/python';python.write_text('#!/bin/sh\nexec '+__import__('shlex').quote(sys.executable)+' "$@"\n');python.chmod(0o755)
             class Handler(BaseHTTPRequestHandler):
@@ -52,7 +48,6 @@ root=pathlib.Path(os.environ['DMAX_REMOTE_FIXTURE']);name=pathlib.Path(sys.argv[
 with open(root/'calls.jsonl','a') as f:f.write(json.dumps([name,*args])+'\\n')
 if name=='id':sys.exit(0)
 elif name=='getent':print('dmax-remote:x:1001:1001::'+str(root/'root/var/lib/d-max-remote')+':/usr/sbin/nologin')
-elif name=='ssh-keyscan':print((root/'server-public').read_text(),end='')
 elif name=='chown':pass
 elif name=='install':
  cleaned=[];i=0
@@ -63,29 +58,23 @@ elif name=='install':
 elif name=='systemctl':
  home=root/'root/var/lib/d-max-remote';status=home/'public/status.json'
  if args[0] in ('enable','restart'):
-  public=(home/'id_ed25519.pub').read_bytes();url='https://fixture-'+hashlib.sha256(public).hexdigest()[:12]+'.tunnl.gg'
+  url='https://fixture-one.trycloudflare.com'
   status.write_text(json.dumps(dict(url=url,connected=True,heartbeat_at=time.time(),message='fixture connected')))
  elif args[0]=='disable' and status.exists():
   data=json.loads(status.read_text());data['connected']=False;status.write_text(json.dumps(data))
 ''');fake.chmod(0o755)
-                for name in ('id','getent','ssh-keyscan','chown','install','systemctl'):(base/'bin'/name).symlink_to(fake)
+                for name in ('id','getent','chown','install','systemctl'):(base/'bin'/name).symlink_to(fake)
                 env=dict(os.environ,PATH=str(base/'bin')+':'+os.environ['PATH'],DMAX_REMOTE_FIXTURE=str(base))
                 def run(action,ok=True):
                     r=subprocess.run(['bash',str(script),action],env=env,text=True,capture_output=True,timeout=30)
                     self.assertEqual(r.returncode==0,ok,r.stdout+r.stderr);return r
                 run('ativar');home=tree/'var/lib/d-max-remote';key=(home/'id_ed25519').read_bytes()
-                known_path=tree/'etc/d-max-remote/known_hosts'
-                url=json.loads((home/'public/status.json').read_text())['url'];known=known_path.read_bytes()
-                (home/'id_ed25519.pub').unlink()
                 run('ativar');self.assertEqual((home/'id_ed25519').read_bytes(),key)
-                self.assertTrue((home/'id_ed25519.pub').is_file())
-                self.assertEqual(json.loads((home/'public/status.json').read_text())['url'],url)
-                self.assertEqual((config/'d-max.env').read_text(),'# Preserve existing cloud configuration\nEV_CLOUD_TOKEN=fixture-existing-only\n')
-                other=base/'other-key';subprocess.run([real_ssh_keygen,'-q','-t','ed25519','-N','','-f',str(other)],check=True)
-                (base/'server-public').write_text('proxy.tunnl.gg '+' '.join(Path(str(other)+'.pub').read_text().split()[:2])+'\n')
+                self.assertEqual(json.loads((home/'public/status.json').read_text())['url'],'https://fixture-one.trycloudflare.com')
+                self.assertIn('fixture-existing-only',(config/'d-max.env').read_text())
+                (app/'bin/cloudflared').write_bytes(b'corrupt')
                 rejected=run('ativar',ok=False)
-                self.assertIn('mudou',rejected.stdout+rejected.stderr)
-                self.assertEqual(known_path.read_bytes(),known)
+                self.assertIn('Integridade',rejected.stdout+rejected.stderr)
                 self.assertEqual((home/'id_ed25519').read_bytes(),key)
                 run('desativar');self.assertTrue((home/'id_ed25519').exists())
                 self.assertFalse(json.loads((home/'public/status.json').read_text())['connected'])

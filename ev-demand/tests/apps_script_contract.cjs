@@ -4,7 +4,7 @@ const source=fs.readFileSync(process.argv[2],'utf8');
 let rows=[['id','nome','login','situacao','valido_ate'],['TEC-1','Técnico Um','tecnico.um','ativo','']];
 const properties={'device.controller':crypto.createHash('sha256').update('fixture-device-key').digest('hex')};
 let uncertain=false;
-let subscriptions=null;
+let subscriptions=null,remoteRows=[],remote=null;
 const sheet={
  getLastRow:()=>rows.length,
  getRange:(start,column,height,width)=>({
@@ -15,7 +15,7 @@ const props={getProperty:k=>properties[k]??null,setProperty:(k,v)=>properties[k]
 const context={
  Date,JSON,Math,Number,String,Object,Array,Boolean,Error,RegExp,
  PropertiesService:{getScriptProperties:()=>props},
- SpreadsheetApp:{openById:()=>({getSheetByName:name=>name==='Assinaturas'?subscriptions:sheet,getSpreadsheetTimeZone:()=> 'America/Sao_Paulo'})},
+ SpreadsheetApp:{openById:()=>({getSheetByName:name=>name==='Assinaturas'?subscriptions:name==='DMax_Remoto'?remote:sheet,insertSheet:name=>{assert.equal(name,'DMax_Remoto');remote={getLastRow:()=>remoteRows.length,setFrozenRows:()=>{},autoResizeColumns:()=>{},getRange:(start,column,height,width)=>({getValues:()=>Array.from({length:height},(_,i)=>Array.from({length:width},(_,j)=>remoteRows[start-1+i]?.[column-1+j]??'')),setValues:values=>values.forEach((row,i)=>{remoteRows[start-1+i]??=[];row.forEach((v,j)=>remoteRows[start-1+i][column-1+j]=v)})})};return remote;},getSpreadsheetTimeZone:()=> 'America/Sao_Paulo'})},
  LockService:{getScriptLock:()=>({tryLock:()=>true,releaseLock:()=>{}})},
  ContentService:{MimeType:{JSON:'application/json'},createTextOutput:text=>({text,setMimeType(){return this;}})},
  Utilities:{DigestAlgorithm:{SHA_256:'sha256'},Charset:{UTF_8:'utf8'},getUuid:()=>crypto.randomUUID(),
@@ -64,3 +64,19 @@ subRows[1][2]='regular';notice=verifyNotice(call('snapshot').subscription);asser
 subRows.push([...subRows[1]]);assert.equal(call('snapshot').ok,false);subRows.pop();
 subRows[1][0]='another-controller';assert.equal(call('snapshot').subscription,undefined);
 console.log('Subscription contract passed: signed per-controller ten-day notices, stable deadline, renewal and duplicate rejection.');
+
+// Remote directory uses the existing authenticated identity, with no secrets in cells.
+const registration={site_name:'=unsafe formula',url:'https://first-site.trycloudflare.com',connected:true,heartbeat_at:Date.now()/1000,provider:'cloudflare',revision:1};
+const register=(data,key='fixture-device-key',id='controller')=>JSON.parse(context.doPost({postData:{contents:JSON.stringify({action:'snapshot',controller_id:id,key,remote:data})}}).text);
+assert.equal(register(registration,'wrong').code,401);assert.equal(remoteRows.length,0);
+assert.equal(register(registration).remote_ack.accepted,true);assert.equal(remoteRows.length,2);assert.equal(remoteRows[1][1],"'=unsafe formula");
+assert.equal(register(registration).remote_ack.revision,1);assert.equal(remoteRows.length,2);
+const newer={...registration,url:'https://second-site.trycloudflare.com',revision:2};
+assert.equal(register(newer).remote_ack.accepted,true);assert.equal(remoteRows[1][2],newer.url);
+assert.equal(register(registration).remote_ack.accepted,false);assert.equal(remoteRows[1][2],newer.url);
+assert.equal(register({...newer,url:'https://evil.test'}).remote_error,true);
+assert.equal(register({...newer,key:'must-never-be-stored'}).remote_error,true);
+properties['device.other']=properties['device.controller'];assert.equal(register(registration,'fixture-device-key','other').remote_ack.accepted,true);assert.equal(remoteRows.length,3);
+assert.equal(JSON.stringify(remoteRows).includes('fixture-device-key'),false);assert.equal(JSON.stringify(remoteRows).includes('pbkdf2'),false);
+remoteRows.push([...remoteRows[1]]);assert.equal(register(newer).remote_error,true);
+console.log('Remote directory contract passed: authenticated IDs, literal names, separate installations, revision ordering, duplicate rejection and no credentials in cells.');

@@ -1,18 +1,19 @@
 """Explicit Raspberry Pi OS ARM64 runtime and offline wheels, without Windows files."""
 import argparse
 import hashlib
+import json
 from pathlib import Path
 import re
 import zipfile
 
-VERSION = '0.11.0'
+VERSION = '0.12.0'
 PYTHON = ('__init__.py', 'access.py', 'control.py', 'directory.py', 'engine.py', 'main.py',
           'meter.py', 'network.py', 'ocpp_server.py', 'recovery.py', 'root_auth.py',
-          'security.py', 'server_ui.py', 'services.py', 'store.py', 'live_dom.py', 'licensing.py', 'reports.py', 'maintenance.py', 'remote_gateway.py', 'remote_tunnel.py', 'supervision.py', 'plant_view.py', 'telemetry.py')
+          'security.py', 'server_ui.py', 'services.py', 'store.py', 'live_dom.py', 'licensing.py', 'reports.py', 'maintenance.py', 'remote_gateway.py', 'remote_tunnel.py', 'remote_registry.py', 'curve.py', 'supervision.py', 'plant_view.py', 'telemetry.py')
 STATIC = ('style.css', 'energycube.css', 'server.css', 'plant.css', 'live.css', 'live.js', 'maintenance.js', 'remote.js', 'd-max-logo.png', 'energycube-logo.png', 'd-max-report.jpg', 'energycube-report.jpg')
 
 
-def package(root, wheels, output, signing_key=None):
+def package(root, wheels, output, signing_key=None, cloudflared=None):
     files = {}
 
     def include(source, target):
@@ -28,6 +29,16 @@ def package(root, wheels, output, signing_key=None):
     for name in STATIC:
         include(root / 'app/static' / name, 'app/static/' + name)
     include(root / 'app/root-credential.json', 'app/root-credential.json')
+    client=cloudflared or root/'vendor/cloudflared-linux-arm64'
+    metadata=json.loads((root/'deploy/cloudflared-release.json').read_text())
+    if hashlib.sha256(client.read_bytes()).hexdigest()!=metadata['sha256']:
+        raise ValueError('Hash oficial do cloudflared divergente')
+    with client.open('rb') as stream:header=stream.read(20)
+    if header[:5]!=b'\x7fELF\x02' or int.from_bytes(header[18:20],'little')!=183:
+        raise ValueError('cloudflared precisa ser Linux ARM64')
+    include(client,'bin/cloudflared')
+    include(root/'deploy/cloudflared-release.json','deploy/cloudflared-release.json')
+    include(root/'deploy/cloudflared-LICENSE','deploy/cloudflared-LICENSE')
     for name in ('run.py', 'requirements.lock', 'rede.ini', 'instalar-raspberry.sh',
                  'desinstalar-raspberry.sh', 'importar-dados-raspberry.sh', 'acesso-remoto.sh'):
         include(root / name, name)
@@ -44,6 +55,8 @@ def package(root, wheels, output, signing_key=None):
     include(root / 'docs/release-v0100.md', 'NOVIDADES-0.10.0.md')
     include(root / 'docs/validation-v0100.md', 'VALIDACAO-0.10.0.md')
     include(root / 'docs/release-v0110.md', 'NOVIDADES-0.11.0.md')
+    include(root / 'docs/release-v0120.md', 'NOVIDADES-0.12.0.md')
+    include(root / 'docs/validation-v0120.md', 'VALIDACAO-0.12.0.md')
     include(root / 'docs/assinaturas-v090.md', 'ASSINATURAS-GOOGLE.md')
     include(root / 'google-apps-script/Code.gs', 'google-apps-script/Code.gs')
     include(root / 'docs/raspberry-acesso.md', 'ACESSO-RAIZ.txt')
@@ -72,7 +85,7 @@ def package(root, wheels, output, signing_key=None):
         for name, data in sorted(files.items()):
             info = zipfile.ZipInfo('D-Max-Raspberry/' + name)
             info.create_system = 3
-            info.external_attr = ((0o100755 if name.endswith('.sh') else 0o100644) << 16)
+            info.external_attr = ((0o100755 if name.endswith('.sh') or name=='bin/cloudflared' else 0o100644) << 16)
             info.compress_type = zipfile.ZIP_DEFLATED
             archive.writestr(info, data)
     with zipfile.ZipFile(output) as archive:
@@ -91,6 +104,7 @@ if __name__ == '__main__':
     parser.add_argument('--wheels', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--signing-key', type=Path, required=True)
+    parser.add_argument('--cloudflared', type=Path, required=True)
     args = parser.parse_args()
-    count, digest = package(Path(__file__).resolve().parents[1], args.wheels, args.output, args.signing_key)
+    count, digest = package(Path(__file__).resolve().parents[1], args.wheels, args.output, args.signing_key,args.cloudflared)
     print(f'{args.output.name}: {count} arquivos; SHA-256 {digest}')

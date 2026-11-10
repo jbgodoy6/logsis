@@ -118,6 +118,9 @@ fi
 chown -R root:root "$app_dir/app"
 chmod -R a+rX "$app_dir/app"
 install -d -m 0755 "$app_dir/deploy"
+install -d -m 0755 "$app_dir/bin"
+install -m 0755 "$source_dir/bin/cloudflared" "$app_dir/bin/cloudflared"
+install -m 0644 "$source_dir/deploy/cloudflared-release.json" "$source_dir/deploy/cloudflared-LICENSE" "$app_dir/deploy/"
 install -m 0644 "$source_dir/deploy/manage.py" "$app_dir/deploy/manage.py"
 install -m 0644 "$source_dir/deploy/maintenance_worker.py" "$app_dir/deploy/maintenance_worker.py"
 for remote_file in remote.py d-max-remote.service d-max-remote-gateway.service; do

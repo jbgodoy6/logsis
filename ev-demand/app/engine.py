@@ -338,6 +338,9 @@ class Engine:
             self.control_progress_at = time.monotonic()
         self.trace.append({'ts': now, 'total': self.meter['total_kw'], 'ev': measured_ev, 'limit': settings['limit_kw']})
         self.trace = self.trace[-180:]
+        from .curve import record as record_curve
+        ev_valid=all(p['sample_at'] and 0<=now-p['sample_at']<=settings['freshness_s'] for p in ports if p['connected'] or p['running'] or p['power_kw']>.1)
+        record_curve(self.store,now,self.meter,measured_ev,ev_valid,settings,self.fault)
         if int(now // 60) != self.bucket_minute:
             self.flush()
         self.summary = {'budget_kw': budget, 'other_kw': other, 'ev_kw': measured_ev,
@@ -397,6 +400,10 @@ class Engine:
                         'total_kw': self.meter['total_kw'], 'native': True}
         self.trace.append({'ts': now, 'total': self.meter['total_kw'], 'ev': ev, 'limit': self.store.settings()['limit_kw']})
         self.trace = self.trace[-180:]
+        from .curve import record as record_curve
+        cfg=self.store.settings()
+        ev_valid=all(p['sample_at'] and 0<=now-p['sample_at']<=cfg['freshness_s'] for p in ports if p['connected'] or p['running'] or p['power_kw']>.1)
+        record_curve(self.store,now,self.meter,ev,ev_valid,cfg,self.fault)
         if int(now // 60) != self.bucket_minute:
             self.flush()
         self.control_progress_at = time.monotonic()

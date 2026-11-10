@@ -8,6 +8,7 @@ function onOpen() {
   SpreadsheetApp.getUi().createMenu('D-Max')
     .addItem('Preparar aba Tecnicos', 'prepararTecnicos')
     .addItem('Preparar aba Assinaturas', 'prepararAssinaturas')
+    .addItem('Preparar diretório de acesso remoto', 'prepararRemoto')
     .addItem('Autorizar um D-Max', 'autorizarDMax')
     .addItem('Revogar chave de um D-Max', 'revogarDMax').addToUi();
 }
@@ -79,6 +80,10 @@ function doPost(event) {
       const result=snapshot_(props);
       const notice=subscription_(props,data.controller_id);
       if(notice)result.subscription=notice;
+      if(data.remote){
+        try{result.remote_ack=remote_(data.controller_id,data.remote);}
+        catch(e){result.remote_error=true;}
+      }
       return json_(result);
     }
     if(data.action==='update')return json_(update_(props,data.record));
@@ -87,6 +92,39 @@ function doPost(event) {
     // Never echo request contents, device keys or password hashes.
     return json_({ok:false,code:e.code||503,message:e.code?'Solicitação recusada':'Confira a aba, permissões e cotas do Apps Script'});
   } finally {if(acquired)lock.releaseLock();}
+}
+
+const DMAX_REMOTE_TAB='DMax_Remoto';
+const DMAX_REMOTE_HEADERS=['controller_id','instalacao','url','ultimo_estado_informado','ultima_comunicacao','ultimo_sinal_tunel','revisao'];
+function remoteSheet_(){
+  const book=SpreadsheetApp.openById(DMAX_SHEET_ID);
+  let sheet=book.getSheetByName(DMAX_REMOTE_TAB);
+  if(!sheet)sheet=book.insertSheet(DMAX_REMOTE_TAB);
+  if(!sheet.getLastRow()){
+    sheet.getRange(1,1,1,DMAX_REMOTE_HEADERS.length).setValues([DMAX_REMOTE_HEADERS]);
+    sheet.setFrozenRows(1);sheet.autoResizeColumns(1,DMAX_REMOTE_HEADERS.length);
+  }
+  if(JSON.stringify(sheet.getRange(1,1,1,DMAX_REMOTE_HEADERS.length).getValues()[0])!==JSON.stringify(DMAX_REMOTE_HEADERS))error_(422,'Cabeçalhos remotos incompatíveis');
+  return sheet;
+}
+function prepararRemoto(){remoteSheet_();}
+function sheetText_(value){return /^[=+\-@\t\r]/.test(value)?"'"+value:value;}
+function remote_(id,data){
+  if(!data||Object.keys(data).sort().join(',')!=='connected,heartbeat_at,provider,revision,site_name,url'||
+     data.provider!=='cloudflare'||typeof data.connected!=='boolean'||!Number.isSafeInteger(data.revision)||data.revision<1||
+     typeof data.site_name!=='string'||data.site_name.length>100||
+     typeof data.url!=='string'||!/^https:\/\/[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.trycloudflare\.com$/.test(data.url)||
+     typeof data.heartbeat_at!=='number'||!Number.isFinite(data.heartbeat_at)||data.heartbeat_at<1||data.heartbeat_at>Date.now()/1000+300)error_(422,'Registro remoto inválido');
+  const sheet=remoteSheet_();
+  const matches=sheet.getLastRow()>1?sheet.getRange(2,1,sheet.getLastRow()-1,7).getValues().map((row,i)=>({row,index:i+2})).filter(item=>String(item.row[0])===id):[];
+  if(matches.length>1)error_(409,'Identificador remoto duplicado');
+  const old=matches[0];
+  const revision=old?Number(old.row[6]):0;
+  if(!Number.isSafeInteger(revision)||revision<0)error_(422,'Revisão remota inválida');
+  if(data.revision<revision)return {revision:revision,accepted:false};
+  if(data.revision===revision&&old&&(old.row[2]!==data.url||old.row[3]!== (data.connected?'CONECTADO':'DESCONECTADO')))return {revision:revision,accepted:false};
+  sheet.getRange(old?old.index:sheet.getLastRow()+1,1,1,7).setValues([[id,sheetText_(data.site_name),data.url,data.connected?'CONECTADO':'DESCONECTADO',new Date().toISOString(),new Date(data.heartbeat_at*1000).toISOString(),data.revision]]);
+  return {revision:data.revision,accepted:true};
 }
 
 function date_(value,timezone) {

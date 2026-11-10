@@ -157,6 +157,10 @@ def build_pdf(data, version):
         stream += text(482, 28, f'Página {page}/{len(groups)}', 8)
         pages.append(stream.encode('latin1'))
 
+    return assemble_pdf(pages)
+
+
+def assemble_pdf(pages):
     objects = []
     def obj(value):
         objects.append(value if isinstance(value, bytes) else value.encode('ascii'))

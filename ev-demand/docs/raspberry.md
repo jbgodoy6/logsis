@@ -1,3 +1,7 @@
+# D-Max 0.12.0 · Cloudflare e curva de 30 dias
+
+Veja NOVIDADES-0.12.0.md para atualização, ativação do túnel e publicação do Apps Script. Atualize sem desinstalar; Grafana é preservado.
+
 # D-Max 0.8.5 · Portas, leituras e cadastro
 
 Consulte NOVIDADES-0.8.5.md no pacote. Seleção de porta serial, leituras habilitadas nas duas telas, exclusão com histórico, separação de simulados e tentativa imediata de sincronizar técnicos. Atualize sem desinstalar.

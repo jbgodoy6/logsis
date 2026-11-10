@@ -64,6 +64,10 @@ class Store:
             CREATE INDEX IF NOT EXISTS samples_time ON samples(ts);
             CREATE INDEX IF NOT EXISTS outbox_time ON outbox(ts);
             CREATE INDEX IF NOT EXISTS outbox_kind_time ON outbox(kind,ts);
+            CREATE TABLE IF NOT EXISTS curve_points (
+                ts REAL NOT NULL,mode TEXT NOT NULL,total_kw REAL,ev_kw REAL,other_kw REAL,
+                limit_kw REAL NOT NULL,meter_at REAL,quality TEXT NOT NULL,PRIMARY KEY(mode,ts));
+            CREATE INDEX IF NOT EXISTS curve_time ON curve_points(ts);
             CREATE INDEX IF NOT EXISTS outbox_urgent_time ON outbox(ts DESC) WHERE kind IN
                 ('connected','disconnected','session_start','session_end','ocpp_status','ocpp_connected','ocpp_disconnected');
         ''')
@@ -132,6 +136,7 @@ class Store:
         """No unacknowledged record may be purged, even if offline longer than 30 days."""
         now = time.time()
         with self.db:
+            self.db.execute('DELETE FROM curve_points WHERE ts<?',(now-30*86400,))
             self.db.execute('DELETE FROM samples WHERE ts<? AND id IN (SELECT id FROM receipts)',
                             (now - self.settings()['retain_days'] * 86400,))
             self.db.execute('DELETE FROM events WHERE ts<? AND id IN (SELECT id FROM receipts)', (now - 30 * 86400,))

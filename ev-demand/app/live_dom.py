@@ -1,8 +1,8 @@
 """Convert our escaped, read-only view into a DOM description, never executable HTML."""
 from html.parser import HTMLParser
 
-TAGS = frozenset('section article div span p b strong em small h2 h3 h4 a svg g path rect circle ellipse line polyline text i'.split())
-ATTRS = frozenset('class id role aria-label data-live-key viewbox x y x1 x2 y1 y2 cx cy r rx ry width height d points fill stroke stroke-width stroke-opacity fill-opacity stroke-linecap stroke-linejoin stroke-dasharray text-anchor font-size opacity transform href target'.split())
+TAGS = frozenset('section article div span p b strong em small h2 h3 h4 a svg g path rect circle ellipse line polyline text title i'.split())
+ATTRS = frozenset('class id role aria-label data-live-key data-curve-value tabindex viewbox x y x1 x2 y1 y2 cx cy r rx ry width height d points fill stroke stroke-width stroke-opacity fill-opacity stroke-linecap stroke-linejoin stroke-dasharray text-anchor font-size opacity transform href target'.split())
 
 
 class ViewTree(HTMLParser):

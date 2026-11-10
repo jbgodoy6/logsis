@@ -1,5 +1,5 @@
 [Unit]
-Description=D-Max stable remote tunnel (tunnl.gg pilot)
+Description=D-Max Cloudflare Quick Tunnel
 Wants=network-online.target d-max-remote-gateway.service
 After=network-online.target d-max-remote-gateway.service
 StartLimitIntervalSec=0

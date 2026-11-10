@@ -1,4 +1,4 @@
-# Próxima versão — curva histórica auditável na Visão geral
+# Entregue na 0.12.0 — curva histórica auditável na Visão geral
 
 Solicitado em 10/11/2026 após a entrega da 0.10.0. **Somente registrar agora;
 não implementar, alterar o pacote publicado ou gerar versão para este pedido.**
@@ -28,8 +28,9 @@ não implementar, alterar o pacote publicado ou gerar versão para este pedido.*
 Situação na 0.10.0: a curva usa os últimos 180 pontos em memória e não oferece
 consulta histórica por período, exportação própria ou tooltip. Os relatórios
 atuais de sessões não substituem o histórico da curva.
-Essa pendência continua aberta na 0.11.0, dedicada ao piloto de acesso remoto
-com preservação da integração Grafana.
+Essa pendência permaneceu aberta na 0.11.0. O usuário autorizou a implementação
+na 0.12.0: entregue com 30 dias locais, resolução nominal de 5 s, separação real/simulado,
+filtros, tooltip/toque e PDF/CSV. Consulte release-v0120.md e validation-v0120.md.
 
 # Escopo retomado da conversa anterior
 

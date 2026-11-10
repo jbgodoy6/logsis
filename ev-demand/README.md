@@ -1,3 +1,7 @@
+# D-Max 0.12.0 · Cloudflare automático e curva histórica
+
+[Guia de atualização no Raspberry](docs/release-v0120.md). Túnel Quick Tunnel com URL automática e registro autenticado por instalação no Google Planilhas. Curva abaixo do multimedidor, histórico local de 30 dias, filtros, valores por instante e exportação PDF/CSV. Mantém usuários, configurações e Grafana. [Validação e limites](docs/validation-v0120.md).
+
 # D-Max 0.11.0 · Piloto de acesso remoto, Grafana preservado
 
 [Atualizar e ativar no Raspberry](docs/release-v0110.md). Gateway exclusivo da interface, identidade por instalação, reconexão automática e compressão da tela ao vivo. OCPP e configuração inicial bloqueados no remoto. Ativação pelo terminal, separada da atualização; banco, credencial raiz e integração Grafana preservados. A conexão ao provedor público precisa ser confirmada no equipamento.

@@ -37,6 +37,14 @@ async def fixture(action:str, request:Request):
         state=data['state'];revision=data['revision']
         issued=time.time()-NOTICE_SECONDS-1 if state=='expired' else time.time()
         return engine.subscription.receive(envelope(store,state='regular' if state=='regular' else 'pending',revision=revision,issued=issued),TOKEN)
+    if action=='curve':
+        now=time.time()
+        with store.db:
+            store.db.execute('DELETE FROM curve_points')
+            for n in range(100):
+                for mode in ('physical','simulation'):
+                    store.db.execute('INSERT INTO curve_points VALUES (?,?,?,?,?,?,?,?)',(now-600+n*5,mode,700 if n==55 else 200+n,30+n,170,900,now-600+n*5,'valid'))
+        return {'now':now}
     if action=='sessions':
         store.put('vehicle',dict(id='PDF-TEST',name='Veículo teste PDF',plate='TESTE',identifiers=[],priority=False))
         cid=store.entities('charger')[0]['id']

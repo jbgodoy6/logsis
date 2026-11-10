@@ -6,6 +6,7 @@ import os
 import re
 import secrets
 import time
+from collections import OrderedDict
 from pathlib import Path
 from urllib.parse import urlsplit
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
@@ -242,8 +243,9 @@ def create_app(database=None, background=True, recovery_public_key=None, root_pa
     async def lifespan(app):
         tasks = []
         if background:
+            from .remote_registry import watch as watch_remote
             tasks = [asyncio.create_task(engine.run()), asyncio.create_task(meter_loop(engine)),
-                     asyncio.create_task(cloud_loop(engine)), asyncio.create_task(directory_loop(access))]
+                     asyncio.create_task(cloud_loop(engine)), asyncio.create_task(directory_loop(access)),asyncio.create_task(watch_remote(access))]
         network = getattr(app.state, 'web_network', None)
         if background and network is not None:
             await asyncio.to_thread(network.start)
@@ -268,7 +270,7 @@ def create_app(database=None, background=True, recovery_public_key=None, root_pa
                 await asyncio.to_thread(network.close)
             store.db.close()
 
-    app = FastAPI(title='EnergyCube D-Max · Controle de demanda', version='0.11.0', lifespan=lifespan,
+    app = FastAPI(title='EnergyCube D-Max · Controle de demanda', version='0.12.0', lifespan=lifespan,
                   docs_url=None, redoc_url=None, openapi_url=None)
     app.state.store, app.state.engine, app.state.access = store, engine, access
     app.state.recovery = recovery
@@ -540,12 +542,59 @@ def create_app(database=None, background=True, recovery_public_key=None, root_pa
     @app.get('/api/remote')
     async def remote_status(u=Depends(technician)):
         from .remote_tunnel import public_status
-        return public_status()
+        from .remote_registry import publication
+        return dict(public_status(),publication=publication(access),controller_id=store.entities('system')[0]['controller_id'])
+
+    curve_cache=OrderedDict()
+    curve_lock=asyncio.Lock()
+    async def curve_data(start,end,mode):
+        from .curve import query,parameters
+        settings=store.settings();now=time.time()
+        parameters(settings,start,end,mode,now)
+        period=60 if end else 5
+        key=(start,end,mode or settings['mode'],settings['site_name'],settings['timezone'],int(now//period))
+        async with curve_lock:
+            if key not in curve_cache:
+                curve_cache[key]=await asyncio.to_thread(query,store,settings,start,end,mode,now)
+                while len(curve_cache)>24:curve_cache.popitem(last=False)
+            return curve_cache[key]
+
+    @app.get('/api/curve')
+    async def curve_history(start: str=Query('',max_length=64),end: str=Query('',max_length=64),mode: str=Query('',max_length=16),u=Depends(user)):
+        try:return await curve_data(start,end,mode)
+        except ValueError as exc:raise HTTPException(422,str(exc)) from None
+
+    @app.get('/api/curve/report.pdf')
+    async def curve_report(start: str='',end: str='',mode: str='',u=Depends(user)):
+        from .curve import pdf
+        from .server_ui import VERSION
+        try:
+            data=await curve_data(start,end,mode)
+            payload=await asyncio.to_thread(pdf,data,VERSION)
+        except ValueError as exc:raise HTTPException(422,str(exc)) from None
+        store.record('curve_export',{'actor':u['name'],'format':'pdf','start':data['start'],'end':data['end'],'mode':data['mode'],'samples':data['total_samples']})
+        return Response(payload,media_type='application/pdf',headers={'Content-Disposition':'attachment; filename="D-Max-curva.pdf"','Cache-Control':'no-store'})
+
+    @app.get('/api/curve/export.csv')
+    async def curve_csv(start: str='',end: str='',mode: str='',u=Depends(user)):
+        import tempfile
+        from .curve import export_csv,parameters
+        from starlette.background import BackgroundTask
+        settings=store.settings()
+        try:parameters(settings,start,end,mode)
+        except ValueError as exc:raise HTTPException(422,str(exc)) from None
+        folder=Path(tempfile.mkdtemp(prefix='dmax-curve-'));path=folder/'curva.csv'
+        try:count=await asyncio.to_thread(export_csv,store,settings,path,start,end,mode)
+        except BaseException:
+            path.unlink(missing_ok=True);folder.rmdir();raise
+        store.record('curve_export',{'actor':u['name'],'format':'csv','start':start,'end':end,'mode':mode or settings['mode'],'samples':count})
+        return FileResponse(path,filename='D-Max-curva.csv',media_type='text/csv',headers={'Cache-Control':'no-store'},
+                            background=BackgroundTask(lambda:(path.unlink(),folder.rmdir())))
 
     @app.get('/api/audit')
     async def audit(actor: str = '', offset: int = 0, u=Depends(administrator)):
         import json
-        kinds=('settings_changed','operator_action','appearance_changed','charger_configured','vehicle_configured','user_created','user_updated','directory_configured','maintenance_requested','backup_downloaded')
+        kinds=('settings_changed','operator_action','appearance_changed','charger_configured','vehicle_configured','user_created','user_updated','directory_configured','maintenance_requested','backup_downloaded','curve_export')
         rows=[]
         for row in store.db.execute('SELECT * FROM events WHERE kind IN ('+','.join('?' for _ in kinds)+') ORDER BY ts DESC', kinds):
             payload=json.loads(row['payload'])

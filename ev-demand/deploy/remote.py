@@ -16,6 +16,17 @@ if __name__=='__main__':
         data=public_status()
         print(data['message'])
         if data.get('url'):print('Endereço: '+data['url'])
+    elif action=='verify-client':
+        import hashlib,json
+        root=Path(__file__).resolve().parents[1]
+        info=json.loads((root/'deploy/cloudflared-release.json').read_text())
+        path=root/'bin/cloudflared'
+        if path.is_symlink() or not path.is_file():raise SystemExit('Cliente Cloudflare ausente ou inválido')
+        with path.open('rb') as stream:digest=hashlib.file_digest(stream,'sha256').hexdigest()
+        with path.open('rb') as stream:header=stream.read(20)
+        if digest!=info['sha256'] or header[:5]!=b'\x7fELF\x02' or int.from_bytes(header[18:20],'little')!=183:
+            raise SystemExit('Integridade ou arquitetura do cliente Cloudflare inválida; use o pacote ARM64 oficial')
+        print('Cliente Cloudflare ARM64 conferido: '+info['version'])
     elif action=='verify-host' and len(sys.argv)==2:
         import subprocess
         from app.remote_tunnel import HOST_FINGERPRINT
