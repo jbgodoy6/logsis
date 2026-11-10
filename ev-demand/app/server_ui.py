@@ -19,14 +19,15 @@ from .meter import MEASUREMENTS, FORMATS, normalize_serial_port
 from .plant_view import render_plant
 from .live_dom import view_tree
 
-VERSION = '0.9.0'
+VERSION = '0.10.0'
 PAGES = {
     'overview': 'Visão geral', 'chargers': 'Carregadores', 'vehicles': 'Veículos',
     'schedule': 'Horários', 'history': 'Histórico', 'meter': 'Multimedidor',
     'settings': 'Configurações', 'users': 'Usuários', 'directory': 'Técnicos globais',
     'profile': 'Minha senha',
     'simulation': 'Simulador',
-    'monitor': 'Planta ao vivo',
+    'maintenance': 'Manutenção',
+    'audit': 'Auditoria',
 }
 ROLES = {'root': 'Raiz', 'technician': 'Técnico / instalador', 'admin': 'Administrador', 'operator': 'Operador'}
 
@@ -86,9 +87,13 @@ def link(page, text, **query):
 def subscription_banner(state):
     subscription = state.get('subscription', {})
     result = '<div class="subscription-banner" id="subscription-banner" role="status">'
-    if subscription.get('state') in ('pending', 'native'):
+    if subscription.get('state') in ('pending', 'native') or subscription.get('offline_state') == 'warning':
         title = ('Controle de demanda desativado · funcionamento nativo solicitado' if subscription.get('native')
                  else 'Assinatura pendente · ' + str(subscription['remaining_days']) + ' dia(s) restantes')
+        if subscription.get('offline_state') == 'warning' and subscription.get('state') not in ('pending', 'native'):
+            title = 'Reconecte à internet · mais de 15 dias sem contato autenticado; controle ativo'
+        elif subscription.get('offline_state') == 'pending' and not subscription.get('native'):
+            title = 'Pendência por ausência de contato · ' + str(subscription['remaining_days']) + ' dia(s) restantes'
         result += '<div class="notice"><strong>' + esc(title) + '</strong><p>' + esc(subscription['message']) + '</p>'
         if subscription.get('deadline'):
             from datetime import datetime
@@ -124,7 +129,7 @@ def install(app):
         def valid_token(self, action, value):
             try:
                 when = int(value.split('.', 1)[0])
-                return 0 <= time.time() - when <= 3600 and hmac.compare_digest(self.token(action, when), value)
+                return 0 <= time.time() - when <= 7*86400 and hmac.compare_digest(self.token(action, when), value)
             except (ValueError, TypeError, OverflowError):
                 return False
 
@@ -153,6 +158,8 @@ def install(app):
 
         def finish(self, response):
             response.headers['Cache-Control'] = 'no-store'
+            if self.request.cookies.get('dmax_saved'):
+                response.delete_cookie('dmax_saved')
             response.set_cookie('dmax_ui_nonce', self.nonce, httponly=True,
                                 secure=self.request.url.scheme == 'https', samesite='strict', max_age=28800)
             for cookie in self.cookies:
@@ -175,9 +182,11 @@ def install(app):
                     + '</body></html>')
 
         async def render(self, page='overview', message='', diagnostic=None, status=200, recovery_data=None):
+            if page == 'monitor':
+                page = 'overview'
             if page not in PAGES:
                 return self.finish(HTMLResponse('Página não encontrada', status_code=404))
-            note = '<div class="notice" role="status">' + esc(message) + '</div>' if message else ''
+            note = '<div class="notice' + (' flash-notice' if message == 'Alteração aplicada.' else '') + '" role="status">' + esc(message) + '</div>' if message else ''
             if not self.user:
                 required = (await self.api('GET', '/api/setup'))['required']
                 if required:
@@ -216,7 +225,7 @@ def install(app):
                 content = note + self.password_form() + self.form('logout', submit='Sair')
                 return self.finish(HTMLResponse(self.document('<main class="initial-password">' + panel('Troque a senha inicial', content) + '</main>'), status_code=status))
             allowed = {'meter': self.technical, 'settings': self.manager, 'users': self.manager,
-                       'directory': self.user['role'] == 'root', 'simulation': self.manager}
+                       'directory': self.user['role'] == 'root', 'simulation': self.technical and app.state.store.settings()['mode'] == 'simulation', 'maintenance': self.technical, 'audit': self.manager}
             if not allowed.get(page, True):
                 page, note, status = 'overview', '<div class="notice">Acesso não permitido para seu perfil.</div>', 403
             self.state = await self.api('GET', '/api/state')
@@ -235,6 +244,17 @@ def install(app):
                 content = self.meter(diagnostic, serial['ports'])
             elif page == 'history':
                 content = await self.history()
+            elif page == 'audit':
+                actor=self.request.query_params.get('actor','')
+                try: offset=max(0,int(self.request.query_params.get('offset','0')))
+                except ValueError: offset=0
+                audit=await self.api('GET','/api/audit?'+urlencode({'actor':actor,'offset':offset}))
+                content=panel('Alterações e liberações', '<form method="get">'+field('Login de quem alterou','actor',actor)+'<button>Filtrar</button></form>'+table(['Horário','Evento','Responsável e alteração'],[[esc(__import__('datetime').datetime.fromtimestamp(e['ts']).isoformat()),esc(e['kind']),esc(e['payload'])] for e in audit['events']])+link('audit','Próximos registros',actor=actor,offset=offset+100))
+            elif page == 'maintenance':
+                content = '<article class="panel"><h3>Backup e manutenção</h3><p>O backup contém dados privados da instalação. Guarde em local seguro.</p><a href="/api/maintenance/backup">Baixar backup SQLite</a><p>Restauração e atualização exigem raiz e carregadores físicos desconectados. O serviço reinicia durante a operação.</p>'
+                if self.user['role'] == 'root':
+                    content += '<label>Backup desta instalação<input id="restore-file" type="file" accept=".sqlite3"></label><button type="button" data-maintenance="restore">Restaurar backup</button><label>Pacote ARM64 assinado<input id="update-file" type="file" accept=".zip"></label><button type="button" data-maintenance="update">Validar e atualizar</button>'
+                content += '<p id="maintenance-status" role="status"></p></article><script src="/static/maintenance.js?v='+VERSION+'" defer></script>'
             elif page == 'users':
                 content = await self.users()
             elif page == 'directory':
@@ -248,6 +268,8 @@ def install(app):
             live = page in ('overview', 'monitor') and status == 200
             if live:
                 content = '<div class="live-status" data-live-status role="status">Atualização automática em segundo plano</div><div class="live-content" data-live-page="' + page + '">' + content + '</div><noscript><p>Ative JavaScript para atualização automática. O botão Atualizar continua disponível.</p></noscript>'
+            if page == 'overview' and self.technical and self.state['settings']['mode'] == 'simulation':
+                content += self.simulation()
             network = getattr(app.state, 'web_network', None)
             if network is not None and page in ('settings', 'overview'):
                 details = network.public()
@@ -256,7 +278,7 @@ def install(app):
                     urls = [('https' if self.request.url.scheme == 'https' else 'http') + '://127.0.0.1:' + str(details['port'])]
                 content += panel('Acesso pela rede local', '<p>' + esc(details['status']) + '</p>'
                     + ''.join('<p><a href="' + esc(url) + '">' + esc(url) + '</a></p>' for url in urls)
-                    + '<p class="hint">Nome e porta: edite rede.ini no servidor e reinicie o D-Max. O nome sem .local depende do DNS da rede.</p>')
+                    )
             nav = ''.join('<a class="nav' + (' active' if key == page else '') + '" href="/ui/' + key + '">' + esc(title) + '</a>'
                           for key, title in PAGES.items() if allowed.get(key, True))
             body = ('<div id="shell"><aside class="sidebar"><a class="brand" href="/">'
@@ -270,6 +292,8 @@ def install(app):
             response = self.finish(HTMLResponse(self.document(body, PAGES[page], live=live), status_code=status))
             if live:
                 response.headers['X-DMax-Live'] = '1'
+            if page == 'maintenance':
+                response.headers['X-DMax-Live'] = '1'
             return response
 
         @property
@@ -282,7 +306,7 @@ def install(app):
 
         def password_form(self):
             if self.user and self.user['name'] == 'root':
-                return '<p>O acesso raiz é definido pelo proprietário no pacote e não pode ser alterado por esta instalação. A sessão vale por 15 minutos.</p>'
+                return '<p>O acesso raiz é definido pelo proprietário. Sessão por senha: 4 horas sem atualização autenticada; renovada durante supervisão. Recuperação por assinatura: 15 minutos, sem renovação.</p>'
             return self.form('password',
                 field('Senha atual', 'current_password', kind='password', required='', maxlength=200, autocomplete='current-password')
                 + field('Nova senha', 'new_password', kind='password', minlength=8, maxlength=200, required='', autocomplete='new-password')
@@ -290,22 +314,12 @@ def install(app):
                 'Alterar senha e entrar novamente', page='profile')
 
         def overview(self):
-            summary, settings = self.state['summary'], self.state['settings']
-            metrics = ''.join('<article class="metric"><div class="metric-label">' + esc(title)
-                              + '</div><div class="metric-value"><b>' + number(value) + '</b><span>kW</span></div></article>'
-                              for title, value in [('Consumo total', summary.get('total_kw')), ('Em recarga', summary.get('ev_kw')),
-                                                   ('Outras cargas', summary.get('other_kw')), ('Disponível para recarga', summary.get('budget_kw'))])
-            content = '<div class="metrics" data-live-key="metrics">' + metrics + '</div>'
-            content += '<p class="hint">Atualização a cada 2 segundos · demanda ' + number(settings['limit_kw']) + ' kW · margem ' + number(settings['margin_kw']) + ' kW</p>'
+            summary = self.state['summary']
+            content = render_plant(self.state)
             if self.state.get('fault') or not summary.get('meter_fresh'):
                 content += '<div class="notice">' + esc(self.state.get('fault') or 'Sem medição atual: novas liberações bloqueadas.') + '</div>'
             content += '<p>' + ('Horário bloqueado · novas conexões aguardam.' if summary.get('blocked') else 'Horário permitido para recarga.') + '</p>'
-            from .plant_view import render_meter
-            content += render_meter(self.state)
             content += panel('Demanda da instalação · últimos minutos', self.chart()).replace('<article class="panel">', '<article class="panel" data-live-key="chart">', 1)
-            content += '<div class="charger-grid" data-live-key="ports">' + ''.join(self.card(p, controls=False) for p in self.state['ports'][:6]) + '</div>'
-            if self.manager and settings['mode'] == 'simulation':
-                content += '<p>' + link('simulation', 'Configurar demonstração e outras cargas') + '</p>'
             return content
 
         def simulation(self):
@@ -313,8 +327,8 @@ def install(app):
                 return panel('Simulador desativado', '<p>A instalação está em modo físico.</p>')
             return panel('Simulação', self.form('load',
                 field('Outras cargas · kW', 'other_kw', self.state['summary'].get('other_kw', 0), 'number', min=0, step='any', required=''),
-                'Aplicar carga', page='simulation')
-                + (self.form('demo', submit='Carregar demonstração', page='simulation') if not self.state['chargers'] else '')
+                'Aplicar carga', page='overview')
+                + (self.form('demo', submit='Carregar demonstração', page='overview') if not self.state['chargers'] else '')
                 + link('overview', 'Acompanhar distribuição de potência'))
 
         def chart(self):
@@ -369,7 +383,7 @@ def install(app):
                                 field('Duração · minutos', 'minutes', 30, 'number', min=1, max=1440, required='')
                                 + field('Motivo', 'reason', required='', maxlength=200),
                                 'Liberar emergência', page='chargers', key=port['key'], command='emergency') + '</details>'
-                if charger['transport'] == 'simulator' and self.manager:
+                if charger['transport'] == 'simulator' and self.technical and self.state['settings']['mode'] == 'simulation':
                     fields = '' if port['connected'] else (
                         select('Veículo', 'vehicle_id', self.vehicle_options(), '')
                         + field('Potência aceita · kW', 'acceptance_kw', charger['connector_max_kw'], 'number', min=0.1, step='any', required=''))
@@ -450,7 +464,8 @@ def install(app):
                 fields += select('Modo', 'mode', [('simulation', 'Simulação'), ('physical', 'Equipamentos físicos · piloto')], s['mode'])
                 for key, title in [('technical_limit_kw', 'Teto técnico · kW'), ('margin_kw', 'Margem · kW'), ('freshness_s', 'Leitura válida · segundos'), ('ramp_kw_s', 'Rampa · kW/s'), ('retain_days', 'Retenção de leituras sincronizadas · dias')]:
                     fields += field(title, key, s[key], 'number', step='any', required='')
-                fields += field('Fuso horário', 'timezone', s['timezone'], required='') + field('API de nuvem · HTTPS', 'cloud_url', s['cloud_url'], 'url')
+                fields += field('Fuso horário', 'timezone', s['timezone'], required='') + field('API de nuvem real · HTTPS', 'cloud_url', s['cloud_url'], 'url')
+                fields += field('API de demonstração separada · HTTPS', 'demo_cloud_url', s.get('demo_cloud_url',''), 'url')
                 for i, circuit in enumerate(s['circuits']):
                     fields += '<fieldset><legend>Circuito ' + esc(circuit['id']) + '</legend>'
                     fields += field('Nome', 'circuit_name_' + str(i), circuit['name'], required='')
@@ -522,16 +537,22 @@ def install(app):
             names = {v['id']: v['name'] for v in app.state.store.entities('vehicle')}
             sessions = [[stamp(s['started_at']), stamp(s.get('ended_at')), esc(s['port']),
                          esc(names.get(s.get('vehicle_id'), 'Não identificado')), number(s['energy_kwh'], 3) + ' kWh',
-                         number(s.get('peak_kw', 0)) + ' kW', esc(s.get('reason', ''))] for s in history['sessions']]
+                         number(s.get('peak_kw', 0)) + ' kW', esc(s.get('mode','Origem desconhecida')), esc(s.get('reason', ''))] for s in history['sessions']]
             events = [[stamp(e['ts']), esc(e['kind']), esc(e['payload'])] for e in history['events']]
             vehicles = [('', 'Todos os veículos')] + [(v['id'], v['name'] + (' · excluído' if v.get('archived') else '')) for v in app.state.store.entities('vehicle')]
             chargers = [('', 'Todos os carregadores')] + [(c['id'], c['name'] + (' · excluído' if c.get('archived') else '')) for c in app.state.store.entities('charger')]
             filters = (field('Início do período · horário da instalação', 'start', kind='datetime-local')
                        + field('Fim do período · horário da instalação', 'end', kind='datetime-local')
                        + select('Veículo', 'vehicle_id', vehicles) + select('Carregador', 'charger_id', chargers))
+            filters += select('Relatório', 'report_type', [('detailed','Detalhado por sessão'), ('vehicles','Geral por veículo')])
+            filters += select('Origem da energia', 'energy_scope', [('all','Todas · totais separados'),('physical','Real'),('simulation','Simulação')])
+            filters += '<fieldset><legend>Veículos do relatório geral · vazio seleciona todos</legend>' + ''.join('<label><input type="checkbox" name="vehicle_selection" value="'+esc(v['id'])+'">'+esc(v['name'])+'</label>' for v in app.state.store.entities('vehicle')) + '<label><input type="checkbox" name="vehicle_selection" value="unassigned">Sem veículo associado</label></fieldset>'
             export = '<form method="get" action="/api/reports/sessions.pdf">' + filters + '<button class="primary" type="submit">Baixar relatório PDF</button></form>'
             guidance = '<p class="hint">Fuso: ' + esc(str(zone)) + '. Seleção pelo início da sessão, com término do filtro exclusivo. O PDF inclui todas as sessões encontradas, inclusive veículos e carregadores excluídos. Sessões abertas têm valores parciais.</p>'
-            return panel('Relatório de recargas em PDF', export + guidance) + panel('Últimas sessões', table(['Início', 'Término', 'Conector', 'Veículo', 'Energia', 'Pico', 'Estado'], sessions)) + panel('Eventos', table(['Horário', 'Evento', 'Detalhes'], events))
+            from .reports import report_data
+            summary=report_data(app.state.store,report_type='vehicles')['vehicle_summary']
+            fleet=table(['Veículo','Origem','kWh históricos','Recargas','Último início'],[[esc(r['vehicle_name']),esc({'physical':'Real','simulation':'Simulação','unknown':'Desconhecida'}[r['scope']]),number(r['total_kwh'],3),str(r['count']),stamp(r['last_at']) if r['last_at'] else 'Sem recarga'] for r in summary])
+            return panel('Relatório de recargas em PDF', export + guidance) + panel('Resumo acumulado por veículo · origens separadas',fleet) + panel('Últimas sessões', table(['Início', 'Término', 'Conector', 'Veículo', 'Energia', 'Pico', 'Origem', 'Estado'], sessions)) + panel('Eventos', table(['Horário', 'Evento', 'Detalhes'], events))
 
         async def users(self):
             users = (await self.api('GET', '/api/users'))['users']
@@ -592,7 +613,7 @@ def install(app):
 
     async def get_page(request: Request, page='overview'):
         console = Console(request)
-        message = 'Alteração aplicada.' if request.query_params.get('notice') == 'saved' else ''
+        message = 'Alteração aplicada.' if request.cookies.get('dmax_saved') == '1' else ''
         try:
             return await console.render(page, message)
         except UIError as exc:
@@ -684,7 +705,7 @@ def install(app):
                     await api('POST', '/api/vehicles', data)
                 elif action in ('settings', 'circuit', 'schedule_add', 'schedule_delete', 'meter'):
                     if action == 'settings':
-                        for key in ('site_name', 'timezone', 'mode', 'cloud_url'):
+                        for key in ('site_name', 'timezone', 'mode', 'cloud_url', 'demo_cloud_url'):
                             if key in form:
                                 settings[key] = value(key)
                         for key in ('limit_kw', 'technical_limit_kw', 'margin_kw', 'freshness_s', 'ramp_kw_s'):
@@ -753,7 +774,9 @@ def install(app):
                     raise UIError('Operação desconhecida')
             if diagnostic is not None:
                 return await console.render(page, 'Operação concluída.', diagnostic=diagnostic)
-            return console.finish(RedirectResponse('/ui/' + page + '?notice=saved', status_code=303))
+            response = console.finish(RedirectResponse('/ui/' + page, status_code=303))
+            response.set_cookie('dmax_saved', '1', httponly=True, secure=request.url.scheme == 'https', samesite='strict', max_age=60)
+            return response
         except UIError as exc:
             if exc.status == 401:
                 console.user = None

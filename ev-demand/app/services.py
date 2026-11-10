@@ -39,7 +39,7 @@ async def meter_loop(engine):
             except asyncio.CancelledError:
                 raise
             except Exception as exc:
-                engine.meter.update(error=str(exc)[:160], at=0)
+                engine.meter.update(error=str(exc)[:160])
         await asyncio.sleep(max(0.5, meter['poll_s']))
 
 
@@ -49,7 +49,12 @@ async def cloud_loop(engine):
     while True:
         now = time.monotonic()
         settings = engine.store.settings()
-        url, token = settings['cloud_url'], os.getenv('EV_CLOUD_TOKEN')
+        simulated = settings['mode'] == 'simulation'
+        url = settings.get('demo_cloud_url', '') if simulated else settings['cloud_url']
+        token = os.getenv('EV_DEMO_CLOUD_TOKEN' if simulated else 'EV_CLOUD_TOKEN')
+        if simulated and (url == settings['cloud_url'] or token and token == os.getenv('EV_CLOUD_TOKEN')):
+            url = ''
+            engine.cloud['status'] = 'Demonstração exige destino e credencial separados'
         if now >= next_cleanup:
             engine.store.cleanup()
             next_cleanup = now + 60
@@ -65,7 +70,7 @@ async def cloud_loop(engine):
                     try:
                         async with httpx.AsyncClient(timeout=20, follow_redirects=False) as client:
                             response = await client.post(url, headers={'Authorization': f'Bearer {token}'},
-                                json={'controller_id': os.getenv('EV_CONTROLLER_ID') or engine.store.entities('system')[0]['controller_id'],
+                                json={'controller_id': (os.getenv('EV_DEMO_CONTROLLER_ID') or ('demo-' + engine.store.entities('system')[0]['controller_id'])) if simulated else (os.getenv('EV_CONTROLLER_ID') or engine.store.entities('system')[0]['controller_id']),
                                       'records': [export_record(record) for record in records]})
                             response.raise_for_status()
                             ids = response.json()['acknowledged_ids']

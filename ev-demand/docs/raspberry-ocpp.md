@@ -17,10 +17,10 @@ O protocolo implementado é OCPP 1.6 JSON por WebSocket. OCPP 2.x não está imp
 
 Endereço completo de exemplo:
 
-    ws://IP_DO_PI:8080/ocpp/CP-01
+    ws://IP_DO_PI:80/ocpp/CP-01
 
 Se o equipamento tiver campos separados para URL base e Charge Point ID e acrescentar
-ID automaticamente, use base ws://IP_DO_PI:8080/ocpp e ID CP-01. Não duplique o ID no
+ID automaticamente, use base ws://IP_DO_PI:80/ocpp e ID CP-01. Não duplique o ID no
 caminho. O subprotocolo WebSocket é ocpp1.6. Em uma implantação com TLS confiável,
 use wss:// e a porta/certificado configurados. Não desabilite verificação de certificados.
 A porta web e OCPP é a mesma; qualquer alteração exige atualizar ambas as URLs.

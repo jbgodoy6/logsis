@@ -62,6 +62,10 @@ def plant_snapshot(state):
                 plugged=plugged, charging=charging, display_state=display_state, running=bool(port.get('running')), alarm=alarm, error_code=error,
                 status=status, ocpp_status=port.get('ocpp_status', ''), power_kw=finite(port.get('power_kw')) if fresh else None,
                 telemetry_fresh=fresh, sample_at=port.get('sample_at', 0), limit_kw=None if port.get('native_mode') else finite(port.get('limit_kw')),
+                requested_limit_kw=finite(port.get('requested_limit_kw')),
+                command_status=port.get('command_status', 'Nenhum comando confirmado'),
+                command_at=port.get('command_at'),
+                reading_age_s=max(0, now-port['sample_at']) if port.get('sample_at') else None,
                 vehicle_id=vehicle.get('id'), vehicle_name=vehicle.get('name') if plugged else None,
                 session_id=port.get('session_id'), energy_kwh=finite(session.get('energy_kwh')),
                 soc=finite(port.get('soc')) if plugged and fresh else None))
@@ -87,7 +91,8 @@ def plant_snapshot(state):
     return dict(schema_version=1, observed_at=now, site_name=settings['site_name'], mode=settings['mode'],
         limit_kw=settings['limit_kw'], margin_kw=settings['margin_kw'], controller_fault=bool(state.get('fault')),
         ev_kw=finite(summary.get('ev_kw')), other_kw=finite(summary.get('other_kw')),
-        meter=dict(fresh=meter_fresh, sampled_at=meter.get('at', 0), readings=readings), chargers=chargers)
+        meter=dict(fresh=meter_fresh, sampled_at=meter.get('at', 0),
+                   reading_age_s=max(0, now-meter['at']) if meter.get('at') else None, readings=readings), chargers=chargers)
 
 
 def state_signature(payload):
@@ -96,7 +101,7 @@ def state_signature(payload):
         margin=payload['margin_kw'], fault=payload['controller_fault'], meter=payload['meter']['fresh'],
         readings=[(r['measurement'], r['unit']) for r in payload['meter']['readings']],
         chargers=[dict(c, connectors=[{k: v for k, v in port.items() if k not in
-            ('power_kw', 'sample_at', 'energy_kwh', 'soc', 'limit_kw')} for port in c['connectors']])
+            ('power_kw', 'sample_at', 'energy_kwh', 'soc', 'limit_kw', 'reading_age_s')} for port in c['connectors']])
             for c in payload['chargers']]), sort_keys=True, ensure_ascii=False)
 
 

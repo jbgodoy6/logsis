@@ -1,5 +1,9 @@
 -- Execute once as the project owner in Supabase SQL Editor. No public read access.
 create schema if not exists dmax;
+-- Each database belongs to one deployment. Demo uses a separate database,
+-- credential, Edge Function and Grafana datasource, never a dashboard filter.
+create table if not exists dmax.deployment (id integer primary key check(id=1), environment text not null check(environment in ('physical','simulation')));
+insert into dmax.deployment values (1,'physical') on conflict do nothing;
 revoke all on schema dmax from public, anon, authenticated;
 create table if not exists dmax.controllers (
  id text primary key, site_name text not null, token_hash text not null,
@@ -44,6 +48,10 @@ begin
   raise exception 'Invalid batch';
  end if;
  for r in select value from jsonb_array_elements(p_records) loop
+  if coalesce(r->>'environment',case when r->>'kind'='plant_state' then r->'payload'->>'mode' else 'legacy' end)
+       is distinct from (select environment from dmax.deployment where id=1) then
+    raise exception 'Wrong telemetry environment';
+  end if;
   if r->>'id' is null or r->>'id' !~ '^[0-9a-f]{32}$' or jsonb_typeof(r->'payload') <> 'object'
      or jsonb_typeof(r->'ts') <> 'number' or length(r->>'kind') > 80 then raise exception 'Invalid record'; end if;
   p := r->'payload';

@@ -1,0 +1,11 @@
+[Unit]
+Description=D-Max authenticated maintenance worker
+After=network.target
+[Service]
+Type=oneshot
+User=root
+UMask=0077
+ExecStart=/opt/d-max/.venv/bin/python -I /opt/d-max/deploy/maintenance_worker.py
+TimeoutStartSec=1200
+StandardOutput=journal
+StandardError=journal

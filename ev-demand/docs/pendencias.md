@@ -1,3 +1,7 @@
+# Escopo retomado da conversa anterior
+
+Os ajustes aprovados foram retomados na 0.10.0. Consulte release-v0100.md e validation-v0100.md. Implantação real de nuvem, atualização do Apps Script publicado, RTC e homologação dos carregadores físicos dependem da instalação do proprietário e não foram presumidos. O histórico abaixo é mantido como registro.
+
 # Atualização 0.9.0
 
 Incluídos: exclusão de veículos preservando histórico, relatórios PDF por período/veículo/carregador, multimedidor ampliado, suporte à porta 80 e avisos de assinatura por instalação com contagem offline e solicitação de funcionamento nativo. Ver release-v090.md e assinaturas-v090.md. Homologação física por modelo OCPP permanece necessária.

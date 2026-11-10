@@ -11,6 +11,9 @@ import time
 
 DOMAIN = b'DMAX-LICENSE-1\n'
 NOTICE_SECONDS = 10 * 86400
+WARNING_SECONDS = 15 * 86400
+OFFLINE_PENDING_SECONDS = 30 * 86400
+OFFLINE_NATIVE_SECONDS = 40 * 86400
 
 
 class Subscription:
@@ -20,6 +23,10 @@ class Subscription:
         self.highwater = self.row.get('highwater', 0.0)
         self.anchor = time.monotonic()
         self.saved = self.anchor
+        if 'contact_anchor' not in self.row:
+            self.row['contact_anchor'] = max(self.highwater, time.time())
+            self.highwater = self.row['contact_anchor']
+            self.persist()
 
     def clock(self):
         monotonic = time.monotonic()
@@ -30,7 +37,7 @@ class Subscription:
             self.row['clock_suspect'] = True
         self.highwater = max(expected, wall)
         self.anchor = monotonic
-        if monotonic - self.saved >= 15 and self.row.get('revision'):
+        if monotonic - self.saved >= 15:
             self.persist()
         return self.highwater
 
@@ -72,12 +79,21 @@ class Subscription:
         if same and any(data[k] != self.row.get(k) for k in ('state', 'issued_at', 'deadline', 'message')):
             raise ValueError('Revisão de aviso conflitante')
         self.clock()
+        # Only a fresh, authenticated supplier timestamp can renew contact.
+        # Replaying a signed response cannot reset the offline counter.
+        contact = self.row.get('last_valid_contact', 0)
+        fresh_contact = data['server_time'] > contact and data['server_time'] >= self.highwater - 300
+        contact_anchor = self.row.get('contact_anchor', self.highwater)
         if not same:
             still_expired = (self.row.get('expired', False) and data['state'] == 'pending'
                              and data['issued_at'] == self.row.get('issued_at'))
             self.row = {'id': 'current', **data, 'expired': bool(still_expired), 'clock_suspect': False}
             self.store.record('subscription_received', {k: data[k] for k in ('revision', 'state', 'deadline')})
-        self.highwater = data['server_time'] if not same and data['state'] == 'regular' else max(self.highwater, data['server_time'])
+        self.row['contact_anchor'] = contact_anchor
+        self.row['last_valid_contact'] = data['server_time'] if fresh_contact else contact
+        if fresh_contact:
+            self.row['offline_expired'] = False
+        self.highwater = max(self.highwater, data['server_time'])
         self.anchor = time.monotonic()
         self.persist()
         return self.status()
@@ -89,9 +105,28 @@ class Subscription:
             self.row['expired'] = True
             self.persist()
             self.store.record('subscription_expired', {'revision': self.row['revision'], 'deadline': self.row['deadline']})
-        expired = bool(self.row.get('expired'))
-        return {'state': 'native' if expired else self.row.get('state', 'unconfigured'),
-                'native': expired, 'deadline': self.row.get('deadline'),
-                'remaining_days': max(0, math.ceil((self.row.get('deadline', now) - now) / 86400)) if self.row.get('deadline') else None,
-                'message': self.row.get('message') or 'Regularize sua assinatura com o fornecedor.',
+        last_contact = self.row.get('last_valid_contact') or self.row['contact_anchor']
+        offline_seconds = max(0, now - last_contact)
+        offline = ('native' if offline_seconds >= OFFLINE_NATIVE_SECONDS or self.row.get('offline_expired')
+                   else 'pending' if offline_seconds >= OFFLINE_PENDING_SECONDS
+                   else 'warning' if offline_seconds >= WARNING_SECONDS else 'connected')
+        if offline == 'native' and not self.row.get('offline_expired'):
+            self.row['offline_expired'] = True
+            self.persist()
+            self.store.record('platform_contact_expired', {'last_contact': last_contact})
+        financial = bool(self.row.get('expired'))
+        expired = financial or offline == 'native'
+        offline_deadline = last_contact + OFFLINE_NATIVE_SECONDS
+        deadline = self.row.get('deadline') if self.row.get('state') == 'pending' else None
+        if offline in ('pending', 'native'):
+            deadline = min(deadline, offline_deadline) if deadline else offline_deadline
+        message = self.row.get('message') or 'Regularize sua assinatura com o fornecedor.'
+        if offline != 'connected':
+            message += ' Sem contato autenticado com o fornecedor: reconecte à internet. Controle ativo até o prazo de 40 dias, salvo pendência financeira anterior.'
+        return {'state': 'native' if expired else 'pending' if offline == 'pending' else self.row.get('state', 'unconfigured'),
+                'native': expired, 'deadline': deadline,
+                'financial_expired': financial, 'offline_state': offline,
+                'last_valid_contact': self.row.get('last_valid_contact'), 'offline_days': int(offline_seconds // 86400),
+                'remaining_days': max(0, math.ceil((deadline - now) / 86400)) if deadline else None,
+                'message': message,
                 'clock_suspect': bool(self.row.get('clock_suspect')), 'revision': self.row['revision']}

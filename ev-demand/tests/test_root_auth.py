@@ -35,10 +35,10 @@ class RootPassphraseTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200, response.text)
         self.assertEqual(response.json()['role'], 'root')
         self.assertFalse(response.json()['must_change'])
-        self.assertIn('Max-Age=900', response.headers['set-cookie'])
+        self.assertIn('Max-Age=14400', response.headers['set-cookie'])
         self.assertEqual(self.client.get('/api/directory').status_code, 200)
         self.assertEqual(self.client.get('/api/state').status_code, 200)
-        with patch('app.access.time.time', return_value=time.time() + 901):
+        with patch('app.access.time.time', return_value=time.time() + 14401):
             self.assertEqual(self.client.get('/api/me').status_code, 401)
 
     def test_exact_phrase_is_required_and_legacy_passwords_do_not_work(self):

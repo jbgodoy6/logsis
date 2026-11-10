@@ -167,12 +167,19 @@ class Engine:
             if not cp or time.time() - p['last_command_at'] < 3:
                 return False
             p['last_command_at'] = time.time()
+            p.update(requested_limit_kw=value, command_status='Aguardando resposta', command_at=time.time())
             try:
                 if not await cp.limit(p['connector'], value):
+                    p['command_status'] = 'Rejeitado'
                     raise RuntimeError('Perfil rejeitado pelo carregador')
+                p['command_status'] = 'Aceito · cumprimento físico depende da medição'
             except Exception as exc:
+                if p['command_status'] != 'Rejeitado':
+                    p['command_status'] = 'Sem confirmação de aceite'
                 self.store.record('command_failed', {'port': p['key'], 'command': 'SetChargingProfile', 'error': str(exc)[:200]})
                 return False
+        else:
+            p.update(requested_limit_kw=value, command_status='Simulado', command_at=time.time())
         p['limit_kw'] = value
         p['profile_initialized'] = True
         if value < previous:
@@ -216,7 +223,7 @@ class Engine:
             total = self.other_kw + sum(p['power_kw'] * self.config(p['charger']).get('input_factor', 1.0) for p in ports)
             self.meter.update(total_kw=total, at=now, error='')
             self.aggregate('site', total)
-        fresh = bool(self.meter['at']) and now - self.meter['at'] <= settings['freshness_s']
+        fresh = bool(self.meter['at']) and 0 <= now - self.meter['at'] <= settings['freshness_s'] and not self.meter.get('error')
         fresh = fresh and not self.fault
         # Subtract only contemporaneous EV measurements from the incoming meter.
         measured_ev = sum(p['power_kw'] for p in ports

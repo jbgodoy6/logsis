@@ -34,6 +34,9 @@ install -d -o root -g root -m 0700 /run/d-max-maintenance
 exec 9>/run/d-max-maintenance/lock
 flock -n 9 || fail 'Outra manutenção está em andamento.'
 if [[ -f "$service_file" ]]; then systemctl disable --now d-max.service; fi
+systemctl disable --now d-max-maintenance.path || true
+systemctl stop d-max-maintenance.service || true
+rm -f -- /etc/systemd/system/d-max-maintenance.path /etc/systemd/system/d-max-maintenance.service
 if [[ -f /etc/systemd/system.conf.d/70-d-max-watchdog.conf ]]; then
     python3 -I "$app_dir/deploy/manage.py" disable-watchdog || fail 'Watchdog personalizado; revise sem apagar sua configuração.'
 fi

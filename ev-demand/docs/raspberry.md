@@ -82,16 +82,16 @@ atualizações. Não rode manualmente outro run.py contra o mesmo banco do servi
 O primeiro cadastro continua restrito ao próprio servidor. Como Raspberry Pi OS Lite
 não tem navegador, abra um túnel pelo PowerShell do Windows:
 
-    ssh -N -L 18080:127.0.0.1:8080 SEU_USUARIO@IP_DO_PI
+    ssh -N -L 18080:127.0.0.1:80 SEU_USUARIO@IP_DO_PI
 
 Mantenha esse terminal aberto e visite http://127.0.0.1:18080 no navegador Windows.
 Defina somente a senha de admin. Se você importou o banco do Windows, esse cadastro
 não aparece e as contas existentes são mantidas. A porta local 18080 evita conflito
-com o D-Max Windows antigo na porta 8080. Não exponha o cadastro inicial pela internet.
+com o D-Max Windows antigo na porta 80. Não exponha o cadastro inicial pela internet.
 
 Após configurar, qualquer computador da mesma rede pode acessar:
 
-    http://IP_DO_PI:8080
+    http://IP_DO_PI:80
 
 O nome anunciado é dmax-<identificador>.local. Para personalizar:
 
@@ -109,7 +109,7 @@ Salve e aplique:
 
     sudo systemctl restart d-max
 
-O endereço será http://dmax-garagem.local:8080 em clientes/redes compatíveis com mDNS.
+O endereço será http://dmax-garagem.local:80 em clientes/redes compatíveis com mDNS.
 Caso o nome não resolva, use o IP ou um registro no DNS do roteador. Não é necessário
 instalar nada nos computadores de acesso. Ao trocar a porta, atualize também os
 carregadores: painel e OCPP compartilham a mesma porta. Variáveis DMAX_HOST/DMAX_PORT

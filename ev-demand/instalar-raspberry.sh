@@ -8,9 +8,30 @@ app_dir=/opt/d-max
 state_dir=/var/lib/d-max
 config_dir=/etc/d-max
 service_file=/etc/systemd/system/d-max.service
+backup_dir=''
+rollback() {
+    result=$?
+    trap - ERR
+    if [[ -n "$backup_dir" && -f "$backup_dir/app.tar.gz" ]]; then
+        echo 'Falha na atualização; restaurando a versão anterior.' >&2
+        systemctl stop d-max.service || true
+        rm -rf -- "$app_dir"
+        tar -xzf "$backup_dir/app.tar.gz" -C /opt
+        tar -xzf "$backup_dir/config.tar.gz" -C /etc
+        if [[ -f "$backup_dir/controller.sqlite3" ]]; then
+            rm -f -- "$state_dir/controller.sqlite3-wal" "$state_dir/controller.sqlite3-shm"
+            install -o dmax -g dmax -m 0600 "$backup_dir/controller.sqlite3" "$state_dir/controller.sqlite3"
+        fi
+        [[ ! -f "$backup_dir/d-max.service" ]] || install -m 0644 "$backup_dir/d-max.service" "$service_file"
+        systemctl daemon-reload
+        systemctl start d-max.service || true
+    fi
+    exit "$result"
+}
+trap rollback ERR
 check_only=false
 hardware_watchdog=true
-fail() { echo "D-Max: $*" >&2; exit 1; }
+fail() { echo "D-Max: $*" >&2; return 1; }
 for argument in "$@"; do
     case "$argument" in
         --check) check_only=true ;;
@@ -79,8 +100,10 @@ if [[ -f "$app_dir/.dmax-managed" ]]; then
     if [[ -f "$service_file" ]]; then systemctl stop d-max.service; fi
     backup_dir=/var/backups/d-max/update-$(date -u +%Y%m%dT%H%M%S)-$$
     install -d -m 0700 "$backup_dir"
-    tar --exclude=d-max/.venv -czf "$backup_dir/app.tar.gz" -C /opt d-max
+    tar -czf "$backup_dir/app.tar.gz" -C /opt d-max
     tar -czf "$backup_dir/config.tar.gz" -C /etc d-max
+    [[ ! -f "$service_file" ]] || cp "$service_file" "$backup_dir/d-max.service"
+    [[ ! -f "$app_dir/app/root-credential.json" ]] || cp "$app_dir/app/root-credential.json" "$backup_dir/root-credential.json"
     if [[ -f "$state_dir/controller.sqlite3" ]]; then
         "$python_bin" -I "$source_dir/deploy/manage.py" backup-db "$state_dir/controller.sqlite3" "$backup_dir/controller.sqlite3"
     fi
@@ -89,10 +112,19 @@ fi
 # A lista do manifesto já foi verificada; não misture módulos da versão antiga.
 rm -rf -- "$app_dir/app"
 tar --exclude='__pycache__' --exclude='*.pyc' -C "$source_dir" -cf - app | tar -C "$app_dir" -xf -
+if [[ -n "$backup_dir" && -f "$backup_dir/root-credential.json" ]]; then
+    install -m 0644 "$backup_dir/root-credential.json" "$app_dir/app/root-credential.json"
+fi
 chown -R root:root "$app_dir/app"
 chmod -R a+rX "$app_dir/app"
 install -d -m 0755 "$app_dir/deploy"
 install -m 0644 "$source_dir/deploy/manage.py" "$app_dir/deploy/manage.py"
+install -m 0644 "$source_dir/deploy/maintenance_worker.py" "$app_dir/deploy/maintenance_worker.py"
+if [[ ! -f "$config_dir/update-public.pem" ]]; then
+    install -o root -g root -m 0644 "$source_dir/deploy/update-public.pem" "$config_dir/update-public.pem"
+fi
+install -o root -g root -m 0644 "$source_dir/deploy/d-max-maintenance.path" "$source_dir/deploy/d-max-maintenance.service" /etc/systemd/system/
+install -d -o dmax -g dmax -m 0700 "$state_dir/maintenance"
 install -m 0644 "$source_dir/run.py" "$source_dir/requirements.lock" "$app_dir/"
 install -m 0644 "$source_dir/desinstalar-raspberry.sh" "$source_dir/importar-dados-raspberry.sh" "$app_dir/"
 install -m 0644 /dev/null "$app_dir/.dmax-managed"
@@ -115,9 +147,10 @@ fi
 install -o root -g root -m 0644 "$source_dir/deploy/d-max.service" "$service_file"
 sha256sum "$service_file" > "$app_dir/.dmax-service.sha256"
 systemctl daemon-reload
+systemctl enable --now d-max-maintenance.path
 systemctl enable --now d-max.service
 sleep 2
-systemctl is-active --quiet d-max.service || fail 'Serviço não iniciou. Consulte: sudo journalctl -u d-max -n 60'
+systemctl is-active --quiet d-max.service
 echo 'D-Max instalado e habilitado no boot. Processo monitorado pelo systemd.'
 echo 'Primeira configuração: use o túnel SSH descrito no LEIA-ME.txt.'
 echo 'Rede: /etc/d-max/rede.ini. Estado: sudo systemctl status d-max --no-pager'

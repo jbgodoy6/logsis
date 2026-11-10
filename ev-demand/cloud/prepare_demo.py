@@ -26,6 +26,7 @@ for name,value in [('postgres-password',password),('grafana-password',admin)]:
 plant=plant_snapshot(fixture());payload=json.dumps(plant,ensure_ascii=False).replace("'","''")
 init="create role anon; create role authenticated; create role service_role;\n"
 init+=(root/'supabase/schema.sql').read_text()
+init+="\nupdate dmax.deployment set environment='simulation' where id=1;\n"
 init+="\ncreate role dmax_viewer login password '"+viewer+"';\ngrant usage on schema dmax to dmax_viewer;\ngrant select on dmax.v_sites,dmax.v_ports,dmax.v_meter,dmax.minutes,dmax.events to dmax_viewer;\n"
 # Table RLS on minutes/events has no implicit public policies.
 init+="create policy viewer_minutes on dmax.minutes for select to dmax_viewer using (true);\ncreate policy viewer_events on dmax.events for select to dmax_viewer using (true);\n"

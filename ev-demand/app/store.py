@@ -67,6 +67,9 @@ class Store:
             CREATE INDEX IF NOT EXISTS outbox_urgent_time ON outbox(ts DESC) WHERE kind IN
                 ('connected','disconnected','session_start','session_end','ocpp_status','ocpp_connected','ocpp_disconnected');
         ''')
+        for table in ('events', 'samples', 'outbox'):
+            if 'environment' not in {r['name'] for r in self.db.execute('PRAGMA table_info(' + table + ')')}:
+                self.db.execute("ALTER TABLE " + table + " ADD COLUMN environment TEXT NOT NULL DEFAULT 'legacy'")
         self.db.execute('INSERT OR IGNORE INTO settings VALUES (1,?)', (json.dumps(DEFAULT_SETTINGS),))
         self.db.commit()
         if not self.entities('system'):
@@ -76,6 +79,7 @@ class Store:
         data = json.loads(self.db.execute('SELECT payload FROM settings WHERE id=1').fetchone()[0])
         data['meter'] = normalize_meter(data['meter'])
         data.setdefault('technical_limit_kw', data['limit_kw'])
+        data.setdefault('demo_cloud_url', '')
         data['display_colors'] = display_colors(data.get('display_colors'))
         return data
 
@@ -100,23 +104,21 @@ class Store:
         data = json.dumps(payload, ensure_ascii=False, allow_nan=False)
         with self.db:
             if kind == 'minute':
-                self.db.execute('INSERT INTO samples VALUES (?,?,?,?)', (identifier, now, source, data))
+                self.db.execute('INSERT INTO samples(id,ts,source,payload,environment) VALUES (?,?,?,?,?)', (identifier, now, source, data, self.settings()['mode']))
             else:
-                self.db.execute('INSERT INTO events VALUES (?,?,?,?)', (identifier, now, kind, data))
-            self.db.execute('INSERT INTO outbox VALUES (?,?,?,?)', (identifier, now, kind, data))
+                self.db.execute('INSERT INTO events(id,ts,kind,payload,environment) VALUES (?,?,?,?,?)', (identifier, now, kind, data, self.settings()['mode']))
+            self.db.execute('INSERT INTO outbox(id,ts,kind,payload,environment) VALUES (?,?,?,?,?)', (identifier, now, kind, data, self.settings()['mode']))
         return identifier
 
     def queue_plant(self, payload):
         with self.db:
-            self.db.execute("DELETE FROM outbox WHERE kind='plant_state'")
-            self.db.execute('INSERT INTO outbox VALUES (?,?,?,?)',
-                (uuid.uuid4().hex, time.time(), 'plant_state', json.dumps(payload, ensure_ascii=False, allow_nan=False)))
+            self.db.execute("DELETE FROM outbox WHERE kind='plant_state' AND environment=?", (self.settings()['mode'],))
+            self.db.execute('INSERT INTO outbox(id,ts,kind,payload,environment) VALUES (?,?,?,?,?)',
+                (uuid.uuid4().hex, time.time(), 'plant_state', json.dumps(payload, ensure_ascii=False, allow_nan=False), self.settings()['mode']))
 
-    def pending(self):
-        urgent = "('connected','disconnected','session_start','session_end','ocpp_status','ocpp_connected','ocpp_disconnected')"
-        rows = list(self.db.execute("SELECT * FROM outbox WHERE kind='plant_state' ORDER BY ts DESC LIMIT 1"))
-        rows += list(self.db.execute('SELECT * FROM outbox WHERE kind IN ' + urgent + ' ORDER BY ts DESC LIMIT ?', (200-len(rows),)))
-        rows += list(self.db.execute("SELECT * FROM outbox WHERE kind!='plant_state' AND kind NOT IN " + urgent + ' ORDER BY ts LIMIT ?', (200-len(rows),)))
+    def pending(self, environment=None):
+        environment = environment or self.settings()['mode']
+        rows = self.db.execute("SELECT * FROM outbox WHERE environment=? ORDER BY CASE WHEN kind='plant_state' THEN 0 WHEN kind IN ('connected','disconnected','session_start','session_end','ocpp_status','ocpp_connected','ocpp_disconnected') THEN 1 ELSE 2 END, ts DESC LIMIT 200", (environment,))
         return [dict(row) | {'payload': json.loads(row['payload'])} for row in rows]
 
     def acknowledge(self, identifiers):

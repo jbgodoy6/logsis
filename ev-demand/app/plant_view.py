@@ -32,6 +32,8 @@ def render_meter(state):
     result = '<div class="plant-energy" data-live-key="site-meter"><div class="plant-meter-art">' + meter_svg() + '</div><div class="plant-meter"><span class="plant-kicker">ENTRADA DE ENERGIA · MULTIMEDIDOR</span><h3>Leituras da instalação</h3><span class="plant-badge ' + ('ok' if plant['meter']['fresh'] else 'offline') + '">' + ('Medição atual' if plant['meter']['fresh'] else 'Sem medição atual') + '</span><div class="plant-readings">'
     for reading in plant['meter']['readings']:
         result += '<div><span>' + esc(reading['label']) + '</span><b>' + number(reading['value'], 2) + ' <small>' + esc(reading['unit']) + '</small></b>' + ('<small>Leitura indisponível</small>' if reading['error'] else '') + '</div>'
+    age = plant['meter']['reading_age_s']
+    result += '<p>Última leitura válida: ' + (number(age, 0) + ' s atrás' if age is not None else 'nunca recebida') + '</p>'
     return result + '</div></div></div>'
 
 
@@ -50,6 +52,7 @@ def render_plant(state):
         ('Limite operacional', number(plant['limit_kw']) + ' <em>kW</em>', 'Margem: ' + number(plant['margin_kw']) + ' kW'),
         ('Carregadores online', str(online) + ' <em>/ ' + str(len(plant['chargers'])) + '</em>', str(connected) + ' conectores com veículo confirmado online'),
         ('Alarmes ativos', str(alarms), 'Verifique os equipamentos em vermelho' if alarms else 'Nenhum alarme informado')]) + '</div>'
+    result += '<div class="plant-stats">' + ''.join('<article><span>'+label+'</span><strong>'+number(value)+' <em>kW</em></strong></article>' for label,value in [('Em recarga',plant['ev_kw']),('Outras cargas',plant['other_kw']),('Disponível para recarga',state.get('summary',{}).get('budget_kw'))])+'</div>'
     result += render_meter(state)
     result += '<div class="plant-section-title"><div><h3>Parque de carregadores</h3><p>O equipamento permanece na planta mesmo sem comunicação.</p></div><span>Verde · carregando &nbsp; Azul · cabo conectado &nbsp; Vermelho · alarme &nbsp; Cinza · cabo desconectado</span></div><div class="plant-grid">'
     for charger, port in ports:
@@ -60,7 +63,9 @@ def render_plant(state):
         result += '<article data-live-key="' + esc(port['id']) + '" class="plant-charger ' + tone + (' offline' if not port['online'] else '') + '"><div class="plant-card-top"><div><small>' + esc(charger['id']) + ' · CONECTOR ' + str(port['connector']) + '</small><h4>' + esc(charger['name']) + '</h4></div><span class="plant-badge ' + tone + '">' + esc(port['status']) + '</span></div>'
         result += equipment_svg(port['plugged'], port['alarm'], not port['online'], port['charging'], colors)
         result += '<div class="plant-vehicle"><span>' + ('● CABO CONECTADO' if port['plugged'] and port['online'] else 'ESTADO NÃO CONFIRMADO' if not port['online'] else 'PRONTO PARA CONECTAR') + '</span><b>' + esc(vehicle) + '</b></div>'
-        result += '<div class="plant-card-data"><div><span>Potência atual</span><b>' + number(port['power_kw']) + ' <small>kW</small></b></div><div><span>Limite aplicado</span><b>' + number(port['limit_kw']) + ' <small>kW</small></b></div><div><span>Energia da sessão</span><b>' + number(port['energy_kwh'], 2) + ' <small>kWh</small></b></div></div>'
+        result += '<div class="plant-card-data"><div><span>Potência medida</span><b>' + number(port['power_kw']) + ' <small>kW</small></b></div><div><span>Limite aceito / simulado</span><b>' + number(port['limit_kw']) + ' <small>kW</small></b></div><div><span>Energia da sessão</span><b>' + number(port['energy_kwh'], 2) + ' <small>kWh</small></b></div></div>'
+        result += '<p>Limite solicitado: ' + number(port['requested_limit_kw']) + ' kW · ' + esc(port['command_status']) + '</p>'
+        result += '<p>Última leitura válida: ' + (number(port['reading_age_s'], 0) + ' s atrás' if port['reading_age_s'] is not None else 'nunca recebida') + '. Aceite não comprova cumprimento físico.</p>'
         result += '<div class="plant-card-foot"><span class="plant-network ' + ('normal' if port['online'] else 'lost') + '">' + ('● Online · ' if port['online'] else '⊘ Sem comunicação OCPP · ') + 'Capacidade ' + number(charger['max_kw'], 0) + ' kW</span><span>' + ('Erro: ' + esc(port['error_code']) if port['alarm'] else 'Leitura atual' if port['telemetry_fresh'] else 'Sem leitura atual') + '</span></div></article>'
     if not ports:
         result += '<article class="plant-empty"><h3>Seu parque começa aqui</h3><p>Cadastre um carregador no D-Max para ele aparecer automaticamente nesta planta.</p></article>'

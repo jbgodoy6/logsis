@@ -1,3 +1,7 @@
+# D-Max 0.10.0 · Supervisão integrada e manutenção
+
+[Atualizar sem desinstalar](docs/release-v0100.md) · [Validação e limites](docs/validation-v0100.md). Visão geral integrada, simulação restrita, energia por veículo com origens separadas, contagem autenticada 15/30/40 dias, backup/restauração e pacotes assinados. Novas instalações usam porta 80; atualizações preservam a porta existente e a credencial raiz.
+
 # D-Max 0.9.0 · Relatórios, frota e assinaturas
 
 [Atualizar no Raspberry](docs/release-v090.md) · [Configurar a aba Assinaturas no Google](docs/assinaturas-v090.md). PDF local por período/veículo/carregador, exclusão de veículos com histórico, multimedidor ampliado, porta 80 opcional e avisos de mensalidade com prazo offline e solicitação de funcionamento nativo OCPP. Instalar sem desinstalar.

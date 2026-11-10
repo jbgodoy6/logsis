@@ -10,7 +10,7 @@ class NetworkTests(unittest.TestCase):
     def test_default_and_persistent_port_and_name(self):
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / 'rede.ini'
-            self.assertEqual(load_config(path).port, 8080)
+            self.assertEqual(load_config(path).port, 80)
             path.write_text('[web]\nhost=0.0.0.0\nporta=9090\nnome=dmax-garagem\nanunciar=true\n')
             result = load_config(path)
             self.assertEqual((result.host, result.port, result.name, result.discovery),
@@ -38,7 +38,7 @@ class NetworkTests(unittest.TestCase):
         self.assertEqual(second.public()['url'], 'http://dmax-abcdef01.local:9000')
         self.assertNotIn('password', str(first.public()))
         self.assertEqual(LAN(WebConfig(name='dmax-garagem'), 'id', tls=True).public()['url'],
-                         'https://dmax-garagem.local:8080')
+                         'https://dmax-garagem.local:80')
 
     def test_loopback_binding_is_not_advertised(self):
         lan = LAN(WebConfig(host='127.0.0.1'), 'abcdef01')
@@ -73,7 +73,7 @@ class NetworkTests(unittest.TestCase):
             lan.start()
         self.assertIsNone(lan.zeroconf)
         self.assertIn('use o IP', lan.status)
-        self.assertEqual(lan.public()['ip_urls'], ['http://192.0.2.10:8080'])
+        self.assertEqual(lan.public()['ip_urls'], ['http://192.0.2.10:80'])
 
     def test_discovery_can_be_disabled_without_changing_os_network(self):
         lan = LAN(WebConfig(discovery=False), 'abcdef01')
@@ -91,7 +91,7 @@ class NetworkTests(unittest.TestCase):
             factory.return_value.unregister_service.assert_not_called()
             factory.return_value.close.assert_called_once()
             self.assertFalse(lan.public()['announced'])
-            self.assertEqual(lan.public()['ip_urls'], ['http://192.0.2.10:8080'])
+            self.assertEqual(lan.public()['ip_urls'], ['http://192.0.2.10:80'])
 
     def test_cleanup_errors_do_not_block_controller_shutdown(self):
         lan = LAN(WebConfig(), 'abcdef01')

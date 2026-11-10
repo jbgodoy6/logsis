@@ -15,7 +15,7 @@ import tempfile
 import unittest
 import zipfile
 
-from app.store import Store
+from app.store import Store, password_hash
 
 
 @unittest.skipUnless(os.getenv('DMAX_PI_PACKAGE'), 'Requires the ARM64 distribution ZIP')
@@ -42,6 +42,8 @@ class PiScriptLifecycleTests(unittest.TestCase):
                 text = re.sub('|'.join(re.escape(p) for p in prefixes), lambda m: str(fixture) + m.group(0), text)
                 text = text.replace('-C /opt d-max', '-C ' + str(fixture / 'opt') + ' d-max')
                 text = text.replace('-C /etc d-max', '-C ' + str(fixture / 'etc') + ' d-max')
+                text = text.replace('-C /opt\n', '-C ' + str(fixture / 'opt') + '\n')
+                text = text.replace('-C /etc\n', '-C ' + str(fixture / 'etc') + '\n')
                 path.write_text(text)
             # Recompute only fixture script hashes, preserving all distributed data.
             manifest = source / 'SHA256SUMS.txt'
@@ -75,7 +77,8 @@ elif name=='fake-python' or name=='python':
  if '-m' in args and args[args.index('-m')+1]=='venv':
   target=pathlib.Path(args[-1])/'bin';target.mkdir(parents=True)
   (target/'python').symlink_to(pathlib.Path(sys.argv[0]).resolve())
- elif '-m' in args and args[args.index('-m')+1]=='pip':pass
+ elif '-m' in args and args[args.index('-m')+1]=='pip':
+  if os.environ.get('DMAX_FIXTURE_FAIL_PIP'):sys.exit(1)
  else:sys.exit(subprocess.call([os.environ['DMAX_FIXTURE_PYTHON'],*args]))
 ''')
             helper.chmod(0o755)
@@ -101,6 +104,24 @@ elif name=='fake-python' or name=='python':
             run('importar-dados-raspberry.sh', base / 'windows.sqlite3')
             database = fixture / 'var/lib/d-max/controller.sqlite3'
             self.assertTrue(database.is_file())
+            # Exercise a real upgrade and failed upgrade without uninstalling.
+            saved=Store(str(database))
+            saved.put('session',dict(id='retained-session',energy_kwh=123.45))
+            with saved.db:saved.db.execute('INSERT INTO users(name,password,role) VALUES(?,?,?)',('retained-user',password_hash('fixture-retained'),'admin'))
+            saved.db.close()
+            network=fixture/'etc/d-max/rede.ini';network.write_text('[web]\nporta=9090\nnome=preservado\n')
+            credential=app/'app/root-credential.json';credential_bytes=credential.read_bytes()
+            run('instalar-raspberry.sh','--no-hardware-watchdog')
+            self.assertEqual(network.read_text(),'[web]\nporta=9090\nnome=preservado\n')
+            self.assertEqual(credential.read_bytes(),credential_bytes)
+            retained=Store(str(database));self.assertEqual(retained.get('session','retained-session')['energy_kwh'],123.45)
+            self.assertIsNotNone(retained.db.execute("SELECT 1 FROM users WHERE name='retained-user'").fetchone());retained.db.close()
+            env['DMAX_FIXTURE_FAIL_PIP']='1'
+            run('instalar-raspberry.sh','--no-hardware-watchdog',ok=False)
+            env.pop('DMAX_FIXTURE_FAIL_PIP')
+            self.assertTrue((app/'app/main.py').is_file());self.assertEqual(credential.read_bytes(),credential_bytes)
+            self.assertEqual(network.read_text(),'[web]\nporta=9090\nnome=preservado\n')
+            retained=Store(str(database));self.assertEqual(retained.get('session','retained-session')['energy_kwh'],123.45);retained.db.close()
             run('desinstalar-raspberry.sh')
             self.assertFalse(app.exists())
             self.assertTrue(database.exists())

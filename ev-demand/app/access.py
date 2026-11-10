@@ -12,6 +12,8 @@ INITIAL_PASSWORD = '12345678'
 ROLES = ('operator', 'admin', 'technician', 'root')
 TECHNICAL = ('root', 'technician')
 MANAGERS = ('root', 'technician', 'admin')
+SESSION_IDLE = {'operator': 7*86400, 'admin': 86400, 'technician': 12*3600, 'root': 4*3600}
+
 DIRECTORY_DEFAULTS = {'url': '', 'interval_s': 300, 'enabled': False}
 
 
@@ -80,6 +82,8 @@ class Access:
         login_columns = {r['name'] for r in self.db.execute('PRAGMA table_info(logins)')}
         if 'epoch' not in login_columns:
             self.db.execute('ALTER TABLE logins ADD COLUMN epoch INTEGER NOT NULL DEFAULT 0')
+        if 'renewable' not in login_columns:
+            self.db.execute('ALTER TABLE logins ADD COLUMN renewable INTEGER NOT NULL DEFAULT 0')
         for row in self.db.execute('SELECT name FROM users WHERE id IS NULL').fetchall():
             self.db.execute('UPDATE users SET id=?,full_name=? WHERE name=?', (uuid.uuid4().hex, row['name'], row['name']))
         self.db.executescript('''
@@ -150,7 +154,7 @@ class Access:
     def session(self, token):
         if not token:
             return None
-        row = self.db.execute('''SELECT u.*,l.expires AS session_expires,l.epoch AS session_epoch
+        row = self.db.execute('''SELECT u.*,l.expires AS session_expires,l.epoch AS session_epoch,l.renewable AS session_renewable
             FROM logins l JOIN users u ON u.name=l.username WHERE l.token=?''',
                               (hashlib.sha256(token.encode()).hexdigest(),)).fetchone()
         if not row:
@@ -158,6 +162,9 @@ class Access:
         data = dict(row)
         if not self.usable(data) or data['epoch'] != data['session_epoch'] or data['session_expires'] <= time.time():
             return None
+        if data['session_renewable'] and data['session_expires'] < time.time() + SESSION_IDLE[data['role']] - 60:
+            with self.db:
+                self.db.execute('UPDATE logins SET expires=? WHERE token=?', (time.time() + SESSION_IDLE[data['role']], hashlib.sha256(token.encode()).hexdigest()))
         return self.public(data)
 
     def revoke(self, name):

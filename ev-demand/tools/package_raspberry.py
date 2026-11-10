@@ -5,14 +5,14 @@ from pathlib import Path
 import re
 import zipfile
 
-VERSION = '0.9.0'
+VERSION = '0.10.0'
 PYTHON = ('__init__.py', 'access.py', 'control.py', 'directory.py', 'engine.py', 'main.py',
           'meter.py', 'network.py', 'ocpp_server.py', 'recovery.py', 'root_auth.py',
-          'security.py', 'server_ui.py', 'services.py', 'store.py', 'live_dom.py', 'licensing.py', 'reports.py', 'supervision.py', 'plant_view.py', 'telemetry.py')
-STATIC = ('style.css', 'energycube.css', 'server.css', 'plant.css', 'live.css', 'live.js', 'd-max-logo.png', 'energycube-logo.png', 'd-max-report.jpg', 'energycube-report.jpg')
+          'security.py', 'server_ui.py', 'services.py', 'store.py', 'live_dom.py', 'licensing.py', 'reports.py', 'maintenance.py', 'supervision.py', 'plant_view.py', 'telemetry.py')
+STATIC = ('style.css', 'energycube.css', 'server.css', 'plant.css', 'live.css', 'live.js', 'maintenance.js', 'd-max-logo.png', 'energycube-logo.png', 'd-max-report.jpg', 'energycube-report.jpg')
 
 
-def package(root, wheels, output):
+def package(root, wheels, output, signing_key=None):
     files = {}
 
     def include(source, target):
@@ -31,7 +31,7 @@ def package(root, wheels, output):
     for name in ('run.py', 'requirements.lock', 'rede.ini', 'instalar-raspberry.sh',
                  'desinstalar-raspberry.sh', 'importar-dados-raspberry.sh'):
         include(root / name, name)
-    for name in ('d-max.service', 'd-max.env.example', 'manage.py'):
+    for name in ('d-max.service', 'd-max.env.example', 'manage.py', 'maintenance_worker.py', 'd-max-maintenance.path', 'd-max-maintenance.service', 'update-public.pem'):
         include(root / 'deploy' / name, 'deploy/' + name)
     include(root / 'docs/raspberry.md', 'LEIA-ME.txt')
     include(root / 'docs/nuvem-v080.md', 'NUVEM-E-GRAFANA.md')
@@ -41,6 +41,8 @@ def package(root, wheels, output):
     include(root / 'docs/live-v084.md', 'ATUALIZACAO-SEM-PISCAR.md')
     include(root / 'docs/release-v085.md', 'NOVIDADES-0.8.5.md')
     include(root / 'docs/release-v090.md', 'NOVIDADES-0.9.0.md')
+    include(root / 'docs/release-v0100.md', 'NOVIDADES-0.10.0.md')
+    include(root / 'docs/validation-v0100.md', 'VALIDACAO-0.10.0.md')
     include(root / 'docs/assinaturas-v090.md', 'ASSINATURAS-GOOGLE.md')
     include(root / 'google-apps-script/Code.gs', 'google-apps-script/Code.gs')
     include(root / 'docs/raspberry-acesso.md', 'ACESSO-RAIZ.txt')
@@ -60,6 +62,10 @@ def package(root, wheels, output):
         include(wheel, 'wheels/' + wheel.name)
     files['SHA256SUMS.txt'] = ''.join(hashlib.sha256(data).hexdigest() + '  ' + name + '\n'
                                     for name, data in sorted(files.items())).encode()
+    if signing_key is not None:
+        from cryptography.hazmat.primitives import serialization
+        key=serialization.load_pem_private_key(Path(signing_key).read_bytes(),password=None)
+        files['SHA256SUMS.sig']=key.sign(b'DMAX-UPDATE-1\n'+files['SHA256SUMS.txt'])
     output.parent.mkdir(parents=True, exist_ok=True)
     with zipfile.ZipFile(output, 'w', zipfile.ZIP_DEFLATED) as archive:
         for name, data in sorted(files.items()):
@@ -83,6 +89,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--wheels', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
+    parser.add_argument('--signing-key', type=Path, required=True)
     args = parser.parse_args()
-    count, digest = package(Path(__file__).resolve().parents[1], args.wheels, args.output)
+    count, digest = package(Path(__file__).resolve().parents[1], args.wheels, args.output, args.signing_key)
     print(f'{args.output.name}: {count} arquivos; SHA-256 {digest}')

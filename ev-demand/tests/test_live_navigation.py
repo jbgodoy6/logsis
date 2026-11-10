@@ -20,7 +20,7 @@ class LiveNavigationTests(unittest.TestCase):
             self.assertEqual(shell.status_code,200)
             self.assertNotIn('http-equiv="refresh"',shell.text)
             self.assertNotIn('<iframe',shell.text)
-            self.assertIn('data-live-page="'+page+'"',shell.text)
+            self.assertIn('data-live-page="overview"',shell.text)
             self.assertIn('/static/live.js?v=',shell.text)
             self.assertIn("script-src 'self'",shell.headers['content-security-policy'])
             self.assertEqual(shell.headers['x-frame-options'],'DENY')

@@ -10,7 +10,7 @@ from pathlib import Path
 from urllib.parse import urlsplit
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
-from fastapi import Depends, FastAPI, HTTPException, Request, Response, WebSocket, WebSocketDisconnect
+from fastapi import Depends, FastAPI, HTTPException, Query, Request, Response, WebSocket, WebSocketDisconnect
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
@@ -21,7 +21,7 @@ from .services import cloud_loop, meter_loop
 from .meter import Meter, MEASUREMENTS, read_meter
 from .store import Store, password_hash, password_matches
 from .telemetry import DEFAULT_COLORS, display_colors
-from .access import Access, TECHNICAL, MANAGERS
+from .access import Access, TECHNICAL, MANAGERS, SESSION_IDLE
 from .directory import directory_loop, synchronize, validate_config
 from .security import AttemptLimiter, same_origin, valid_host
 from .recovery import Recovery, TTL as RECOVERY_TTL
@@ -135,6 +135,7 @@ class Settings(Model):
     circuits: list[Circuit] = Field(min_length=1, max_length=60)
     meter: Meter
     cloud_url: str = Field(default='', max_length=1000)
+    demo_cloud_url: str = Field(default='', max_length=1000)
     retain_days: int = Field(default=7, ge=1, le=30)
     display_colors: DisplayColors | None = None
 
@@ -152,8 +153,12 @@ class Settings(Model):
             raise ValueError('Fuso horário desconhecido')
         if len({c.id for c in self.circuits}) != len(self.circuits):
             raise ValueError('Circuitos duplicados')
-        if self.cloud_url:
-            url = urlsplit(self.cloud_url)
+        if self.cloud_url and self.cloud_url == self.demo_cloud_url:
+            raise ValueError('Nuvem real e demonstração exigem destinos separados')
+        for destination in (self.cloud_url, self.demo_cloud_url):
+            if not destination:
+                continue
+            url = urlsplit(destination)
             if url.scheme != 'https' or not url.hostname or url.username or url.password or url.fragment:
                 raise ValueError('Nuvem exige URL HTTPS sem credenciais ou fragmento')
         return self
@@ -263,7 +268,7 @@ def create_app(database=None, background=True, recovery_public_key=None, root_pa
                 await asyncio.to_thread(network.close)
             store.db.close()
 
-    app = FastAPI(title='EnergyCube D-Max · Controle de demanda', version='0.9.0', lifespan=lifespan,
+    app = FastAPI(title='EnergyCube D-Max · Controle de demanda', version='0.10.0', lifespan=lifespan,
                   docs_url=None, redoc_url=None, openapi_url=None)
     app.state.store, app.state.engine, app.state.access = store, engine, access
     app.state.recovery = recovery
@@ -309,6 +314,11 @@ def create_app(database=None, background=True, recovery_public_key=None, root_pa
             if (origin and not same_origin(origin, host, request.scope['scheme'])) or request.headers.get('sec-fetch-site') == 'cross-site':
                 return Response('Origem não permitida', status_code=403)
         response = await call_next(request)
+        token = request.cookies.get('ev_session')
+        if token and not any('ev_session=' in h for h in response.headers.getlist('set-cookie')):
+            row = store.db.execute('SELECT username,expires,renewable FROM logins WHERE token=?', (hashlib.sha256(token.encode()).hexdigest(),)).fetchone()
+            if row and row['renewable'] and row['expires'] > time.time():
+                response.set_cookie('ev_session', token, httponly=True, secure=request.url.scheme == 'https', samesite='strict', max_age=max(1,int(row['expires']-time.time())))
         response.headers['X-Content-Type-Options'] = 'nosniff'
         live_document = response.headers.get('X-DMax-Live') == '1'
         if 'X-DMax-Live' in response.headers:
@@ -371,13 +381,13 @@ def create_app(database=None, background=True, recovery_public_key=None, root_pa
         if not access.usable(latest) or any(latest[k] != row[k] for k in ('epoch','password')):
             raise HTTPException(401, 'Acesso alterado durante a autenticação. Faça login novamente.')
         row = latest
-        return open_session(row, response, request, lifetime=RECOVERY_TTL if row['role'] == 'root' else 28800)
+        return open_session(row, response, request, lifetime=SESSION_IDLE[row['role']], renewable=True)
 
-    def open_session(row, response, request, lifetime=28800):
+    def open_session(row, response, request, lifetime=28800, renewable=False):
         token = secrets.token_urlsafe(32)
         with store.db:
-            store.db.execute('INSERT INTO logins(token,username,expires,epoch) VALUES (?,?,?,?)',
-                (hashlib.sha256(token.encode()).hexdigest(), row['name'], time.time() + lifetime, row['epoch']))
+            store.db.execute('INSERT INTO logins(token,username,expires,epoch,renewable) VALUES (?,?,?,?,?)',
+                (hashlib.sha256(token.encode()).hexdigest(), row['name'], time.time() + lifetime, row['epoch'], int(renewable)))
         response.set_cookie('ev_session', token, httponly=True, secure=request.url.scheme == 'https', samesite='strict', max_age=lifetime)
         store.record('login', {'user': row['name'], 'role': row['role']})
         return access.public(row)
@@ -527,12 +537,24 @@ def create_app(database=None, background=True, recovery_public_key=None, root_pa
     async def history(u=Depends(user)):
         return store.history()
 
+    @app.get('/api/audit')
+    async def audit(actor: str = '', offset: int = 0, u=Depends(administrator)):
+        import json
+        kinds=('settings_changed','operator_action','appearance_changed','charger_configured','vehicle_configured','user_created','user_updated','directory_configured','maintenance_requested','backup_downloaded')
+        rows=[]
+        for row in store.db.execute('SELECT * FROM events WHERE kind IN ('+','.join('?' for _ in kinds)+') ORDER BY ts DESC', kinds):
+            payload=json.loads(row['payload'])
+            if actor and payload.get('actor')!=actor:
+                continue
+            rows.append(dict(ts=row['ts'],kind=row['kind'],payload=payload))
+        return {'events':rows[max(0,offset):max(0,offset)+100], 'total':len(rows)}
+
     @app.get('/api/reports/sessions.pdf')
-    async def sessions_pdf(start: str = '', end: str = '', vehicle_id: str = '', charger_id: str = '', u=Depends(user)):
+    async def sessions_pdf(start: str = '', end: str = '', vehicle_id: str = '', charger_id: str = '', report_type: str = 'detailed', vehicles: str = '', energy_scope: str = 'all', vehicle_selection: list[str] = Query(default=[]), u=Depends(user)):
         from .reports import report_data, build_pdf
         from .server_ui import VERSION
         try:
-            data = report_data(store, start, end, vehicle_id, charger_id)
+            data = report_data(store, start, end, vehicle_id, charger_id, report_type, ','.join(vehicle_selection) or vehicles, energy_scope)
         except (ValueError, OverflowError) as exc:
             raise HTTPException(422, str(exc))
         payload = await asyncio.to_thread(build_pdf, data, VERSION)
@@ -562,6 +584,8 @@ def create_app(database=None, background=True, recovery_public_key=None, root_pa
             if not any(r.enabled and r.measurement == 'power_total_kw' for r in data.meter.registers):
                 raise HTTPException(422, 'Configure a leitura da potência ativa total para o controle de demanda')
         if data.mode != current['mode']:
+            engine.flush()
+            engine.trace.clear()
             for port in list(engine.ports.values()):
                 if engine.config(port['charger'])['transport'] == 'simulator':
                     engine.disconnect(port['key'])
@@ -669,12 +693,14 @@ def create_app(database=None, background=True, recovery_public_key=None, root_pa
             raise HTTPException(409, 'Controle de recarga desativado pela assinatura; funcionamento nativo')
         if data.action in ('emergency', 'cancel_emergency') and u['role'] == 'operator' and not u['can_emergency']:
             raise HTTPException(403, 'Operador sem permissão de emergência')
-        if data.action in ('connect', 'disconnect') and u['role'] not in MANAGERS:
+        if data.action in ('connect', 'disconnect') and u['role'] not in TECHNICAL:
             raise HTTPException(403, 'Simulação restrita à administração')
         if key not in engine.ports:
             raise HTTPException(404, 'Conector desconhecido')
         p = engine.ports[key]
         c = engine.config(p['charger'])
+        if c['transport'] == 'simulator' and u['role'] not in TECHNICAL:
+            raise HTTPException(403, 'Simulação restrita ao técnico/instalador e raiz')
         if c.get('archived'):
             raise HTTPException(404, 'Carregador excluído')
         if data.vehicle_id and not any(v['id'] == data.vehicle_id and not v.get('archived') for v in store.entities('vehicle')):
@@ -714,10 +740,11 @@ def create_app(database=None, background=True, recovery_public_key=None, root_pa
         return {'ok': True}
 
     @app.post('/api/simulation')
-    async def simulation(data: Simulation, u=Depends(administrator)):
+    async def simulation(data: Simulation, u=Depends(technician)):
         if store.settings()['mode'] != 'simulation':
             raise HTTPException(409, 'Simulador desativado')
         engine.other_kw = data.other_kw
+        store.record('simulation_load_changed', {'actor': u['name'], 'other_kw': data.other_kw})
         return {'ok': True}
 
     @app.post('/api/ports/{key}/learn')
@@ -725,6 +752,8 @@ def create_app(database=None, background=True, recovery_public_key=None, root_pa
         if engine.subscription.status()['native']:
             raise HTTPException(409, 'Aprendizado indisponível durante funcionamento nativo')
         p = engine.ports.get(key)
+        if p and engine.config(p['charger'])['transport'] == 'simulator' and store.settings()['mode'] != 'simulation':
+            raise HTTPException(409, 'Simulador desativado')
         if not p or not p['running'] or data.cap_kw > p['limit_kw']:
             raise HTTPException(409, 'É necessário estar em recarga; o teste só pode reduzir o limite atual')
         if p.get('test'):
@@ -735,7 +764,7 @@ def create_app(database=None, background=True, recovery_public_key=None, root_pa
         return {'ok': True}
 
     @app.post('/api/demo')
-    async def demo(u=Depends(administrator)):
+    async def demo(u=Depends(technician)):
         if any(not c.get('archived') for c in store.entities('charger')) or store.settings()['mode'] != 'simulation':
             raise HTTPException(409, 'Demonstração disponível somente em uma instalação vazia em simulação')
         suffix = '-' + secrets.token_hex(3) if store.entities('charger') else ''
@@ -804,6 +833,9 @@ def create_app(database=None, background=True, recovery_public_key=None, root_pa
             store.record('ocpp_disconnected', {'charger': identifier})
 
     app.mount('/static', StaticFiles(directory=Path(__file__).parent / 'static'), name='static')
+
+    from .maintenance import install as install_maintenance
+    install_maintenance(app, user, technician, root)
 
     if web_ui == 'server':
         from .server_ui import install

@@ -1,0 +1,7 @@
+[Unit]
+Description=D-Max maintenance request watcher
+[Path]
+PathExists=/var/lib/d-max/maintenance/request.json
+Unit=d-max-maintenance.service
+[Install]
+WantedBy=multi-user.target

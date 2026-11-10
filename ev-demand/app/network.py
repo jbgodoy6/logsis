@@ -11,7 +11,7 @@ import socket
 @dataclass(frozen=True)
 class WebConfig:
     host: str = '0.0.0.0'
-    port: int = 8080
+    port: int = 80
     name: str = 'auto'
     discovery: bool = True
 
@@ -40,7 +40,7 @@ def load_config(path):
             raise ValueError('Chave desconhecida em rede.ini')
         return WebConfig(
             host=section.get('host', '0.0.0.0').strip(),
-            port=section.getint('porta', 8080),
+            port=section.getint('porta', 80),
             name=section.get('nome', 'auto').strip().lower(),
             discovery=section.getboolean('anunciar', True),
         ).validated()

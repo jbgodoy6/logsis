@@ -61,7 +61,7 @@ class TelemetryTests(unittest.TestCase):
 class CloudDeliveryTests(unittest.IsolatedAsyncioTestCase):
     async def test_event_sent_within_seconds_and_ack_required(self):
         store=Store(':memory:');engine=Engine(store)
-        cfg=store.settings();cfg['cloud_url']='https://example.test/ingest';store.save_settings(cfg)
+        cfg=store.settings();cfg['demo_cloud_url']='https://example.test/ingest';store.save_settings(cfg)
         calls=[];valid=False
         class Response:
             def raise_for_status(self): pass
@@ -71,7 +71,7 @@ class CloudDeliveryTests(unittest.IsolatedAsyncioTestCase):
             async def __aenter__(self): return self
             async def __aexit__(self,*args): pass
             async def post(self,url,**kwargs): calls.append(kwargs['json']);return Response()
-        with patch.dict(os.environ,{'EV_CLOUD_TOKEN':'test-token-for-unit-tests-only'}),patch('app.services.httpx.AsyncClient',Client):
+        with patch.dict(os.environ,{'EV_DEMO_CLOUD_TOKEN':'test-token-for-unit-tests-only'}),patch('app.services.httpx.AsyncClient',Client):
             task=asyncio.create_task(cloud_loop(engine))
             try:
                 await asyncio.sleep(.05)

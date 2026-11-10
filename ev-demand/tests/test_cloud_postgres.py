@@ -31,7 +31,12 @@ class PostgresContractTests(unittest.TestCase):
     def ingest(self,records,token=None,ok=True):
         return self.sql("set role service_role; select public.dmax_ingest('"+self.cid+"','"+(token or self.token)+"',$payload$"+json.dumps(records)+"$payload$::jsonb);",ok)
 
-    def record(self,kind,payload):return dict(id=secrets.token_hex(16),ts=time.time(),kind=kind,payload=payload)
+    def record(self,kind,payload):return dict(id=secrets.token_hex(16),ts=time.time(),kind=kind,payload=payload,environment='simulation')
+
+    def test_ingest_rejects_physical_records_in_separate_demo_database(self):
+        record=self.record('local_audit',{})
+        record['environment']='physical'
+        self.ingest([record],ok=False)
 
     def test_catalog_offline_new_charger_stale_data_and_replay(self):
         state=plant_snapshot(fixture())
