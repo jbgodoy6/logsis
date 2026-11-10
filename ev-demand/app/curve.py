@@ -109,40 +109,60 @@ def export_csv(store,settings,path,start='',end='',mode=''):
                 datetime.fromtimestamp(p['meter_at'],zone).isoformat() if p['meter_at'] else '',p['quality']]);count+=1
     return count
 
-COLORS={'total_kw':'#0879cf','ev_kw':'#69b7ee','other_kw':'#239b75','limit_kw':'#c58e3d'}
+COLORS={'total_kw':'#075fc4','ev_kw':'#d66a05','other_kw':'#108567','limit_kw':'#c63949'}
+QUALITIES={'valid':'Leituras completas','meter_missing':'Sem leitura válida do multimedidor','charger_missing':'Leitura incompleta dos carregadores','clock_rollback':'Alteração no relógio'}
 LABELS={'total_kw':'Total','ev_kw':'Carregadores','other_kw':'Outras cargas','limit_kw':'Limite'}
 
 def geometry(data):
-    maximum=max([1]+[p[f] for p in data['points'] for f in FIELDS if p[f] is not None])*1.12
+    peak=max([1]+[p[f] for p in data['points'] for f in FIELDS if p[f] is not None])*1.05
+    target=peak/5;scale=10**math.floor(math.log10(target))
+    step=next(v*scale for v in (1,2,2.5,5,10) if v*scale>=target)
+    maximum=math.ceil(peak/step)*step
     return maximum,lambda ts:55+(ts-data['start'])/max(1,data['end']-data['start'])*820,lambda value:225-value/maximum*205
 
 def render(data):
     esc=lambda value:html.escape(str(value),quote=True)
     zone=ZoneInfo(data['timezone']);maximum,x,y=geometry(data)
     if not data['points']:return '<p class="hint">Sem leituras registradas neste período e nesta origem. O histórico começa após instalar esta versão.</p>'
-    result='<p class="hint">'+str(data['total_samples'])+' registros · origem '+('real' if data['mode']=='physical' else 'simulada')+' · resolução nominal 5 s'+(' · visualização reduzida com amostras originais e extremos preservados' if data['reduced'] else '')+'. Passe o mouse ou toque para consultar o instante registrado.</p>'
-    result+='<p class="hint">Total azul · carregadores azul claro · outras cargas verde · limite vigente tracejado. Lacunas indicam ausência de leituras; linhas ligam amostras registradas.</p><svg class="server-chart curve-chart" viewBox="0 0 900 275" role="img" aria-label="Curva histórica de demanda">'
-    for i in range(4):
-        value=maximum*i/3;result+=f'<line x1="55" x2="875" y1="{y(value):.2f}" y2="{y(value):.2f}" stroke="#e0e8f1"/><text x="45" y="{y(value)+4:.2f}" text-anchor="end">{value:.0f}</text>'
+    latest=data['points'][-1]
+    result='<div class="curve-legend">'
     for field in FIELDS:
+        value='sem leitura' if latest[field] is None else f'{latest[field]:.1f} kW'.replace('.',',')
+        result+='<span class="curve-legend-item"><i class="curve-dot curve-'+field+'"></i><span>'+LABELS[field]+'<b>'+value+'</b></span></span>'
+    result+='</div><p class="hint">'+str(data['total_samples'])+' registros · '+('REAL' if data['mode']=='physical' else 'SIMULAÇÃO')+' · amostragem e atualização visual a cada 5 s'+(' · visualização reduzida, com extremos preservados' if data['reduced'] else '')+'. Consulte os instantes com mouse ou toque.</p>'
+    if data['missing_samples']:result+='<p class="curve-quality">'+str(data['missing_samples'])+' registros com leituras incompletas. As lacunas são preservadas; valores ausentes não são zero.</p>'
+    result+='<svg class="server-chart curve-chart" viewBox="0 0 900 275" role="img" aria-label="Curva histórica de demanda">'
+    for i in range(6):
+        value=maximum*i/5;result+=f'<line x1="55" x2="875" y1="{y(value):.2f}" y2="{y(value):.2f}" stroke="#d6e3f0"/><text x="45" y="{y(value)+4:.2f}" text-anchor="end">{value:g}</text>'
+    result+='<text x="10" y="12">kW</text>'
+    for field in ('total_kw','other_kw','ev_kw','limit_kw'):
         group=[];segment=None
-        def polyline():
+        def series():
             if not group:return ''
-            return '<polyline points="'+' '.join(group)+'" fill="none" stroke="'+COLORS[field]+'" stroke-width="2"'+(' stroke-dasharray="5 5"' if field=='limit_kw' else '')+'/>'
+            points=' '.join(f'{a:.2f},{b:.2f}' for a,b in group)
+            shade=''
+            if field=='total_kw' and len(group)>1:
+                shade=f'<path d="M {group[0][0]:.2f},225 L '+ ' L '.join(f'{a:.2f},{b:.2f}' for a,b in group)+f' L {group[-1][0]:.2f},225 Z" fill="{COLORS[field]}" fill-opacity="0.09"/>'
+            return shade+'<polyline class="curve-line" points="'+points+'" fill="none" stroke="'+COLORS[field]+'" stroke-width="'+('3.4' if field=='total_kw' else '2.6')+'" stroke-linejoin="round" stroke-linecap="round"'+(' stroke-dasharray="8 6"' if field=='limit_kw' else '')+'/>'
         for p in data['points']:
             if p[field] is None or segment is not None and p[field+'_segment']!=segment:
-                result+=polyline();group=[]
-            if p[field] is not None:group.append(f'{x(p["ts"]):.2f},{y(p[field]):.2f}')
+                result+=series();group=[]
+            if p[field] is not None:group.append((x(p['ts']),y(p[field])))
             segment=p[field+'_segment']
-        result+=polyline()
+        result+=series()
+        last=next((p for p in reversed(data['points']) if p[field] is not None),None)
+        if last:result+=f'<circle cx="{x(last["ts"]):.2f}" cy="{y(last[field]):.2f}" r="4" fill="{COLORS[field]}" stroke="#fff" stroke-width="1.5"/>'
     for p in data['points']:
         text=datetime.fromtimestamp(p['ts'],zone).strftime('%d/%m/%Y %H:%M:%S')+' · '+('REAL' if data['mode']=='physical' else 'SIMULAÇÃO')
-        text+=' | '+' | '.join(LABELS[f]+': '+('sem leitura' if p[f] is None else f'{p[f]:.2f} kW'.replace('.',',')) for f in FIELDS)+' | '+p['quality']
+        text+=' | '+' | '.join(LABELS[f]+': '+('sem leitura' if p[f] is None else f'{p[f]:.2f} kW'.replace('.',',')) for f in FIELDS)+' | '+QUALITIES.get(p['quality'],p['quality'])
         value=next((p[f] for f in FIELDS if p[f] is not None),0)
-        result+=f'<circle cx="{x(p["ts"]):.2f}" cy="{y(value):.2f}" r="3" fill="#0879cf" opacity="0.3" tabindex="0" data-curve-value="{esc(text)}"><title>{esc(text)}</title></circle>'
-    for ts,anchor in ((data['start'],'start'),(data['end'],'end')):
-        result+=f'<text x="{x(ts):.2f}" y="255" text-anchor="{anchor}">{esc(datetime.fromtimestamp(ts,zone).strftime("%d/%m %H:%M"))}</text>'
-    return result+'</svg>'
+        result+=f'<circle class="curve-sample" cx="{x(p["ts"]):.2f}" cy="{y(value):.2f}" r="5" fill="{COLORS["total_kw"]}" fill-opacity="0" tabindex="0" data-curve-value="{esc(text)}"><title>{esc(text)}</title></circle>'
+    for i in range(6):
+        ts=data['start']+(data['end']-data['start'])*i/5;anchor='start' if i==0 else 'end' if i==5 else 'middle'
+        label=datetime.fromtimestamp(ts,zone).strftime('%d/%m %H:%M' if i in (0,5) else '%H:%M')
+        result+=f'<text x="{x(ts):.2f}" y="255" text-anchor="{anchor}">{esc(label)}</text>'
+    return result+'</svg><p class="hint">As linhas ligam amostras registradas; degraus podem representar mudanças reais de carga. O limite tracejado usa o valor vigente em cada instante.</p>'
+
 
 def pdf(data,version):
     from .reports import assemble_pdf,literal,decimal
@@ -167,7 +187,7 @@ def pdf(data,version):
     for i,f in enumerate(FIELDS):
         stats=data['statistics'][f]
         page+=text(30,300-i*22,LABELS[f]+': mínimo '+('—' if stats['min'] is None else decimal(stats['min']))+' kW; máximo '+('—' if stats['max'] is None else decimal(stats['max']))+' kW',10)
-    page+=text(30,180,'Azul: total; azul claro: carregadores; verde: outras cargas; tracejado: limite vigente.',8)
+    page+=text(30,180,'Azul: total; laranja: carregadores; verde: outras cargas; vermelho tracejado: limite.',8)
     page+=text(30,163,'Visualização reduzida seleciona amostras originais e extremos. CSV contém todos os pontos.',8)
     page+=text(30,146,'Lacunas representam ausência de leituras. Média amostral não é consumo de energia em kWh.',8)
     page+=text(30,28,'EnergyCube D-Max v'+version+' · Relatório local da curva',8)

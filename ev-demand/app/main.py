@@ -12,7 +12,7 @@ from urllib.parse import urlsplit
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from fastapi import Depends, FastAPI, HTTPException, Query, Request, Response, WebSocket, WebSocketDisconnect
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
@@ -270,7 +270,7 @@ def create_app(database=None, background=True, recovery_public_key=None, root_pa
                 await asyncio.to_thread(network.close)
             store.db.close()
 
-    app = FastAPI(title='EnergyCube D-Max · Controle de demanda', version='0.12.1', lifespan=lifespan,
+    app = FastAPI(title='EnergyCube D-Max · Controle de demanda', version='0.13.0', lifespan=lifespan,
                   docs_url=None, redoc_url=None, openapi_url=None)
     app.state.store, app.state.engine, app.state.access = store, engine, access
     app.state.recovery = recovery
@@ -505,6 +505,14 @@ def create_app(database=None, background=True, recovery_public_key=None, root_pa
                 'pending': len(access.pending()), 'token_present': bool(access.device_token()),
                 'controller_id': store.entities('system')[0]['controller_id']}
 
+    @app.get('/api/remote-clients')
+    async def remote_clients(u=Depends(root)):
+        from .remote_clients import fetch,DirectoryUnavailable
+        try:data=await fetch(access)
+        except DirectoryUnavailable as exc:raise HTTPException(503,str(exc)) from None
+        store.record('remote_clients_consulted',{'actor':u['name'],'count':len(data['clients'])})
+        return JSONResponse(data,headers={'Cache-Control':'no-store'})
+
     @app.put('/api/directory')
     async def save_directory(data: DirectoryConfig, u=Depends(root)):
         try:
@@ -594,7 +602,7 @@ def create_app(database=None, background=True, recovery_public_key=None, root_pa
     @app.get('/api/audit')
     async def audit(actor: str = '', offset: int = 0, u=Depends(administrator)):
         import json
-        kinds=('settings_changed','operator_action','appearance_changed','charger_configured','vehicle_configured','user_created','user_updated','directory_configured','maintenance_requested','backup_downloaded','curve_export')
+        kinds=('settings_changed','operator_action','appearance_changed','charger_configured','vehicle_configured','user_created','user_updated','directory_configured','maintenance_requested','backup_downloaded','curve_export','remote_clients_consulted')
         rows=[]
         for row in store.db.execute('SELECT * FROM events WHERE kind IN ('+','.join('?' for _ in kinds)+') ORDER BY ts DESC', kinds):
             payload=json.loads(row['payload'])

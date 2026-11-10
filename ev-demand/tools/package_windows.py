@@ -10,11 +10,11 @@ import re
 import zipfile
 
 
-VERSION = '0.12.1'
+VERSION = '0.13.0'
 STATIC = ('style.css', 'energycube.css', 'server.css', 'plant.css', 'live.css', 'live.js', 'maintenance.js', 'remote.js', 'd-max-logo.png', 'energycube-logo.png', 'd-max-report.jpg', 'energycube-report.jpg')
 PYTHON = (
     '__init__.py', 'access.py', 'control.py', 'directory.py', 'engine.py', 'main.py',
-    'meter.py', 'supervision.py', 'root_auth.py', 'recovery.py', 'network.py', 'ocpp_server.py', 'security.py', 'server_ui.py', 'services.py', 'store.py', 'live_dom.py', 'licensing.py', 'reports.py', 'maintenance.py', 'remote_tunnel.py', 'remote_registry.py', 'curve.py', 'plant_view.py', 'telemetry.py',
+    'meter.py', 'supervision.py', 'root_auth.py', 'recovery.py', 'network.py', 'ocpp_server.py', 'security.py', 'server_ui.py', 'services.py', 'store.py', 'live_dom.py', 'licensing.py', 'reports.py', 'maintenance.py', 'remote_tunnel.py', 'remote_registry.py', 'remote_clients.py', 'curve.py', 'plant_view.py', 'telemetry.py',
 )
 
 

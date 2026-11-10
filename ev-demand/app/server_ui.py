@@ -19,7 +19,7 @@ from .meter import MEASUREMENTS, FORMATS, normalize_serial_port
 from .plant_view import render_plant
 from .live_dom import view_tree
 
-VERSION = '0.12.1'
+VERSION = '0.13.0'
 PAGES = {
     'overview': 'Visão geral', 'chargers': 'Carregadores', 'vehicles': 'Veículos',
     'schedule': 'Horários', 'history': 'Histórico', 'meter': 'Multimedidor',
@@ -29,6 +29,7 @@ PAGES = {
     'maintenance': 'Manutenção',
     'audit': 'Auditoria',
     'remote': 'Acesso remoto',
+    'remoteclients': 'Buscar clientes remotos',
 }
 ROLES = {'root': 'Raiz', 'technician': 'Técnico / instalador', 'admin': 'Administrador', 'operator': 'Operador'}
 
@@ -226,7 +227,7 @@ def install(app):
                 content = note + self.password_form() + self.form('logout', submit='Sair')
                 return self.finish(HTMLResponse(self.document('<main class="initial-password">' + panel('Troque a senha inicial', content) + '</main>'), status_code=status))
             allowed = {'meter': self.technical, 'settings': self.manager, 'users': self.manager,
-                       'directory': self.user['role'] == 'root', 'simulation': self.technical and app.state.store.settings()['mode'] == 'simulation', 'maintenance': self.technical, 'audit': self.manager, 'remote': self.technical}
+                       'directory': self.user['role'] == 'root', 'remoteclients': self.user['role'] == 'root', 'simulation': self.technical and app.state.store.settings()['mode'] == 'simulation', 'maintenance': self.technical, 'audit': self.manager, 'remote': self.technical}
             if not allowed.get(page, True):
                 page, note, status = 'overview', '<div class="notice">Acesso não permitido para seu perfil.</div>', 403
             self.state = await self.api('GET', '/api/state')
@@ -246,6 +247,8 @@ def install(app):
                 content = self.meter(diagnostic, serial['ports'])
             elif page == 'history':
                 content = await self.history()
+            elif page == 'remoteclients':
+                content=await self.remote_clients()
             elif page == 'remote':
                 remote=await self.api('GET','/api/remote')
                 content=panel('Cloudflare · acesso remoto e diretório', '<p id="remote-state">'+esc('Conectado' if remote['connected'] else 'Sem conexão confirmada')+'</p><p id="remote-message">'+esc(remote['message'])+'</p><p><a id="remote-url" href="'+esc(remote.get('url') or '#')+'" target="_blank" rel="noopener noreferrer">'+esc(remote.get('url') or 'Endereço ainda não disponível')+'</a></p><p>Identificador da instalação: <code>'+esc(remote['controller_id'])+'</code></p><p id="remote-publication">'+esc('Planilha: plataforma desativada; configure Técnicos globais para registrar o endereço' if not remote['publication']['directory_enabled'] else 'Planilha: envio pendente' if remote['publication']['pending'] else 'Planilha: consulte a última confirmação no diretório')+'</p><p>Ative no Raspberry pelo instalador de acesso remoto. Cada equipamento usa sua própria identidade. O Quick Tunnel gera um endereço automático que pode mudar. O novo endereço é enviado ao diretório da planilha quando a plataforma está configurada.</p><p>O serviço gratuito tem limites de tráfego e disponibilidade. O D-Max local e a integração Grafana permanecem independentes.</p>')+'<script src="/static/remote.js?v='+VERSION+'" defer></script>'
@@ -576,6 +579,24 @@ def install(app):
                 fields += checkbox('Conta ativa', 'active', u['active']) + checkbox('Excluir acesso e preservar auditoria', 'deleted', u['deleted'])
             guidance = '<p class="hint">Novas contas cadastradas aqui entram com a senha inicial 12345678 e devem trocá-la antes de operar. Não há código de primeiro acesso.</p>'
             return content + panel('Editar conta' if old else 'Adicionar usuário', guidance + self.form('user', fields, page='users'))
+
+        async def remote_clients(self):
+            from datetime import datetime
+            from zoneinfo import ZoneInfo
+            intro='<p>Os endereços são consultados na plataforma somente ao abrir esta aba ou clicar em Atualizar. Escolha o cliente para abrir o D-Max em outra aba e faça login nele.</p>'
+            try:data=await self.api('GET','/api/remote-clients')
+            except UIError as exc:return panel('Clientes remotos',intro+'<p class="notice">'+esc(exc.message)+'</p>')
+            zone=ZoneInfo(self.state['settings']['timezone']);query=self.request.query_params.get('q','')[:100]
+            intro+='<form method="get" class="remote-search">'+field('Nome do cliente ou identificador','q',query)+'<button class="primary">Buscar</button></form>'
+            intro+='<p class="hint">Consulta: '+esc(datetime.fromtimestamp(data['fetched_at'],zone).strftime('%d/%m/%Y %H:%M:%S'))+' · '+esc(str(zone))+'. O estado é o último informado pelo equipamento; confira a data da comunicação.</p>'
+            cards=''
+            for row in data['clients']:
+                if query.casefold() not in (row['site_name']+' '+row['controller_id']).casefold():continue
+                age=time.time()-row['updated_at'];recent=age<=900
+                label='Último informe: conectado' if row['connected'] else 'Último informe: desconectado'
+                if not recent:label='Sem comunicação recente · '+label.lower()
+                cards+='<article class="remote-client"><h3>'+esc(row['site_name'])+'</h3><p class="hint">'+esc(row['controller_id'])+'</p><p>'+esc(label)+'</p><p>Comunicação: '+esc(datetime.fromtimestamp(row['updated_at'],zone).strftime('%d/%m/%Y %H:%M:%S'))+'</p><a class="primary" target="_blank" rel="noopener noreferrer" referrerpolicy="no-referrer" href="'+esc(row['url'])+'">Abrir D-Max</a><p class="hint remote-address">'+esc(row['url'])+'</p></article>'
+            return panel('Clientes remotos',intro+('<div class="remote-clients">'+cards+'</div>' if cards else '<p>Nenhum cliente encontrado. Confira os nomes em Configurações de cada D-Max e o envio à aba DMax_Remoto.</p>'))
 
         async def directory(self):
             data = await self.api('GET', '/api/directory')

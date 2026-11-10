@@ -67,3 +67,13 @@ class CurveAPITests(unittest.TestCase):
             self.assertTrue(c.get('/api/curve/report.pdf').content.startswith(b'%PDF-1.4'))
             self.assertEqual(app.state.store.db.execute("SELECT count(*) FROM events WHERE kind='curve_export'").fetchone()[0],2)
         app.state.store.db.close()
+
+class CurveSimulationQualityTests(unittest.IsolatedAsyncioTestCase):
+    async def test_simulator_sample_after_tick_start_is_valid(self):
+        app=create_app(':memory:',background=False,root_password_hash=password_hash('fixture-simulation-root'))
+        with TestClient(app) as c:
+            c.post('/api/setup',json={'admin_password':'fixture-simulation-admin'});c.post('/api/login',json={'username':'root','password':'fixture-simulation-root'});c.post('/api/demo',json={})
+            await app.state.engine.tick()
+            points=curve.query(app.state.store,app.state.store.settings())['points']
+            self.assertTrue(points);self.assertEqual(points[-1]['quality'],'valid');self.assertIsNotNone(points[-1]['ev_kw']);self.assertIsNotNone(points[-1]['other_kw'])
+        app.state.store.db.close()

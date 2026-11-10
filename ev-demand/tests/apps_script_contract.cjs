@@ -80,3 +80,14 @@ properties['device.other']=properties['device.controller'];assert.equal(register
 assert.equal(JSON.stringify(remoteRows).includes('fixture-device-key'),false);assert.equal(JSON.stringify(remoteRows).includes('pbkdf2'),false);
 remoteRows.push([...remoteRows[1]]);assert.equal(register(newer).remote_error,true);
 console.log('Remote directory contract passed: authenticated IDs, literal names, separate installations, revision ordering, duplicate rejection and no credentials in cells.');
+// Listing all installations requires a separately granted owner-console capability.
+remoteRows.pop();
+assert.equal(call('remote_directory').code,403);
+properties['remote_directory.controller']='enabled';
+let catalog=call('remote_directory');assert.equal(catalog.ok,true);assert.equal(catalog.clients.length,2);
+assert.equal(catalog.clients.find(r=>r.controller_id==='controller').url,newer.url);
+assert.equal(JSON.stringify(catalog).includes('fixture-device-key'),false);assert.equal(JSON.stringify(catalog).includes('pbkdf2'),false);
+delete properties['remote_directory.controller'];assert.equal(call('remote_directory').code,403);
+assert.equal(register({...newer,revision:3}).remote_ack.accepted,true);
+properties['remote_directory.controller']='enabled';remoteRows[1][2]='https://api.trycloudflare.com';assert.equal(call('remote_directory').ok,false);remoteRows[1][2]=newer.url;
+console.log('Remote catalog contract passed: explicit owner-console grant, revocation, current URLs and credential-free response.');

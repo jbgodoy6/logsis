@@ -37,13 +37,23 @@ async def fixture(action:str, request:Request):
         state=data['state'];revision=data['revision']
         issued=time.time()-NOTICE_SECONDS-1 if state=='expired' else time.time()
         return engine.subscription.receive(envelope(store,state='regular' if state=='regular' else 'pending',revision=revision,issued=issued),TOKEN)
+    if action=='remote-catalog':
+        import app.remote_clients
+        application.state.catalog_count=getattr(application.state,'catalog_count',0)
+        if data.get('query'):return {'count':application.state.catalog_count}
+        application.state.catalog_url=data.get('url','https://cliente-um.trycloudflare.com')
+        async def catalog(access,client=None):
+            application.state.catalog_count+=1
+            return dict(clients=[dict(controller_id='CLIENTE-UM',site_name='Cliente Um · Garagem',url=application.state.catalog_url,updated_at=time.time(),connected=True)],fetched_at=time.time())
+        app.remote_clients.fetch=catalog
+        return {'ok':True}
     if action=='curve':
         now=time.time()
         with store.db:
             store.db.execute('DELETE FROM curve_points')
             for n in range(100):
                 for mode in ('physical','simulation'):
-                    store.db.execute('INSERT INTO curve_points VALUES (?,?,?,?,?,?,?,?)',(now-600+n*5,mode,700 if n==55 else 200+n,30+n,170,900,now-600+n*5,'valid'))
+                    store.db.execute('INSERT INTO curve_points VALUES (?,?,?,?,?,?,?,?)',(now-600+n*5,mode,500+100*__import__('math').sin(n/8),100+30*__import__('math').cos(n/10),400+100*__import__('math').sin(n/8)-30*__import__('math').cos(n/10),900,now-600+n*5,'valid'))
         return {'now':now}
     if action=='sessions':
         store.put('vehicle',dict(id='PDF-TEST',name='Veículo teste PDF',plate='TESTE',identifiers=[],priority=False))

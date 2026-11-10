@@ -338,9 +338,7 @@ class Engine:
             self.control_progress_at = time.monotonic()
         self.trace.append({'ts': now, 'total': self.meter['total_kw'], 'ev': measured_ev, 'limit': settings['limit_kw']})
         self.trace = self.trace[-180:]
-        from .curve import record as record_curve
-        ev_valid=all(p['sample_at'] and 0<=now-p['sample_at']<=settings['freshness_s'] for p in ports if p['connected'] or p['running'] or p['power_kw']>.1)
-        record_curve(self.store,now,self.meter,measured_ev,ev_valid,settings,self.fault)
+        self.record_curve(ports,settings)
         if int(now // 60) != self.bucket_minute:
             self.flush()
         self.summary = {'budget_kw': budget, 'other_kw': other, 'ev_kw': measured_ev,
@@ -400,13 +398,20 @@ class Engine:
                         'total_kw': self.meter['total_kw'], 'native': True}
         self.trace.append({'ts': now, 'total': self.meter['total_kw'], 'ev': ev, 'limit': self.store.settings()['limit_kw']})
         self.trace = self.trace[-180:]
-        from .curve import record as record_curve
-        cfg=self.store.settings()
-        ev_valid=all(p['sample_at'] and 0<=now-p['sample_at']<=cfg['freshness_s'] for p in ports if p['connected'] or p['running'] or p['power_kw']>.1)
-        record_curve(self.store,now,self.meter,ev,ev_valid,cfg,self.fault)
+        self.record_curve(ports,self.store.settings())
         if int(now // 60) != self.bucket_minute:
             self.flush()
         self.control_progress_at = time.monotonic()
+
+    def record_curve(self,ports,settings):
+        from .curve import record
+        at=time.time()
+        chargers={c['id']:c for c in self.store.entities('charger') if not c.get('archived')}
+        visible=[p for p in ports if p['charger'] in chargers and (chargers[p['charger']]['transport']=='simulator')==(settings['mode']=='simulation')]
+        fresh=lambda p: bool(p['sample_at']) and 0<=at-p['sample_at']<=settings['freshness_s']
+        ev=sum(p['power_kw'] for p in visible if fresh(p))
+        valid=all(fresh(p) for p in visible if p['connected'] or p['running'] or p['power_kw']>.1)
+        record(self.store,at,self.meter,ev,valid,settings,self.fault)
 
     def snapshot(self):
         mode = self.store.settings()['mode']

@@ -1,3 +1,7 @@
+# D-Max 0.13.0 · Clientes remotos e curva legível
+
+[Atualização e configuração](docs/release-v0130.md). Aba exclusiva do root consulta clientes por nome e URL atual somente ao ser aberta. Curva com contraste reforçado e atualização visual a cada 5 segundos; ciclo de controle preservado. [Receita do acesso remoto](docs/receita-remoto.md).
+
 # D-Max 0.12.1 · Correção do supervisor Cloudflare
 
 [Correção pontual e atualização completa](docs/remote-v0121.md): protocolo automático, prontidão local do conector, recuperação após travamento e diagnóstico sem credenciais. O acesso público na rede do cliente ainda precisa ser confirmado.

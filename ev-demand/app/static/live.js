@@ -10,6 +10,7 @@
   const tags = new Set('section article div span p b strong em small h2 h3 h4 a svg g path rect circle ellipse line polyline text title i'.split(' '));
   const attrs = new Set('class id role aria-label data-live-key data-curve-value tabindex viewbox x y x1 x2 y1 y2 cx cy r rx ry width height d points fill stroke stroke-width stroke-opacity fill-opacity stroke-linecap stroke-linejoin stroke-dasharray text-anchor font-size opacity transform href target'.split(' '));
   const key = item => typeof item === 'string' ? null : item.attrs?.['data-live-key'];
+  let pendingChart=null;
   const nodeKey = node => node.nodeType === 1 ? node.getAttribute('data-live-key') : null;
   function reconcile(parent, descriptions, inSVG = false) {
     const old = Array.from(parent.childNodes), retained = new Set();
@@ -34,7 +35,8 @@
           const actual = name === 'viewbox' ? 'viewBox' : name;
           if (node.getAttribute(actual) !== value) node.setAttribute(actual, value);
         }
-        if(id!=='curve-controls'||!matches)reconcile(node, description.children, ns);
+        if(id==='chart'&&matches)pendingChart={node,children:description.children,ns};
+        else if(id!=='curve-controls'||!matches)reconcile(node, description.children, ns);
       }
       retained.add(node);
       if (parent.childNodes[index] !== node) parent.insertBefore(node, parent.childNodes[index] || null);
@@ -76,7 +78,10 @@
       if (!stopped) timer = setTimeout(update, 2000);
     }
   }
-  window.addEventListener('pagehide', () => { stopped = true; clearTimeout(timer); controller?.abort(); });
+  const chartTimer=setInterval(()=>{
+    if(!stopped&&pendingChart){const {node,children,ns}=pendingChart;pendingChart=null;if(node.isConnected)reconcile(node,children,ns);}
+  },5000);
+  window.addEventListener('pagehide', () => { stopped = true; clearTimeout(timer); clearInterval(chartTimer); pendingChart=null; controller?.abort(); });
   timer = setTimeout(update, 1000);
   const tooltip=document.createElement('div');tooltip.className='curve-tooltip';tooltip.setAttribute('role','status');tooltip.hidden=true;document.body.appendChild(tooltip);
   function show(text,x,y){tooltip.textContent=text;tooltip.hidden=false;tooltip.style.left=Math.max(8,Math.min(x+12,window.innerWidth-tooltip.offsetWidth-8))+'px';tooltip.style.top=Math.max(8,Math.min(y+12,window.innerHeight-tooltip.offsetHeight-8))+'px';}
@@ -87,10 +92,10 @@
     const x=new DOMPoint(event.clientX,event.clientY).matrixTransform(matrix.inverse()).x;
     let nearest,distance=Infinity;
     svg.querySelectorAll('[data-curve-value]').forEach(p=>{const delta=Math.abs(Number(p.getAttribute('cx'))-x);if(delta<distance){distance=delta;nearest=p;}});
-    if(nearest)show(nearest.dataset.curveValue,event.clientX,event.clientY);
+    if(nearest)show(nearest.dataset.curveValue.split(' | ').join('\n'),event.clientX,event.clientY);
   }
   document.addEventListener('pointermove',inspectCurve);
   document.addEventListener('pointerdown',inspectCurve);
-  document.addEventListener('focusin',event=>{const p=event.target.closest?.('[data-curve-value]');if(p){const box=p.getBoundingClientRect();show(p.dataset.curveValue,box.x,box.y);}});
+  document.addEventListener('focusin',event=>{const p=event.target.closest?.('[data-curve-value]');if(p){const box=p.getBoundingClientRect();show(p.dataset.curveValue.split(' | ').join('\n'),box.x,box.y);}});
   document.addEventListener('focusout',()=>{tooltip.hidden=true;});
 })();

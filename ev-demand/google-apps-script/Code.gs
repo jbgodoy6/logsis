@@ -9,6 +9,8 @@ function onOpen() {
     .addItem('Preparar aba Tecnicos', 'prepararTecnicos')
     .addItem('Preparar aba Assinaturas', 'prepararAssinaturas')
     .addItem('Preparar diretório de acesso remoto', 'prepararRemoto')
+    .addItem('Permitir busca de clientes remotos', 'permitirBuscaRemota')
+    .addItem('Revogar busca de clientes remotos', 'revogarBuscaRemota')
     .addItem('Autorizar um D-Max', 'autorizarDMax')
     .addItem('Revogar chave de um D-Max', 'revogarDMax').addToUi();
 }
@@ -76,6 +78,10 @@ function doPost(event) {
     lock=LockService.getScriptLock();
     acquired=lock.tryLock(5000);
     if(!acquired)error_(503,'Consulta ocupada; tente novamente');
+    if(data.action==='remote_directory'){
+      if(props.getProperty('remote_directory.'+data.controller_id)!=='enabled')error_(403,'Consulta remota não autorizada');
+      return json_(remoteDirectory_());
+    }
     if(data.action==='snapshot'){
       const result=snapshot_(props);
       const notice=subscription_(props,data.controller_id);
@@ -125,6 +131,35 @@ function remote_(id,data){
   if(data.revision===revision&&old&&(old.row[2]!==data.url||old.row[3]!== (data.connected?'CONECTADO':'DESCONECTADO')))return {revision:revision,accepted:false};
   sheet.getRange(old?old.index:sheet.getLastRow()+1,1,1,7).setValues([[id,sheetText_(data.site_name),data.url,data.connected?'CONECTADO':'DESCONECTADO',new Date().toISOString(),new Date(data.heartbeat_at*1000).toISOString(),data.revision]]);
   return {revision:data.revision,accepted:true};
+}
+
+function permitirBuscaRemota(){
+  const ui=SpreadsheetApp.getUi(),answer=ui.prompt('Permitir busca de clientes remotos','Identificador do equipamento usado pelo proprietário. Permite consultar todos os clientes; não autorize equipamentos de clientes comuns.',ui.ButtonSet.OK_CANCEL);
+  if(answer.getSelectedButton()!==ui.Button.OK)return;
+  const id=answer.getResponseText().trim(),props=PropertiesService.getScriptProperties();
+  if(!props.getProperty('device.'+id))throw new Error('Autorize esse D-Max primeiro.');
+  props.setProperty('remote_directory.'+id,'enabled');
+  ui.alert('Busca de clientes permitida para este equipamento. A interface exige login root.');
+}
+function revogarBuscaRemota(){
+  const ui=SpreadsheetApp.getUi(),answer=ui.prompt('Revogar busca de clientes remotos','Identificador do equipamento.',ui.ButtonSet.OK_CANCEL);
+  if(answer.getSelectedButton()!==ui.Button.OK)return;
+  PropertiesService.getScriptProperties().deleteProperty('remote_directory.'+answer.getResponseText().trim());
+}
+function remoteDirectory_(){
+  const sheet=remoteSheet_(),clients=[],seen={};
+  if(sheet.getLastRow()>1001)error_(422,'Limite de 1000 clientes');
+  const rows=sheet.getLastRow()>1?sheet.getRange(2,1,sheet.getLastRow()-1,7).getValues():[];
+  rows.forEach(row=>{
+    if(row.every(v=>String(v).trim()===''))return;
+    const id=String(row[0]).trim(),name=String(row[1]).trim(),url=String(row[2]).trim(),stamp=row[4] instanceof Date?row[4].getTime():Date.parse(String(row[4]));
+    if(!/^[A-Za-z0-9_-]{1,100}$/.test(id)||seen[id]||!name||name.length>100||
+       !/^https:\/\/[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.trycloudflare\.com$/.test(url)||
+       ['https://api.trycloudflare.com','https://www.trycloudflare.com'].includes(url)||
+       !['CONECTADO','DESCONECTADO'].includes(row[3])||!Number.isFinite(stamp))error_(422,'Registro remoto inválido');
+    seen[id]=true;clients.push({controller_id:id,site_name:name,url:url,connected:row[3]==='CONECTADO',updated_at:stamp/1000});
+  });
+  return {ok:true,clients:clients};
 }
 
 function date_(value,timezone) {
