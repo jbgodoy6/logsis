@@ -33,6 +33,10 @@ remoto; em Raspberry Pi OS com SSH normalmente já está disponível.
 
 ## Ativar o acesso remoto
 
+Se o ZIP original apresentar `Chave de servidor inválida` apesar de retornar a
+chave pública oficial, consulte [a correção pontual do parser](remote-keyscan-hotfix.md).
+Ela mantém o fingerprint fixado e trata comentários/linhas vazias do ssh-keyscan.
+
 Após atualizar e confirmar a tela local e o cadastro inicial já configurado:
 
 ```sh
