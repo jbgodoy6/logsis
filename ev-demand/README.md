@@ -1,3 +1,5 @@
+Correção da plataforma: [clientes remotos sem liberação manual](docs/remote-clientes-sem-liberacao.md). Aplique o Apps Script atualizado; o D-Max instalado continua na versão 0.13.0.
+
 # D-Max 0.13.0 · Clientes remotos e curva legível
 
 [Atualização e configuração](docs/release-v0130.md). Aba exclusiva do root consulta clientes por nome e URL atual somente ao ser aberta. Curva com contraste reforçado e atualização visual a cada 5 segundos; ciclo de controle preservado. [Receita do acesso remoto](docs/receita-remoto.md).

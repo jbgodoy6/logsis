@@ -65,20 +65,17 @@ o Raspberry. Os arquivos da versão anterior continuam nos backups do instalador
 ## Atualizar a plataforma uma vez
 
 1. Copie o Code.gs desta versão para o mesmo projeto Apps Script da sua planilha:
-   https://raw.githubusercontent.com/jbgodoy6/logsis/dmax-v0.13.0/ev-demand/google-apps-script/Code.gs
+   https://raw.githubusercontent.com/jbgodoy6/logsis/dmax-sheets-v0.13.1/ev-demand/google-apps-script/Code.gs
 2. Salve e atualize a implantação existente em Implantar → Gerenciar implantações
    → lápis → Nova versão. Preserve a mesma URL /exec e as propriedades/chaves.
-3. Reabra a planilha. No menu D-Max → Permitir busca de clientes remotos, informe
-   o identificador do D-Max que você usa como console do proprietário. Ele aparece
-   em Técnicos globais ou Acesso remoto desse equipamento.
-4. Entre como root nesse D-Max e abra Buscar clientes remotos. Os clientes precisam
-   estar enviando sua URL à mesma planilha para aparecer.
+3. Para a busca sem liberação manual, use a correção da plataforma descrita em
+   [Clientes remotos sem liberação](remote-clientes-sem-liberacao.md).
+4. Entre como root no D-Max e abra Buscar clientes remotos. São listados todos
+   os registros válidos de DMax_Remoto, sem autorizar cada cliente ou console.
 
-Essa permissão é exclusiva de consulta ao catálogo completo, armazenada no servidor.
-Ela evita que a chave de qualquer cliente comum seja suficiente para listar os
-outros clientes. O envio da própria URL e a sincronização de técnicos continuam
-independentes e não exigem nova autorização. Para remover o acesso ao catálogo,
-use D-Max → Revogar busca de clientes remotos. Não publique a planilha.
+O login root da interface e a autenticação normal do equipamento na plataforma
+continuam sendo usados. As propriedades antigas remote_directory.*, se existirem,
+são ignoradas e não precisam ser alteradas. Não publique a planilha.
 
 A implantação real do Apps Script depende da conta do proprietário; o ambiente de
 desenvolvimento não possui acesso a ela. O pacote inclui o código pronto.
@@ -87,7 +84,7 @@ desenvolvimento não possui acesso a ela. O pacote inclui o código pronto.
 
 Em desenvolvimento: 249 testes Python passaram, sem falhas ou testes ignorados,
 com as fixtures do pacote ARM64 e PostgreSQL. O Apps Script exato foi executado
-com doubles do Google, incluindo permissão de catálogo, revogação e URL atual.
+com doubles do Google, incluindo autenticação de equipamento, catálogo e URL atual.
 Chromium validou consulta apenas na aba, atualização do link ao reabrir, layout
 móvel, curva com cadência de 5 segundos, tooltip, PDF/CSV e gateway HTTPS local.
 A implantação Google real e o Raspberry não foram acessados por este executor.

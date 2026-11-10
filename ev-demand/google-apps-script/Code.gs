@@ -9,8 +9,6 @@ function onOpen() {
     .addItem('Preparar aba Tecnicos', 'prepararTecnicos')
     .addItem('Preparar aba Assinaturas', 'prepararAssinaturas')
     .addItem('Preparar diretório de acesso remoto', 'prepararRemoto')
-    .addItem('Permitir busca de clientes remotos', 'permitirBuscaRemota')
-    .addItem('Revogar busca de clientes remotos', 'revogarBuscaRemota')
     .addItem('Autorizar um D-Max', 'autorizarDMax')
     .addItem('Revogar chave de um D-Max', 'revogarDMax').addToUi();
 }
@@ -79,7 +77,6 @@ function doPost(event) {
     acquired=lock.tryLock(5000);
     if(!acquired)error_(503,'Consulta ocupada; tente novamente');
     if(data.action==='remote_directory'){
-      if(props.getProperty('remote_directory.'+data.controller_id)!=='enabled')error_(403,'Consulta remota não autorizada');
       return json_(remoteDirectory_());
     }
     if(data.action==='snapshot'){
@@ -133,19 +130,6 @@ function remote_(id,data){
   return {revision:data.revision,accepted:true};
 }
 
-function permitirBuscaRemota(){
-  const ui=SpreadsheetApp.getUi(),answer=ui.prompt('Permitir busca de clientes remotos','Identificador do equipamento usado pelo proprietário. Permite consultar todos os clientes; não autorize equipamentos de clientes comuns.',ui.ButtonSet.OK_CANCEL);
-  if(answer.getSelectedButton()!==ui.Button.OK)return;
-  const id=answer.getResponseText().trim(),props=PropertiesService.getScriptProperties();
-  if(!props.getProperty('device.'+id))throw new Error('Autorize esse D-Max primeiro.');
-  props.setProperty('remote_directory.'+id,'enabled');
-  ui.alert('Busca de clientes permitida para este equipamento. A interface exige login root.');
-}
-function revogarBuscaRemota(){
-  const ui=SpreadsheetApp.getUi(),answer=ui.prompt('Revogar busca de clientes remotos','Identificador do equipamento.',ui.ButtonSet.OK_CANCEL);
-  if(answer.getSelectedButton()!==ui.Button.OK)return;
-  PropertiesService.getScriptProperties().deleteProperty('remote_directory.'+answer.getResponseText().trim());
-}
 function remoteDirectory_(){
   const sheet=remoteSheet_(),clients=[],seen={};
   if(sheet.getLastRow()>1001)error_(422,'Limite de 1000 clientes');
