@@ -20,11 +20,15 @@ if __name__=='__main__':
         import subprocess
         from app.remote_tunnel import HOST_FINGERPRINT
         path=Path(sys.argv[1])
-        lines=path.read_text().splitlines()
+        # ssh-keyscan versions can include banner comments and empty lines on
+        # stdout. They are valid known_hosts syntax, not host-key records.
+        lines=[row.strip() for row in path.read_text().splitlines()
+               if row.strip() and not row.lstrip().startswith('#')]
         if not lines or any(len(r.split())!=3 or r.split()[:2]!=['proxy.tunnl.gg','ssh-ed25519'] for r in lines):
             raise SystemExit('Chave de servidor inválida')
         result=subprocess.run(['ssh-keygen','-lf',str(path),'-E','sha256'],capture_output=True,text=True,check=True)
-        if any(row.split()[1]!=HOST_FINGERPRINT for row in result.stdout.splitlines()):
+        fingerprints=[row.split()[1] for row in result.stdout.splitlines() if len(row.split())>=2]
+        if len(fingerprints)!=len(lines) or any(value!=HOST_FINGERPRINT for value in fingerprints):
             raise SystemExit('Chave do provedor mudou. Não será aceita automaticamente; revise com o fornecedor.')
         print('Identidade SSH do provedor conferida')
     elif action=='preflight':
