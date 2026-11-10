@@ -44,7 +44,8 @@ def main(argv=None):
     if config.host not in ('127.0.0.1', '::1', 'localhost'):
         print('Rede local: ' + lan.public()['url'] + ' (depende de mDNS/firewall)', flush=True)
     uvicorn.run(app, host=config.host, port=config.port, ssl_certfile=args.tls_cert,
-                ssl_keyfile=args.tls_key, log_level='warning')
+                ssl_keyfile=args.tls_key, log_level='warning',proxy_headers=True,
+                forwarded_allow_ips='127.0.0.1,::1')
 
 
 if __name__ == '__main__':

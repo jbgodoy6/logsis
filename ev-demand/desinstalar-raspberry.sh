@@ -34,6 +34,7 @@ install -d -o root -g root -m 0700 /run/d-max-maintenance
 exec 9>/run/d-max-maintenance/lock
 flock -n 9 || fail 'Outra manutenção está em andamento.'
 if [[ -f "$service_file" ]]; then systemctl disable --now d-max.service; fi
+if [[ -f "$app_dir/.dmax-remote-managed" ]]; then bash "$app_dir/acesso-remoto.sh" remover; fi
 systemctl disable --now d-max-maintenance.path || true
 systemctl stop d-max-maintenance.service || true
 rm -f -- /etc/systemd/system/d-max-maintenance.path /etc/systemd/system/d-max-maintenance.service

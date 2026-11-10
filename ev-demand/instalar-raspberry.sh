@@ -120,6 +120,10 @@ chmod -R a+rX "$app_dir/app"
 install -d -m 0755 "$app_dir/deploy"
 install -m 0644 "$source_dir/deploy/manage.py" "$app_dir/deploy/manage.py"
 install -m 0644 "$source_dir/deploy/maintenance_worker.py" "$app_dir/deploy/maintenance_worker.py"
+for remote_file in remote.py d-max-remote.service d-max-remote-gateway.service; do
+    install -m 0644 "$source_dir/deploy/$remote_file" "$app_dir/deploy/$remote_file"
+done
+install -m 0644 "$source_dir/acesso-remoto.sh" "$app_dir/acesso-remoto.sh"
 if [[ ! -f "$config_dir/update-public.pem" ]]; then
     install -o root -g root -m 0644 "$source_dir/deploy/update-public.pem" "$config_dir/update-public.pem"
 fi
@@ -151,7 +155,12 @@ systemctl enable --now d-max-maintenance.path
 systemctl enable --now d-max.service
 sleep 2
 systemctl is-active --quiet d-max.service
+if [[ -f "$app_dir/.dmax-remote-managed" ]] && systemctl is-active --quiet d-max-remote.service; then
+    systemctl restart d-max-remote-gateway.service d-max-remote.service || echo 'Confira os serviços de acesso remoto; o D-Max local foi atualizado.' >&2
+fi
 echo 'D-Max instalado e habilitado no boot. Processo monitorado pelo systemd.'
 echo 'Primeira configuração: use o túnel SSH descrito no LEIA-ME.txt.'
 echo 'Rede: /etc/d-max/rede.ini. Estado: sudo systemctl status d-max --no-pager'
 echo 'Logs: sudo journalctl -u d-max -f'
+echo 'Acesso remoto opcional: sudo bash /opt/d-max/acesso-remoto.sh ativar'
+echo 'A integração existente com Grafana foi preservada.'

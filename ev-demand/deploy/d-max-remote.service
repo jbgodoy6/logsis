@@ -1,0 +1,23 @@
+[Unit]
+Description=D-Max stable remote tunnel (tunnl.gg pilot)
+Wants=network-online.target d-max-remote-gateway.service
+After=network-online.target d-max-remote-gateway.service
+StartLimitIntervalSec=0
+[Service]
+Type=simple
+User=dmax-remote
+Group=dmax-remote
+WorkingDirectory=/opt/d-max
+Environment=PYTHONDONTWRITEBYTECODE=1
+ExecStart=/opt/d-max/.venv/bin/python -I /opt/d-max/deploy/remote.py tunnel
+Restart=always
+RestartSec=15
+TimeoutStopSec=25
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/var/lib/d-max-remote
+UMask=0027
+[Install]
+WantedBy=multi-user.target

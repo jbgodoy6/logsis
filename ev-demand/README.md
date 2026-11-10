@@ -1,3 +1,7 @@
+# D-Max 0.11.0 · Piloto de acesso remoto, Grafana preservado
+
+[Atualizar e ativar no Raspberry](docs/release-v0110.md). Gateway exclusivo da interface, identidade por instalação, reconexão automática e compressão da tela ao vivo. OCPP e configuração inicial bloqueados no remoto. Ativação pelo terminal, separada da atualização; banco, credencial raiz e integração Grafana preservados. A conexão ao provedor público precisa ser confirmada no equipamento.
+
 # D-Max 0.10.0 · Supervisão integrada e manutenção
 
 [Atualizar sem desinstalar](docs/release-v0100.md) · [Validação e limites](docs/validation-v0100.md). Visão geral integrada, simulação restrita, energia por veículo com origens separadas, contagem autenticada 15/30/40 dias, backup/restauração e pacotes assinados. Novas instalações usam porta 80; atualizações preservam a porta existente e a credencial raiz.

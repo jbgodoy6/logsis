@@ -5,11 +5,11 @@ from pathlib import Path
 import re
 import zipfile
 
-VERSION = '0.10.0'
+VERSION = '0.11.0'
 PYTHON = ('__init__.py', 'access.py', 'control.py', 'directory.py', 'engine.py', 'main.py',
           'meter.py', 'network.py', 'ocpp_server.py', 'recovery.py', 'root_auth.py',
-          'security.py', 'server_ui.py', 'services.py', 'store.py', 'live_dom.py', 'licensing.py', 'reports.py', 'maintenance.py', 'supervision.py', 'plant_view.py', 'telemetry.py')
-STATIC = ('style.css', 'energycube.css', 'server.css', 'plant.css', 'live.css', 'live.js', 'maintenance.js', 'd-max-logo.png', 'energycube-logo.png', 'd-max-report.jpg', 'energycube-report.jpg')
+          'security.py', 'server_ui.py', 'services.py', 'store.py', 'live_dom.py', 'licensing.py', 'reports.py', 'maintenance.py', 'remote_gateway.py', 'remote_tunnel.py', 'supervision.py', 'plant_view.py', 'telemetry.py')
+STATIC = ('style.css', 'energycube.css', 'server.css', 'plant.css', 'live.css', 'live.js', 'maintenance.js', 'remote.js', 'd-max-logo.png', 'energycube-logo.png', 'd-max-report.jpg', 'energycube-report.jpg')
 
 
 def package(root, wheels, output, signing_key=None):
@@ -29,9 +29,9 @@ def package(root, wheels, output, signing_key=None):
         include(root / 'app/static' / name, 'app/static/' + name)
     include(root / 'app/root-credential.json', 'app/root-credential.json')
     for name in ('run.py', 'requirements.lock', 'rede.ini', 'instalar-raspberry.sh',
-                 'desinstalar-raspberry.sh', 'importar-dados-raspberry.sh'):
+                 'desinstalar-raspberry.sh', 'importar-dados-raspberry.sh', 'acesso-remoto.sh'):
         include(root / name, name)
-    for name in ('d-max.service', 'd-max.env.example', 'manage.py', 'maintenance_worker.py', 'd-max-maintenance.path', 'd-max-maintenance.service', 'update-public.pem'):
+    for name in ('d-max.service', 'd-max.env.example', 'manage.py', 'maintenance_worker.py', 'd-max-maintenance.path', 'd-max-maintenance.service', 'update-public.pem', 'remote.py', 'd-max-remote.service', 'd-max-remote-gateway.service'):
         include(root / 'deploy' / name, 'deploy/' + name)
     include(root / 'docs/raspberry.md', 'LEIA-ME.txt')
     include(root / 'docs/nuvem-v080.md', 'NUVEM-E-GRAFANA.md')
@@ -43,6 +43,7 @@ def package(root, wheels, output, signing_key=None):
     include(root / 'docs/release-v090.md', 'NOVIDADES-0.9.0.md')
     include(root / 'docs/release-v0100.md', 'NOVIDADES-0.10.0.md')
     include(root / 'docs/validation-v0100.md', 'VALIDACAO-0.10.0.md')
+    include(root / 'docs/release-v0110.md', 'NOVIDADES-0.11.0.md')
     include(root / 'docs/assinaturas-v090.md', 'ASSINATURAS-GOOGLE.md')
     include(root / 'google-apps-script/Code.gs', 'google-apps-script/Code.gs')
     include(root / 'docs/raspberry-acesso.md', 'ACESSO-RAIZ.txt')

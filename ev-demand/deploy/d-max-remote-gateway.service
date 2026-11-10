@@ -1,0 +1,22 @@
+[Unit]
+Description=D-Max remote web gateway (loopback only)
+Wants=d-max.service
+After=d-max.service
+StartLimitIntervalSec=0
+[Service]
+Type=simple
+User=dmax
+Group=dmax
+WorkingDirectory=/opt/d-max
+Environment=PYTHONDONTWRITEBYTECODE=1
+EnvironmentFile=/etc/d-max/d-max.env
+ExecStart=/opt/d-max/.venv/bin/python -I /opt/d-max/deploy/remote.py gateway
+Restart=always
+RestartSec=5
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+UMask=0027
+[Install]
+WantedBy=multi-user.target

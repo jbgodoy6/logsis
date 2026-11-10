@@ -19,7 +19,7 @@ from .meter import MEASUREMENTS, FORMATS, normalize_serial_port
 from .plant_view import render_plant
 from .live_dom import view_tree
 
-VERSION = '0.10.0'
+VERSION = '0.11.0'
 PAGES = {
     'overview': 'Visão geral', 'chargers': 'Carregadores', 'vehicles': 'Veículos',
     'schedule': 'Horários', 'history': 'Histórico', 'meter': 'Multimedidor',
@@ -28,6 +28,7 @@ PAGES = {
     'simulation': 'Simulador',
     'maintenance': 'Manutenção',
     'audit': 'Auditoria',
+    'remote': 'Acesso remoto',
 }
 ROLES = {'root': 'Raiz', 'technician': 'Técnico / instalador', 'admin': 'Administrador', 'operator': 'Operador'}
 
@@ -225,7 +226,7 @@ def install(app):
                 content = note + self.password_form() + self.form('logout', submit='Sair')
                 return self.finish(HTMLResponse(self.document('<main class="initial-password">' + panel('Troque a senha inicial', content) + '</main>'), status_code=status))
             allowed = {'meter': self.technical, 'settings': self.manager, 'users': self.manager,
-                       'directory': self.user['role'] == 'root', 'simulation': self.technical and app.state.store.settings()['mode'] == 'simulation', 'maintenance': self.technical, 'audit': self.manager}
+                       'directory': self.user['role'] == 'root', 'simulation': self.technical and app.state.store.settings()['mode'] == 'simulation', 'maintenance': self.technical, 'audit': self.manager, 'remote': self.technical}
             if not allowed.get(page, True):
                 page, note, status = 'overview', '<div class="notice">Acesso não permitido para seu perfil.</div>', 403
             self.state = await self.api('GET', '/api/state')
@@ -244,6 +245,9 @@ def install(app):
                 content = self.meter(diagnostic, serial['ports'])
             elif page == 'history':
                 content = await self.history()
+            elif page == 'remote':
+                remote=await self.api('GET','/api/remote')
+                content=panel('Acesso remoto · piloto gratuito', '<p id="remote-state">'+esc('Conectado' if remote['connected'] else 'Sem conexão confirmada')+'</p><p id="remote-message">'+esc(remote['message'])+'</p><p><a id="remote-url" href="'+esc(remote.get('url') or '#')+'" target="_blank" rel="noopener noreferrer">'+esc(remote.get('url') or 'Endereço ainda não disponível')+'</a></p><p>Ative no Raspberry pelo instalador de acesso remoto. Cada equipamento usa sua própria identidade. O endereço é preservado nas reconexões enquanto as chaves do serviço forem mantidas.</p><p>O serviço gratuito tem limites de tráfego e disponibilidade. O D-Max local e a integração Grafana permanecem independentes.</p>')+'<script src="/static/remote.js?v='+VERSION+'" defer></script>'
             elif page == 'audit':
                 actor=self.request.query_params.get('actor','')
                 try: offset=max(0,int(self.request.query_params.get('offset','0')))
@@ -292,7 +296,7 @@ def install(app):
             response = self.finish(HTMLResponse(self.document(body, PAGES[page], live=live), status_code=status))
             if live:
                 response.headers['X-DMax-Live'] = '1'
-            if page == 'maintenance':
+            if page in ('maintenance','remote'):
                 response.headers['X-DMax-Live'] = '1'
             return response
 

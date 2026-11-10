@@ -28,6 +28,8 @@ não implementar, alterar o pacote publicado ou gerar versão para este pedido.*
 Situação na 0.10.0: a curva usa os últimos 180 pontos em memória e não oferece
 consulta histórica por período, exportação própria ou tooltip. Os relatórios
 atuais de sessões não substituem o histórico da curva.
+Essa pendência continua aberta na 0.11.0, dedicada ao piloto de acesso remoto
+com preservação da integração Grafana.
 
 # Escopo retomado da conversa anterior
 

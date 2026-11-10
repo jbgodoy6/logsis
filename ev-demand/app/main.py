@@ -268,7 +268,7 @@ def create_app(database=None, background=True, recovery_public_key=None, root_pa
                 await asyncio.to_thread(network.close)
             store.db.close()
 
-    app = FastAPI(title='EnergyCube D-Max · Controle de demanda', version='0.10.0', lifespan=lifespan,
+    app = FastAPI(title='EnergyCube D-Max · Controle de demanda', version='0.11.0', lifespan=lifespan,
                   docs_url=None, redoc_url=None, openapi_url=None)
     app.state.store, app.state.engine, app.state.access = store, engine, access
     app.state.recovery = recovery
@@ -536,6 +536,11 @@ def create_app(database=None, background=True, recovery_public_key=None, root_pa
     @app.get('/api/history')
     async def history(u=Depends(user)):
         return store.history()
+
+    @app.get('/api/remote')
+    async def remote_status(u=Depends(technician)):
+        from .remote_tunnel import public_status
+        return public_status()
 
     @app.get('/api/audit')
     async def audit(actor: str = '', offset: int = 0, u=Depends(administrator)):
