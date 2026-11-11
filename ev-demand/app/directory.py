@@ -125,8 +125,9 @@ async def synchronize(access, client=None):
             if data.get('subscription') is not None and subscription is not None:
                 subscription.receive(data['subscription'], token)
             if 'accounts' in data:
-                access.apply_snapshot(data['accounts'],scopes=('developer','commercial'))
-            access.apply_snapshot(data['technicians'])
+                access.apply_snapshot(data['technicians']+data['accounts'],scopes=('technician','developer','commercial'))
+            else:
+                access.apply_snapshot(data['technicians'])
             acknowledge(access,remote,data.get('remote_ack'))
             if any(row['payload'].get('_acknowledged_base') for row in access.pending()):
                 rebase_acknowledged(access, data['technicians'])

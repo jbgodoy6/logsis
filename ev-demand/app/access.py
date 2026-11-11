@@ -324,7 +324,7 @@ class Access:
             old = self.by_id(r['id'])
             if conflict and conflict['id'] != r['id']:
                 raise ValueError('Login global conflita com conta local; intervenção do raiz necessária')
-            if old and (old['role'] not in scopes or old['name'] != r['name']):
+            if old and (old['name'] != r['name'] or (old['role'] not in scopes and not (old['source']=='directory' and old['role'] in ('technician','developer','commercial')))):
                 raise ValueError('Identidade global alterada; não é permitido assumir conta local')
             seen_ids.add(r['id']);seen_names.add(r['name']);normalized.append(r)
         audit = []
@@ -332,6 +332,9 @@ class Access:
             for r in normalized:
                 old = self.by_id(r['id'])
                 pending = self.db.execute('SELECT 1 FROM directory_pending WHERE user_id=?', (r['id'],)).fetchone()
+                if old and pending and old['role']!=r['role']:
+                    self.db.execute('DELETE FROM directory_pending WHERE user_id=?',(r['id'],))
+                    pending=None
                 if old and pending:
                     # A revocation still wins over a pending offline password edit.
                     if not r['active'] or r.get('deleted'):

@@ -6,31 +6,14 @@ const DMAX_DEFAULT_HASH = 'pbkdf2_sha256$600000$0cc644386557630153579d018267d636
 
 function onOpen() {
   SpreadsheetApp.getUi().createMenu('D-Max')
-    .addItem('Preparar aba Tecnicos', 'prepararTecnicos')
-    .addItem('Preparar contas desenvolvedor/comercial', 'prepararContas')
+    .addItem('Preparar/migrar usuários (aba única)', 'migrarUsuarios')
     .addItem('Preparar aba Assinaturas', 'prepararAssinaturas')
     .addItem('Preparar diretório de acesso remoto', 'prepararRemoto')
     .addItem('Autorizar um D-Max', 'autorizarDMax')
     .addItem('Revogar chave de um D-Max', 'revogarDMax').addToUi();
 }
 
-function prepararTecnicos() {
-  const book = SpreadsheetApp.openById(DMAX_SHEET_ID);
-  let sheet = book.getSheetByName(DMAX_TAB);
-  if (!sheet) sheet = book.insertSheet(DMAX_TAB);
-  if (sheet.getLastRow() === 0) {
-    sheet.getRange(1, 1, 1, 5).setValues([DMAX_HEADERS]);
-    sheet.setFrozenRows(1);
-    sheet.getRange(1,1,1,5).setBackground('#06264a').setFontColor('#ffffff').setFontWeight('bold');
-    sheet.autoResizeColumns(1,5);
-  } else {
-    const header = sheet.getRange(1,1,1,5).getValues()[0].map(v => String(v).trim().toLowerCase());
-    if (JSON.stringify(header) !== JSON.stringify(DMAX_HEADERS)) {
-      throw new Error('A aba já contém dados com outros cabeçalhos. Nada foi substituído.');
-    }
-  }
-  SpreadsheetApp.getUi().alert('Aba Tecnicos pronta. Use id permanente, nome, login, situacao e valido_ate. Não coloque senhas na planilha.');
-}
+function prepararTecnicos() {return migrarUsuarios();}
 
 function autorizarDMax() {
   const ui = SpreadsheetApp.getUi();
@@ -51,7 +34,7 @@ function revogarDMax() {
   const answer=ui.prompt('Revogar chave de equipamento','Informe o identificador do D-Max. Isso revoga a sincronização; não apaga o cadastro offline já existente.',ui.ButtonSet.OK_CANCEL);
   if(answer.getSelectedButton()!==ui.Button.OK)return;
   PropertiesService.getScriptProperties().deleteProperty('device.'+answer.getResponseText().trim());
-  ui.alert('Chave revogada. Para bloquear um técnico, altere a situação na aba Tecnicos.');
+  ui.alert('Chave revogada. Para bloquear um técnico, altere a situação na aba Usuarios.');
 }
 
 function sha_(value) {
@@ -82,7 +65,7 @@ function doPost(event) {
     }
     if(data.action==='snapshot'){
       const result=snapshot_(props);
-      result.accounts=accounts_(props);
+      if(!Object.prototype.hasOwnProperty.call(result,'accounts'))result.accounts=accounts_(props);
       const notice=subscription_(props,data.controller_id);
       if(notice)result.subscription=notice;
       if(data.remote){
@@ -181,6 +164,7 @@ function rows_() {
 }
 
 function refresh_(props) {
+  if(unifiedSheet_(props))return unifiedState_(props);
   const source=rows_(),all=props.getProperties(),seen={},records=[];
   // Validate every identity before committing any metadata change.
   source.rows.forEach(meta=>{
@@ -214,6 +198,7 @@ function refresh_(props) {
   return {source:source,records:records};
 }
 function snapshot_(props) {
+  if(unifiedSheet_(props))return unifiedSnapshot_(props);
   const state=refresh_(props);
   return {ok:true,complete:true,generated_at:Date.now()/1000,technicians:state.records.map(r=>{
     const copy=Object.assign({},r);delete copy.meta_digest;return copy;
@@ -226,6 +211,7 @@ function update_(props,r) {
   if(!validHash_(r.password)||(r.activation_hash!==null&&!validHash_(r.activation_hash))||!Number.isInteger(r.credential_version)||r.credential_version<1)error_(422,'Credencial inválida');
   if(![true,false,0,1].includes(r.active)||![true,false,0,1].includes(r.deleted)||![true,false,0,1].includes(r.must_change)||
     (r.expires_at!==null&&(!Number.isFinite(r.expires_at)||r.expires_at<0)))error_(422,'Situação inválida');
+  if(unifiedSheet_(props))return updateUnified_(props,r);
   const state=refresh_(props),old=state.records.find(x=>x.id===r.id),register=r.operations.includes('register');
   if(state.records.some(x=>x.name===r.name&&x.id!==r.id))error_(409,'Login já existe');
   if(register&&old){if(old.name===r.name&&old.password===r.password)return {ok:true,acknowledged_id:r.id};error_(409,'Identidade já existe');}
@@ -297,15 +283,7 @@ function subscription_(props,id) {
 
 /** Optional privileged accounts. Existing Tecnicos rows and credentials stay intact. */
 const DMAX_ACCOUNT_HEADERS=['id','nome','login','perfil','situacao','valido_ate','verificador'];
-function prepararContas(){
-  const book=SpreadsheetApp.openById(DMAX_SHEET_ID);
-  let sheet=book.getSheetByName('Contas');
-  if(!sheet)sheet=book.insertSheet('Contas');
-  if(!sheet.getLastRow()){
-    sheet.getRange(1,1,1,7).setValues([DMAX_ACCOUNT_HEADERS]);sheet.setFrozenRows(1);
-  }
-  if(JSON.stringify(sheet.getRange(1,1,1,7).getValues()[0])!==JSON.stringify(DMAX_ACCOUNT_HEADERS))error_(422,'Cabeçalhos Contas incompatíveis; nada substituído');
-}
+function prepararContas(){return migrarUsuarios();}
 function accounts_(props){
   const book=SpreadsheetApp.openById(DMAX_SHEET_ID),sheet=book.getSheetByName('Contas');
   if(!sheet)return [];
@@ -334,4 +312,155 @@ function accounts_(props){
   if(records.some(r=>legacy.some(t=>t.id===r.id||t.name===r.name)))error_(409,'Conta conflita com técnico existente');
   records.forEach(r=>props.setProperty('account.'+r.id,JSON.stringify(r)));
   return records;
+}
+
+/** One active roster for all global roles. Legacy tabs are retained as archives. */
+const DMAX_USERS_TAB='Usuarios';
+const DMAX_USERS_HEADERS=['id','nome','login','perfil','situacao','valido_ate','verificador'];
+const DMAX_GLOBAL_ROLES={tecnico:'technician','técnico':'technician',technician:'technician',desenvolvedor:'developer',developer:'developer',comercial:'commercial',commercial:'commercial'};
+function unifiedSheet_(props){
+  if(props.getProperty('directory.unified')!=='1')return null;
+  const sheet=SpreadsheetApp.openById(DMAX_SHEET_ID).getSheetByName(DMAX_USERS_TAB);
+  if(!sheet)error_(503,'Aba Usuarios ausente; restaure a aba, não apague propriedades');
+  return sheet;
+}
+function userRows_(sheet,book){
+  if(!sheet.getLastRow())error_(422,'Cabeçalhos Usuarios ausentes');
+  const values=sheet.getRange(1,1,sheet.getLastRow(),7).getValues();
+  if(JSON.stringify(values[0])!==JSON.stringify(DMAX_USERS_HEADERS))error_(422,'Cabeçalhos Usuarios incompatíveis');
+  const ids=new Set(),names=new Set();
+  const rows=[];
+  values.slice(1).forEach((c,index)=>{
+    if(c.every(v=>String(v).trim()===''))return;
+    const id=String(c[0]).trim(),name=String(c[2]).trim().toLowerCase(),full=String(c[1]).trim();
+    const role=DMAX_GLOBAL_ROLES[String(c[3]).trim().toLowerCase()],status=String(c[4]).trim().toLowerCase();
+    const hash=String(c[6]).trim();
+    if(!/^[A-Za-z0-9_-]{1,100}$/.test(id)||!/^[a-z0-9._-]{3,40}$/.test(name)||['root','admin'].includes(name)||!full||full.length>100||!role||ids.has(id)||names.has(name))error_(422,'Identidade/perfil inválido ou duplicado na linha '+(index+2));
+    if(!['ativo','bloqueado','excluido','excluído'].includes(status)||!validHash_(hash))error_(422,'Situação/verificador inválido na linha '+(index+2));
+    ids.add(id);names.add(name);
+    rows.push({id:id,name:name,full_name:full,role:role,active:status==='ativo',deleted:['excluido','excluído'].includes(status),expires_at:date_(c[5],book.getSpreadsheetTimeZone()),password:hash,row:index+2});
+  });
+  if(rows.length>2000)error_(422,'Limite desta implantação: 2000 usuários');
+  return rows;
+}
+function historicalUsers_(all){
+  const byId={},byName={};
+  // Canonical records supersede archived role records for the same identity.
+  ['user.','account.','identity.'].forEach(prefix=>{
+    Object.keys(all).filter(k=>k.startsWith(prefix)).forEach(k=>{
+      const r=JSON.parse(all[k]);
+      if(byId[r.id]&&byId[r.id].name!==r.name)error_(409,'ID histórico tem logins divergentes: '+r.id);
+      if(byName[r.name]&&byName[r.name]!==r.id)error_(409,'Login histórico tem IDs divergentes: '+r.name);
+      byId[r.id]=Object.assign({role:prefix==='user.'?'technician':r.role},r);byName[r.name]=r.id;
+    });
+  });
+  return {byId:byId,byName:byName};
+}
+function unifiedState_(props){
+  const book=SpreadsheetApp.openById(DMAX_SHEET_ID),sheet=unifiedSheet_(props);
+  const rows=userRows_(sheet,book),all=props.getProperties(),history=historicalUsers_(all),seen=new Set(),records=[];
+  // Validate the entire roster against all historical identities before any write.
+  rows.forEach(r=>{
+    if(history.byId[r.id]&&history.byId[r.id].name!==r.name)error_(409,'Login/id permanente: '+r.id);
+    if(history.byName[r.name]&&history.byName[r.name]!==r.id)error_(409,'Login pertence a outro ID: '+r.name);
+  });
+  rows.forEach(r=>{
+    const old=history.byId[r.id],pending=all['pending.'+r.id]?JSON.parse(all['pending.'+r.id]):null;
+    const credentialChanged=old&&old.password!==r.password;
+    const mustChange=pending&&pending.name===r.name&&pending.password===r.password?Boolean(pending.must_change):old&&!credentialChanged?Boolean(old.must_change):r.role==='technician'&&r.password===DMAX_DEFAULT_HASH;
+    const digest=sha_(JSON.stringify([r.full_name,r.role,r.active,r.deleted,r.expires_at]));
+    const record=Object.assign({},r,{activation_hash:null,must_change:mustChange,credential_version:old?old.credential_version+(credentialChanged?1:0):pending?pending.credential_version:1,meta_version:old?(old.meta_version||0)+(old.meta_digest!==digest?1:0):1,meta_digest:digest});
+    delete record.row;records.push(record);seen.add(r.id);
+  });
+  Object.values(history.byId).forEach(old=>{
+    if(seen.has(old.id))return;
+    records.push(Object.assign({},old,{active:false,deleted:true,meta_version:(old.meta_version||0)+((old.active||!old.deleted)?1:0)}));
+  });
+  if(records.length>5000)error_(503,'Histórico de identidades excedeu a capacidade');
+  records.forEach(r=>props.setProperty('identity.'+r.id,JSON.stringify(r)));
+  rows.forEach(r=>{if(all['pending.'+r.id])props.deleteProperty('pending.'+r.id);});
+  return {source:{sheet:sheet,rows:rows},records:records};
+}
+function unifiedSnapshot_(props){
+  const state=unifiedState_(props);
+  const wire=r=>{const copy=Object.assign({},r);delete copy.meta_digest;return copy;};
+  return {ok:true,complete:true,generated_at:Date.now()/1000,technicians:state.records.filter(r=>r.role==='technician').map(wire),accounts:state.records.filter(r=>['developer','commercial'].includes(r.role)).map(wire)};
+}
+function updateUnified_(props,r){
+  const state=unifiedState_(props),old=state.records.find(x=>x.id===r.id),register=r.operations.includes('register');
+  if(old&&old.role!=='technician')error_(403,'Perfis são gerenciados somente na aba Usuarios');
+  if(state.records.some(x=>x.name===r.name&&x.id!==r.id))error_(409,'Login já existe');
+  if(register&&old){if(old.name===r.name&&old.password===r.password)return {ok:true,acknowledged_id:r.id};error_(409,'Identidade já existe');}
+  if(!register){
+    if(!old||old.name!==r.name)error_(409,'Identidade não encontrada');
+    if(r.operations.includes('credential')&&(!old.active||old.deleted||(old.expires_at!==null&&old.expires_at<=Date.now()/1000)||old.credential_version!==r.base_version)){
+      if(old.password===r.password&&old.credential_version===r.credential_version)return {ok:true,acknowledged_id:r.id};error_(409,'Credencial mudou ou acesso foi revogado');
+    }
+    const matches=old.full_name===r.full_name&&Boolean(old.active)===Boolean(r.active)&&Boolean(old.deleted)===Boolean(r.deleted)&&old.expires_at===r.expires_at;
+    if(r.operations.includes('metadata')&&old.meta_version!==r.base_meta_version&&!matches)error_(409,'Planilha mudou');
+  }
+  let record=old?Object.assign({},old):{id:r.id,name:r.name,role:'technician',meta_version:0};
+  if(register||r.operations.includes('metadata'))Object.assign(record,{full_name:r.full_name,active:Boolean(r.active),deleted:Boolean(r.deleted),expires_at:r.expires_at});
+  if(register||r.operations.includes('credential'))Object.assign(record,{password:r.password,activation_hash:null,must_change:Boolean(r.must_change),credential_version:r.credential_version});
+  const meta=state.source.rows.find(x=>x.id===r.id),index=meta?meta.row:state.source.sheet.getLastRow()+1;
+  const row=[record.id,record.full_name,record.name,'tecnico',record.deleted?'excluido':record.active?'ativo':'bloqueado',record.expires_at===null?'':new Date(record.expires_at*1000).toISOString(),record.password];
+  props.setProperty('pending.'+r.id,JSON.stringify(record));
+  state.source.sheet.getRange(index,1,1,7).setValues([row.map(v=>typeof v==='string'?sheetText_(v):v)]);
+  // Recompute metadata versions through the same canonical path as snapshots.
+  props.setProperty('identity.'+r.id,JSON.stringify(record));
+  unifiedState_(props);
+  return {ok:true,acknowledged_id:r.id};
+}
+function migrarUsuarios(){
+  const lock=LockService.getScriptLock();
+  if(!lock.tryLock(5000))throw new Error('Sincronização ocupada; tente novamente');
+  try {
+    const props=PropertiesService.getScriptProperties(),book=SpreadsheetApp.openById(DMAX_SHEET_ID);
+    if(unifiedSheet_(props)){unifiedState_(props);SpreadsheetApp.getUi().alert('Usuarios já é a única aba ativa de acessos.');return;}
+    if(book.getSheetByName(DMAX_USERS_TAB))throw new Error('Aba Usuarios já existe sem ativação. Preserve-a e revise antes de migrar.');
+    const all=props.getProperties(),history=historicalUsers_(all),byId={},byName={};
+    function merge(record,fromAccount){
+      const old=byId[record.id];
+      if(old&&old.name!==record.name)throw new Error('ID com logins diferentes: '+record.id);
+      if(byName[record.name]&&byName[record.name]!==record.id)throw new Error('Login com IDs diferentes: '+record.name+'. Preserve o ID histórico antes de migrar.');
+      if(history.byId[record.id]&&history.byId[record.id].name!==record.name)throw new Error('Login histórico alterado no ID '+record.id);
+      if(history.byName[record.name]&&history.byName[record.name]!==record.id)throw new Error('Login pertence a outro ID histórico: '+record.name);
+      if(!old||fromAccount)byId[record.id]=record;
+      byName[record.name]=record.id;
+    }
+    const tech=book.getSheetByName(DMAX_TAB),accounts=book.getSheetByName('Contas');
+    if(tech){
+      rows_().rows.forEach(r=>{
+        const old=history.byId[r.id],pending=all['pending.'+r.id]?JSON.parse(all['pending.'+r.id]):null;
+        const password=old?old.password:pending&&pending.name===r.name?pending.password:DMAX_DEFAULT_HASH;
+        merge(Object.assign({},r,{role:'technician',password:password}),false);
+      });
+    }
+    if(accounts){
+      const header=accounts.getRange(1,1,1,7).getValues()[0];
+      if(JSON.stringify(header)!==JSON.stringify(DMAX_USERS_HEADERS))throw new Error('Cabeçalhos Contas incompatíveis');
+      userRows_(accounts,book).forEach(r=>{
+        if(r.role==='technician')throw new Error('Perfil inesperado na antiga aba Contas');
+        merge(r,true);
+      });
+    }
+    const output=[DMAX_USERS_HEADERS];
+    Object.values(byId).forEach(r=>{
+      if(!validHash_(r.password))throw new Error('Verificador inválido no ID '+r.id);
+      output.push([r.id,r.full_name,r.name,{technician:'tecnico',developer:'desenvolvedor',commercial:'comercial'}[r.role],r.deleted?'excluido':r.active?'ativo':'bloqueado',r.expires_at===null?'':new Date(r.expires_at*1000).toISOString(),r.password]);
+    });
+    const stamp=Date.now()+'_'+Utilities.getUuid().slice(0,8);
+    // Back up original tabs before creating the canonical roster. No originals deleted.
+    [tech,accounts].filter(Boolean).forEach((sheet,i)=>sheet.copyTo(book).setName('Backup_acessos_'+stamp+'_'+i).hideSheet());
+    const staging=book.insertSheet('Usuarios_preparacao_'+stamp);
+    staging.getRange(1,1,output.length,7).setValues(output.map(row=>row.map(v=>typeof v==='string'?sheetText_(v):v)));
+    SpreadsheetApp.flush();userRows_(staging,book);
+    staging.setFrozenRows(1);staging.autoResizeColumns(1,7);
+    staging.setName(DMAX_USERS_TAB);SpreadsheetApp.flush();
+    props.setProperty('directory.unified','1');
+    // Old properties remain intact for recovery; only canonical records are new.
+    unifiedState_(props);
+    [tech,accounts].filter(Boolean).forEach(sheet=>sheet.hideSheet());
+    SpreadsheetApp.getUi().alert('Usuarios pronta: '+(output.length-1)+' contas. Edite somente Usuarios. Tecnicos/Contas e backups foram preservados e ocultados.');
+  } finally {lock.releaseLock();}
 }

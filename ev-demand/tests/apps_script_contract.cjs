@@ -12,10 +12,20 @@ const sheet={
   setValues:values=>{values.forEach((row,i)=>{rows[start-1+i]??=[];row.forEach((v,j)=>rows[start-1+i][column-1+j]=v);});if(uncertain){uncertain=false;throw Error('lost response after commit');}}
  })};
 const props={getProperty:k=>properties[k]??null,setProperty:(k,v)=>properties[k]=String(v),deleteProperty:k=>delete properties[k],getProperties:()=>({...properties})};
+const extraSheets={};
+function makeTab(data,name) {
+ const tab={name,hidden:false,getLastRow:()=>data.length,setFrozenRows:()=>{},autoResizeColumns:()=>{},
+  getRange:(start,column,height,width)=>({getValues:()=>Array.from({length:height},(_,i)=>Array.from({length:width},(_,j)=>data[start-1+i]?.[column-1+j]??'')),setValues:values=>{values.forEach((row,i)=>{data[start-1+i]??=[];row.forEach((v,j)=>data[start-1+i][column-1+j]=v)});if(uncertain){uncertain=false;throw Error('lost response after commit')}}}),
+  setName:n=>{delete extraSheets[tab.name];tab.name=n;extraSheets[n]=tab;return tab},hideSheet:()=>{tab.hidden=true;return tab},copyTo:()=>{const n='copy-'+Object.keys(extraSheets).length,t=makeTab(JSON.parse(JSON.stringify(data)),n);extraSheets[n]=t;return t},data};
+ return tab;
+}
+const book={getSheetByName:name=>name==='Tecnicos'?sheet:name==='Contas'?accountSheet:name==='Assinaturas'?subscriptions:name==='DMax_Remoto'?remote:extraSheets[name]??null,
+ insertSheet:name=>{const t=makeTab(name==='DMax_Remoto'?remoteRows:[],name);if(name==='DMax_Remoto')remote=t;else extraSheets[name]=t;return t},getSpreadsheetTimeZone:()=> 'America/Sao_Paulo'};
+sheet.copyTo=()=>{const n='copy-tech',t=makeTab(JSON.parse(JSON.stringify(rows)),n);extraSheets[n]=t;return t};sheet.hideSheet=()=>{sheet.hidden=true;return sheet};
 const context={
  Date,JSON,Math,Number,String,Object,Array,Boolean,Error,RegExp,
  PropertiesService:{getScriptProperties:()=>props},
- SpreadsheetApp:{openById:()=>({getSheetByName:name=>name==='Contas'?accountSheet:name==='Assinaturas'?subscriptions:name==='DMax_Remoto'?remote:sheet,insertSheet:name=>{assert.equal(name,'DMax_Remoto');remote={getLastRow:()=>remoteRows.length,setFrozenRows:()=>{},autoResizeColumns:()=>{},getRange:(start,column,height,width)=>({getValues:()=>Array.from({length:height},(_,i)=>Array.from({length:width},(_,j)=>remoteRows[start-1+i]?.[column-1+j]??'')),setValues:values=>values.forEach((row,i)=>{remoteRows[start-1+i]??=[];row.forEach((v,j)=>remoteRows[start-1+i][column-1+j]=v)})})};return remote;},getSpreadsheetTimeZone:()=> 'America/Sao_Paulo'})},
+ SpreadsheetApp:{openById:()=>book,flush:()=>{},getUi:()=>({alert:()=>{}})},
  LockService:{getScriptLock:()=>({tryLock:()=>true,releaseLock:()=>{}})},
  ContentService:{MimeType:{JSON:'application/json'},createTextOutput:text=>({text,setMimeType(){return this;}})},
  Utilities:{DigestAlgorithm:{SHA_256:'sha256'},Charset:{UTF_8:'utf8'},getUuid:()=>crypto.randomUUID(),
@@ -105,3 +115,41 @@ accountRows[1][4]='bloqueado';assert.equal(call('snapshot').accounts[0].active,f
 accountRows[1][6]='plaintext-is-forbidden';assert.equal(call('snapshot').code,422);accountRows[1][6]=changed.password;
 accountRows[1][2]=rows[1][2];assert.equal(call('snapshot').code,409);
 console.log('privileged accounts contract passed');
+
+// One active sheet: full validation, backups, repeated migration and compatibility.
+accountSheet.copyTo=()=>{const n='copy-accounts',t=makeTab(JSON.parse(JSON.stringify(accountRows)),n);extraSheets[n]=t;return t};accountSheet.hideSheet=()=>{accountSheet.hidden=true;return accountSheet};
+assert.throws(()=>context.migrarUsuarios(),/IDs diferentes|outro ID histórico/);
+assert.equal(properties['directory.unified'],undefined);assert.equal(extraSheets.Usuarios,undefined);
+accountRows[1][2]='dev.one';
+accountRows.push(['TEC-2','Técnico promovido','tecnico.dois','desenvolvedor','ativo','',changed.password]);
+rows.push(['UNSYNC','Técnico ainda não sincronizado','unsynced.tech','ativo','']);
+context.migrarUsuarios();assert.equal(properties['directory.unified'],'1');
+assert.equal(sheet.hidden,true);assert.equal(accountSheet.hidden,true);
+const unified=extraSheets.Usuarios;assert(unified);assert.equal(unified.data[0].join(','),'id,nome,login,perfil,situacao,valido_ate,verificador');
+assert.equal(Object.keys(extraSheets).filter(n=>n.startsWith('Backup_acessos_')).length,2);
+let unifiedResult=call('snapshot');assert.equal(unifiedResult.complete,true);assert.equal(unifiedResult.technicians.find(r=>r.id==='UNSYNC').must_change,true);
+assert.equal(unifiedResult.accounts.find(r=>r.id==='TEC-2').role,'developer');
+assert(!unifiedResult.technicians.some(r=>r.id==='TEC-2'));
+assert.equal(unifiedResult.technicians.find(r=>r.id==='TEC-4').password,retry.password);
+assert.equal(unifiedResult.technicians.find(r=>r.id==='TEC-1').deleted,true);
+const canonicalBefore=JSON.stringify(unified.data);context.migrarUsuarios();assert.equal(JSON.stringify(unified.data),canonicalBefore);
+// Archived tabs no longer affect authentication/synchronization.
+rows[1][2]='bad legacy edit';accountRows[1][2]='bad legacy edit';assert.equal(call('snapshot').complete,true);
+const canonicalTech=unifiedResult.technicians.find(r=>r.id==='TEC-4');
+const edited={...canonicalTech,password:'pbkdf2_sha256$600000$'+'d'.repeat(32)+'$'+'e'.repeat(64),operations:['credential'],base_version:canonicalTech.credential_version,credential_version:canonicalTech.credential_version+1,must_change:false};
+assert.equal(call('update',edited).acknowledged_id,'TEC-4');assert.equal(call('snapshot').technicians.find(r=>r.id==='TEC-4').password,edited.password);
+assert.equal(unified.data.find(r=>r[0]==='TEC-4')[6],edited.password);
+// Devices cannot demote/update privileged users or assign their role through uploads.
+const privileged=call('snapshot').accounts.find(r=>r.id==='TEC-2');assert.equal(call('update',{...privileged,operations:['metadata'],base_meta_version:privileged.meta_version}).code,403);
+const newUnified={...newRecord,id:'NEW-USER',name:'new.user',role:'developer',must_change:true,operations:['register']};
+uncertain=true;assert.equal(call('update',newUnified).ok,false);
+let created=call('snapshot').technicians.find(r=>r.id==='NEW-USER');assert.equal(created.must_change,true);assert.equal(created.role,'technician');
+assert.equal(call('update',newUnified).acknowledged_id,'NEW-USER');
+// Sheet-driven role changes, revocation, verifier reset and malformed snapshots.
+unified.data.find(r=>r[0]==='TEC-4')[3]='comercial';assert.equal(call('snapshot').accounts.find(r=>r.id==='TEC-4').role,'commercial');
+unified.data.find(r=>r[0]==='TEC-4')[4]='bloqueado';assert.equal(call('snapshot').accounts.find(r=>r.id==='TEC-4').active,false);
+const oldCredential=call('snapshot').accounts.find(r=>r.id==='TEC-4').credential_version;
+unified.data.find(r=>r[0]==='TEC-4')[6]=changed.password;assert.equal(call('snapshot').accounts.find(r=>r.id==='TEC-4').credential_version,oldCredential+1);
+const snapshotProperties=JSON.stringify(properties);unified.data.push([...unified.data[1]]);assert.equal(call('snapshot').code,422);assert.equal(JSON.stringify(properties),snapshotProperties);unified.data.pop();
+const deletedIndex=unified.data.findIndex(r=>r[0]==='NEW-USER');unified.data.splice(deletedIndex,1);assert.equal(call('snapshot').technicians.find(r=>r.id==='NEW-USER').deleted,true);
+console.log('Unified users contract passed: backups, identity merge, idempotent migration, archived tabs ignored, role separation, credential edits, revocation, retry and no partial snapshot writes.');

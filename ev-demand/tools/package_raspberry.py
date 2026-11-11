@@ -6,7 +6,7 @@ from pathlib import Path
 import re
 import zipfile
 
-VERSION = '0.14.0'
+VERSION = '0.14.1'
 PYTHON = ('__init__.py', 'commercial.py', 'access.py', 'control.py', 'directory.py', 'engine.py', 'main.py',
           'meter.py', 'network.py', 'ocpp_server.py', 'recovery.py', 'root_auth.py',
           'security.py', 'server_ui.py', 'services.py', 'store.py', 'live_dom.py', 'licensing.py', 'reports.py', 'maintenance.py', 'remote_gateway.py', 'remote_tunnel.py', 'remote_registry.py', 'remote_clients.py', 'curve.py', 'supervision.py', 'plant_view.py', 'telemetry.py')
@@ -70,6 +70,7 @@ def package(root, wheels, output, signing_key=None, cloudflared=None):
     include(root / 'docs/remote-v0121.md', 'NOVIDADES-0.12.1.md')
     include(root / 'docs/release-v0130.md', 'NOVIDADES-0.13.0.md')
     include(root / 'docs/release-v0140.md', 'NOVIDADES-0.14.0.md')
+    include(root / 'docs/release-v0141.md', 'NOVIDADES-0.14.1.md')
     include(root / 'tools/account_verifier.py', 'tools/account_verifier.py')
     include(root / 'docs/receita-remoto.md', 'RECEITA-ACESSO-REMOTO.md')
     include(root / 'docs/assinaturas-v090.md', 'ASSINATURAS-GOOGLE.md')

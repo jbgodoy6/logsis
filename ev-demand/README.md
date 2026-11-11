@@ -1,3 +1,7 @@
+# D-Max 0.14.1 · Usuários da plataforma em aba única
+
+[Técnicos, desenvolvedores e comerciais na aba Usuarios; migração e atualização](docs/release-v0141.md).
+
 # D-Max 0.14.0 · Curva adaptativa e demonstrações isoladas
 
 [Alterações, contas na plataforma e atualização segura](docs/release-v0140.md). Nova versão em desenvolvimento; assinatura de distribuição depende da chave privada original.

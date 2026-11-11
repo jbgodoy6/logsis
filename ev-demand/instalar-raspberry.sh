@@ -133,6 +133,8 @@ fi
 install -o root -g root -m 0644 "$source_dir/deploy/d-max-maintenance.path" "$source_dir/deploy/d-max-maintenance.service" /etc/systemd/system/
 install -d -o dmax -g dmax -m 0700 "$state_dir/maintenance"
 install -m 0644 "$source_dir/run.py" "$source_dir/requirements.lock" "$app_dir/"
+install -d -o root -g root -m 0755 "$app_dir/tools"
+install -m 0644 "$source_dir/tools/account_verifier.py" "$app_dir/tools/account_verifier.py"
 install -m 0644 "$source_dir/desinstalar-raspberry.sh" "$source_dir/importar-dados-raspberry.sh" "$app_dir/"
 install -m 0644 /dev/null "$app_dir/.dmax-managed"
 if [[ ! -x "$app_dir/.venv/bin/python" ]]; then "$python_bin" -I -m venv "$app_dir/.venv"; fi

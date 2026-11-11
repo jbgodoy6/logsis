@@ -19,7 +19,7 @@ from .meter import MEASUREMENTS, FORMATS, normalize_serial_port
 from .plant_view import render_plant
 from .live_dom import view_tree
 
-VERSION = '0.14.0'
+VERSION = '0.14.1'
 PAGES = {
     'overview': 'Visão geral', 'chargers': 'Carregadores', 'vehicles': 'Veículos',
     'schedule': 'Horários', 'history': 'Histórico', 'meter': 'Multimedidor',
