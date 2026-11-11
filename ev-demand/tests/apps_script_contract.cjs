@@ -4,7 +4,7 @@ const source=fs.readFileSync(process.argv[2],'utf8');
 let rows=[['id','nome','login','situacao','valido_ate'],['TEC-1','Técnico Um','tecnico.um','ativo','']];
 const properties={'device.controller':crypto.createHash('sha256').update('fixture-device-key').digest('hex')};
 let uncertain=false;
-let subscriptions=null,remoteRows=[],remote=null;
+let subscriptions=null,remoteRows=[],remote=null,accountSheet=null;
 const sheet={
  getLastRow:()=>rows.length,
  getRange:(start,column,height,width)=>({
@@ -15,7 +15,7 @@ const props={getProperty:k=>properties[k]??null,setProperty:(k,v)=>properties[k]
 const context={
  Date,JSON,Math,Number,String,Object,Array,Boolean,Error,RegExp,
  PropertiesService:{getScriptProperties:()=>props},
- SpreadsheetApp:{openById:()=>({getSheetByName:name=>name==='Assinaturas'?subscriptions:name==='DMax_Remoto'?remote:sheet,insertSheet:name=>{assert.equal(name,'DMax_Remoto');remote={getLastRow:()=>remoteRows.length,setFrozenRows:()=>{},autoResizeColumns:()=>{},getRange:(start,column,height,width)=>({getValues:()=>Array.from({length:height},(_,i)=>Array.from({length:width},(_,j)=>remoteRows[start-1+i]?.[column-1+j]??'')),setValues:values=>values.forEach((row,i)=>{remoteRows[start-1+i]??=[];row.forEach((v,j)=>remoteRows[start-1+i][column-1+j]=v)})})};return remote;},getSpreadsheetTimeZone:()=> 'America/Sao_Paulo'})},
+ SpreadsheetApp:{openById:()=>({getSheetByName:name=>name==='Contas'?accountSheet:name==='Assinaturas'?subscriptions:name==='DMax_Remoto'?remote:sheet,insertSheet:name=>{assert.equal(name,'DMax_Remoto');remote={getLastRow:()=>remoteRows.length,setFrozenRows:()=>{},autoResizeColumns:()=>{},getRange:(start,column,height,width)=>({getValues:()=>Array.from({length:height},(_,i)=>Array.from({length:width},(_,j)=>remoteRows[start-1+i]?.[column-1+j]??'')),setValues:values=>values.forEach((row,i)=>{remoteRows[start-1+i]??=[];row.forEach((v,j)=>remoteRows[start-1+i][column-1+j]=v)})})};return remote;},getSpreadsheetTimeZone:()=> 'America/Sao_Paulo'})},
  LockService:{getScriptLock:()=>({tryLock:()=>true,releaseLock:()=>{}})},
  ContentService:{MimeType:{JSON:'application/json'},createTextOutput:text=>({text,setMimeType(){return this;}})},
  Utilities:{DigestAlgorithm:{SHA_256:'sha256'},Charset:{UTF_8:'utf8'},getUuid:()=>crypto.randomUUID(),
@@ -96,3 +96,12 @@ console.log('Remote catalog contract passed: authenticated full listing without 
 assert.equal(register({...newer,revision:4,url:'https://latest-client.trycloudflare.com'}).remote_ack.accepted,true);
 assert.equal(call('remote_directory').clients.find(row=>row.controller_id==='controller').url,'https://latest-client.trycloudflare.com');
 assert.equal(call('remote_directory',null,'fixture-device-key').clients.length,2);
+
+// Privileged accounts remain separate from existing technician cells.
+const accountRows=[['id','nome','login','perfil','situacao','valido_ate','verificador'],['DEV-1','Desenvolvedor','dev.one','desenvolvedor','ativo','',changed.password],['SALES-1','Comercial','sales.one','comercial','ativo','',changed.password]];
+accountSheet={getLastRow:()=>accountRows.length,getRange:(start,col,height,width)=>({getValues:()=>Array.from({length:height},(_,i)=>Array.from({length:width},(_,j)=>accountRows[start-1+i]?.[col-1+j]??''))})};
+let accounts=call('snapshot').accounts;assert.equal(accounts.length,2);assert.equal(accounts[0].role,'developer');assert.equal(accounts[1].role,'commercial');
+accountRows[1][4]='bloqueado';assert.equal(call('snapshot').accounts[0].active,false);
+accountRows[1][6]='plaintext-is-forbidden';assert.equal(call('snapshot').code,422);accountRows[1][6]=changed.password;
+accountRows[1][2]=rows[1][2];assert.equal(call('snapshot').code,409);
+console.log('privileged accounts contract passed');

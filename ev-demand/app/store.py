@@ -14,7 +14,7 @@ from .telemetry import display_colors
 DEFAULT_SETTINGS = {
     'site_name': 'Minha instalação', 'mode': 'simulation', 'limit_kw': 1000.0,
     'margin_kw': 50.0, 'timezone': 'America/Sao_Paulo', 'freshness_s': 15,
-    'ramp_kw_s': 10.0, 'schedules': [], 'blocked_policy': 'zero',
+    'curve_min_delta_kw': 1.0, 'ramp_kw_s': 10.0, 'schedules': [], 'blocked_policy': 'zero',
     'circuits': [{'id': 'principal', 'name': 'Quadro principal', 'limit_kw': 1000.0}],
     'meter': DEFAULT_METER,
     'cloud_url': '', 'retain_days': 7,
@@ -84,6 +84,7 @@ class Store:
         data['meter'] = normalize_meter(data['meter'])
         data.setdefault('technical_limit_kw', data['limit_kw'])
         data.setdefault('demo_cloud_url', '')
+        data.setdefault('curve_min_delta_kw',1.0)
         data['display_colors'] = display_colors(data.get('display_colors'))
         return data
 

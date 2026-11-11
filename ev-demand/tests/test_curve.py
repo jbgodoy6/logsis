@@ -19,7 +19,7 @@ class CurveTests(unittest.TestCase):
         curve.record(self.store,t,dict(at=t,total_kw=total),ev,valid,settings)
     def data(self,seconds=900,**kw):return curve.query(self.store,self.settings,datetime.fromtimestamp(self.now-seconds,timezone.utc).isoformat(),datetime.fromtimestamp(self.now+1,timezone.utc).isoformat(),now=self.now,**kw)
     def test_record_interval_limit_changes_modes_and_restart(self):
-        self.point(self.now-10);self.point(self.now-9,total=999);self.point(self.now-8,limit=600);self.point(self.now-7,mode='simulation')
+        self.point(self.now-10);self.point(self.now-9,total=101);self.point(self.now-8,limit=600);self.point(self.now-7,mode='simulation')
         data=self.data();self.assertEqual(data['total_samples'],2);self.assertEqual(data['points'][0]['total_kw'],100)
         self.assertEqual(data['points'][-1]['limit_kw'],600)
         path=self.store.db.execute('PRAGMA database_list').fetchone()['file'];self.store.db.close();self.store=Store(path)

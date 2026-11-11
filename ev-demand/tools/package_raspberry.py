@@ -6,11 +6,21 @@ from pathlib import Path
 import re
 import zipfile
 
-VERSION = '0.13.0'
-PYTHON = ('__init__.py', 'access.py', 'control.py', 'directory.py', 'engine.py', 'main.py',
+VERSION = '0.14.0'
+PYTHON = ('__init__.py', 'commercial.py', 'access.py', 'control.py', 'directory.py', 'engine.py', 'main.py',
           'meter.py', 'network.py', 'ocpp_server.py', 'recovery.py', 'root_auth.py',
           'security.py', 'server_ui.py', 'services.py', 'store.py', 'live_dom.py', 'licensing.py', 'reports.py', 'maintenance.py', 'remote_gateway.py', 'remote_tunnel.py', 'remote_registry.py', 'remote_clients.py', 'curve.py', 'supervision.py', 'plant_view.py', 'telemetry.py')
 STATIC = ('style.css', 'energycube.css', 'server.css', 'plant.css', 'live.css', 'live.js', 'maintenance.js', 'remote.js', 'd-max-logo.png', 'energycube-logo.png', 'd-max-report.jpg', 'energycube-report.jpg')
+
+
+def load_signing_key(root,path):
+    from cryptography.hazmat.primitives import serialization
+    from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+    key=serialization.load_pem_private_key(Path(path).read_bytes(),password=None)
+    expected=serialization.load_pem_public_key((root/'deploy/update-public.pem').read_bytes())
+    if not isinstance(key,Ed25519PrivateKey) or key.public_key().public_bytes_raw()!=expected.public_bytes_raw():
+        raise ValueError('Chave privada não corresponde à confiança pública existente; nada assinado')
+    return key
 
 
 def package(root, wheels, output, signing_key=None, cloudflared=None):
@@ -59,6 +69,8 @@ def package(root, wheels, output, signing_key=None, cloudflared=None):
     include(root / 'docs/validation-v0120.md', 'VALIDACAO-0.12.0.md')
     include(root / 'docs/remote-v0121.md', 'NOVIDADES-0.12.1.md')
     include(root / 'docs/release-v0130.md', 'NOVIDADES-0.13.0.md')
+    include(root / 'docs/release-v0140.md', 'NOVIDADES-0.14.0.md')
+    include(root / 'tools/account_verifier.py', 'tools/account_verifier.py')
     include(root / 'docs/receita-remoto.md', 'RECEITA-ACESSO-REMOTO.md')
     include(root / 'docs/assinaturas-v090.md', 'ASSINATURAS-GOOGLE.md')
     include(root / 'google-apps-script/Code.gs', 'google-apps-script/Code.gs')
@@ -80,8 +92,7 @@ def package(root, wheels, output, signing_key=None, cloudflared=None):
     files['SHA256SUMS.txt'] = ''.join(hashlib.sha256(data).hexdigest() + '  ' + name + '\n'
                                     for name, data in sorted(files.items())).encode()
     if signing_key is not None:
-        from cryptography.hazmat.primitives import serialization
-        key=serialization.load_pem_private_key(Path(signing_key).read_bytes(),password=None)
+        key=load_signing_key(root,signing_key)
         files['SHA256SUMS.sig']=key.sign(b'DMAX-UPDATE-1\n'+files['SHA256SUMS.txt'])
     output.parent.mkdir(parents=True, exist_ok=True)
     with zipfile.ZipFile(output, 'w', zipfile.ZIP_DEFLATED) as archive:

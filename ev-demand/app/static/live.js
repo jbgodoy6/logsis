@@ -10,7 +10,7 @@
   const tags = new Set('section article div span p b strong em small h2 h3 h4 a svg g path rect circle ellipse line polyline text title i'.split(' '));
   const attrs = new Set('class id role aria-label data-live-key data-curve-value tabindex viewbox x y x1 x2 y1 y2 cx cy r rx ry width height d points fill stroke stroke-width stroke-opacity fill-opacity stroke-linecap stroke-linejoin stroke-dasharray text-anchor font-size opacity transform href target'.split(' '));
   const key = item => typeof item === 'string' ? null : item.attrs?.['data-live-key'];
-  let pendingChart=null;
+  let pendingChart=null, curveRevision=Number(root.dataset.curveRevision || 0);
   const nodeKey = node => node.nodeType === 1 ? node.getAttribute('data-live-key') : null;
   function reconcile(parent, descriptions, inSVG = false) {
     const old = Array.from(parent.childNodes), retained = new Set();
@@ -43,8 +43,10 @@
     });
     for (const node of Array.from(parent.childNodes)) if (!retained.has(node)) parent.removeChild(node);
   }
-  let stopped = false, timer, controller;
+  let stopped = false, timer, controller, push, inFlight=false;
   async function update() {
+    if(stopped||inFlight)return;
+    inFlight=true;clearTimeout(timer);
     controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 8000);
     try {
@@ -59,6 +61,15 @@
       const data = await response.json();
       if (data.schema_version !== 1 || !Array.isArray(data.nodes)) throw new Error('Invalid data');
       reconcile(root, data.nodes);
+      if (curveRevision !== undefined && data.curve_revision !== curveRevision && pendingChart) {
+        const {node,children,ns}=pendingChart;pendingChart=null;
+        if(node.isConnected)reconcile(node,children,ns);
+      }
+      curveRevision=data.curve_revision;
+      if(data.curve_push&&!push){
+        push=new EventSource('/api/curve/events');
+        push.onmessage=()=>update();
+      }
       const banner = document.getElementById('subscription-banner');
       if (banner && Array.isArray(data.subscription_nodes) && data.subscription_nodes[0]?.tag === 'div') reconcile(banner, data.subscription_nodes[0].children);
       for (const name of ['charging', 'connected', 'alarm', 'disconnected', 'communication']) {
@@ -74,14 +85,14 @@
       status.textContent = 'Dados desatualizados · sem confirmação de atualização. Tentando reconectar…';
       status.dataset.stale = 'true';
     } finally {
-      clearTimeout(timeout);
+      inFlight=false;clearTimeout(timeout);
       if (!stopped) timer = setTimeout(update, 2000);
     }
   }
   const chartTimer=setInterval(()=>{
     if(!stopped&&pendingChart){const {node,children,ns}=pendingChart;pendingChart=null;if(node.isConnected)reconcile(node,children,ns);}
   },5000);
-  window.addEventListener('pagehide', () => { stopped = true; clearTimeout(timer); clearInterval(chartTimer); pendingChart=null; controller?.abort(); });
+  window.addEventListener('pagehide', () => { stopped = true; push?.close(); clearTimeout(timer); clearInterval(chartTimer); pendingChart=null; controller?.abort(); });
   timer = setTimeout(update, 1000);
   const tooltip=document.createElement('div');tooltip.className='curve-tooltip';tooltip.setAttribute('role','status');tooltip.hidden=true;document.body.appendChild(tooltip);
   function show(text,x,y){tooltip.textContent=text;tooltip.hidden=false;tooltip.style.left=Math.max(8,Math.min(x+12,window.innerWidth-tooltip.offsetWidth-8))+'px';tooltip.style.top=Math.max(8,Math.min(y+12,window.innerHeight-tooltip.offsetHeight-8))+'px';}

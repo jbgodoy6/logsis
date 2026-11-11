@@ -1,3 +1,7 @@
+# D-Max 0.14.0 · Curva adaptativa e demonstrações isoladas
+
+[Alterações, contas na plataforma e atualização segura](docs/release-v0140.md). Nova versão em desenvolvimento; assinatura de distribuição depende da chave privada original.
+
 Correção da plataforma: [clientes remotos sem liberação manual](docs/remote-clientes-sem-liberacao.md). Aplique o Apps Script atualizado; o D-Max instalado continua na versão 0.13.0.
 
 # D-Max 0.13.0 · Clientes remotos e curva legível

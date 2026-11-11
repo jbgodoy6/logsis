@@ -44,7 +44,7 @@ def validate_backup(path, identity):
         Settings(**settings)
         from .access import valid_hash
         for name,role,password in db.execute('SELECT name,role,password FROM users'):
-            if role not in ('root','admin','technician','operator') or not valid_hash(password):
+            if role not in ('root','admin','technician','operator','developer','commercial') or not valid_hash(password):
                 raise ValueError('Conta inválida no backup')
         if not db.execute("SELECT 1 FROM users WHERE name='root' AND role='root'").fetchone():
             raise ValueError('Credencial raiz ausente')

@@ -130,6 +130,7 @@ class Settings(Model):
     margin_kw: float = Field(ge=0)
     timezone: str
     freshness_s: float = Field(ge=2, le=120)
+    curve_min_delta_kw: float = Field(default=1.0, gt=0, le=1000)
     ramp_kw_s: float = Field(gt=0)
     schedules: list[Schedule] = Field(max_length=50)
     blocked_policy: str
@@ -211,7 +212,7 @@ class DirectoryConfig(Model):
     device_token: str | None = Field(default=None, min_length=32, max_length=512)
 
 
-def create_app(database=None, background=True, recovery_public_key=None, root_password_hash=None):
+def create_app(database=None, background=True, recovery_public_key=None, root_password_hash=None, demonstration=False):
     web_ui = os.getenv('DMAX_WEB_UI', 'server')
     store = Store(database)
     engine = Engine(store)
@@ -242,9 +243,10 @@ def create_app(database=None, background=True, recovery_public_key=None, root_pa
     @asynccontextmanager
     async def lifespan(app):
         tasks = []
+        if not demonstration:tasks.append(asyncio.create_task(app.state.demonstrations.run()))
         if background:
             from .remote_registry import watch as watch_remote
-            tasks = [asyncio.create_task(engine.run()), asyncio.create_task(meter_loop(engine)),
+            tasks += [asyncio.create_task(engine.run()), asyncio.create_task(meter_loop(engine)),
                      asyncio.create_task(cloud_loop(engine)), asyncio.create_task(directory_loop(access)),asyncio.create_task(watch_remote(access))]
         network = getattr(app.state, 'web_network', None)
         if background and network is not None:
@@ -268,11 +270,13 @@ def create_app(database=None, background=True, recovery_public_key=None, root_pa
             engine.flush()
             if background and network is not None:
                 await asyncio.to_thread(network.close)
+            if not demonstration:app.state.demonstrations.close()
             store.db.close()
 
-    app = FastAPI(title='EnergyCube D-Max · Controle de demanda', version='0.13.0', lifespan=lifespan,
+    app = FastAPI(title='EnergyCube D-Max · Controle de demanda', version='0.14.0', lifespan=lifespan,
                   docs_url=None, redoc_url=None, openapi_url=None)
     app.state.store, app.state.engine, app.state.access = store, engine, access
+    app.state.demonstration=demonstration
     app.state.recovery = recovery
     app.state.root_password_enabled = bool(root_password_hash)
     app.state.root_hash_error = root_hash_error
@@ -302,13 +306,18 @@ def create_app(database=None, background=True, recovery_public_key=None, root_pa
         return u
 
     async def root(u=Depends(user)):
-        if u['role'] != 'root':
+        if u['role'] not in ('root','developer'):
             raise HTTPException(403, 'Função exclusiva do raiz')
         return u
 
     @app.middleware('http')
     async def protect_origin(request, call_next):
         host = request.headers.get('host', '')
+        remote=bool(re.fullmatch(r'[a-z0-9-]+\.(trycloudflare\.com|tunnl\.gg)(?::[0-9]+)?',host.lower()))
+        if remote and access.db.execute("SELECT 1 FROM account_leases WHERE user_id='remote-root-locked'").fetchone():
+            account=access.session(request.cookies.get('ev_session'))
+            if (account and account['role']=='root') or request.url.path.startswith('/api/recovery'):
+                return JSONResponse({'detail':'Recuperação raiz disponível somente no acesso local'},status_code=403)
         if not valid_host(host):
             return Response('Host inválido', status_code=400)
         if request.method not in ('GET', 'HEAD', 'OPTIONS'):
@@ -363,9 +372,11 @@ def create_app(database=None, background=True, recovery_public_key=None, root_pa
             raise HTTPException(429, 'Muitas tentativas. Aguarde cinco minutos.')
         name = data.username.strip().lower()
         row = access.by_name(name)
+        if name=='root' and re.fullmatch(r'[a-z0-9-]+\.(trycloudflare\.com|tunnl\.gg)(?::[0-9]+)?',request.headers.get('host','').lower()) and access.db.execute("SELECT 1 FROM account_leases WHERE user_id='remote-root-locked'").fetchone():
+            raise HTTPException(403,'Raiz reservado ao acesso local')
         if name == 'root' and not root_password_hash:
             raise HTTPException(401, 'Acesso raiz exige autorização de recuperação; não aceita senha')
-        if access.config()['enabled'] and (not row or row['role'] == 'technician'):
+        if access.config()['enabled'] and (not row or row['role'] in ('technician','developer','commercial')):
             try:
                 await asyncio.wait_for(synchronize(access), timeout=5)
             except TimeoutError:
@@ -383,6 +394,15 @@ def create_app(database=None, background=True, recovery_public_key=None, root_pa
         if not access.usable(latest) or any(latest[k] != row[k] for k in ('epoch','password')):
             raise HTTPException(401, 'Acesso alterado durante a autenticação. Faça login novamente.')
         row = latest
+        if row['role']=='commercial':
+            try:token=await app.state.demonstrations.create(row)
+            except ValueError as exc:raise HTTPException(429,str(exc)) from None
+            response.delete_cookie('ev_session')
+            response.set_cookie('dmax_demo',token,httponly=True,secure=request.url.scheme=='https',samesite='strict',max_age=900)
+            return access.public(row)
+        if row['role']=='developer':
+            with store.db:
+                store.db.execute("INSERT OR REPLACE INTO account_leases VALUES ('remote-root-locked',?)",(time.time(),))
         return open_session(row, response, request, lifetime=SESSION_IDLE[row['role']], renewable=True)
 
     def open_session(row, response, request, lifetime=28800, renewable=False):
@@ -444,7 +464,7 @@ def create_app(database=None, background=True, recovery_public_key=None, root_pa
 
     @app.post('/api/recover-admin')
     async def recover(data: Login, u=Depends(user)):
-        if u['role'] != 'root' or data.username != 'admin' or len(data.password) < 8:
+        if u['role'] not in ('root','developer') or data.username != 'admin' or len(data.password) < 8:
             raise HTTPException(403, 'Somente root pode redefinir a senha do administrador; mínimo de oito caracteres')
         with store.db:
             store.db.execute('UPDATE users SET password=? WHERE name=?', (password_hash(data.password), 'admin'))
@@ -560,12 +580,33 @@ def create_app(database=None, background=True, recovery_public_key=None, root_pa
         settings=store.settings();now=time.time()
         parameters(settings,start,end,mode,now)
         period=60 if end else 5
-        key=(start,end,mode or settings['mode'],settings['site_name'],settings['timezone'],int(now//period))
+        key=(start,end,mode or settings['mode'],settings['site_name'],settings['timezone'],int(now//period),getattr(store,'_curve_generation',0))
         async with curve_lock:
             if key not in curve_cache:
                 curve_cache[key]=await asyncio.to_thread(query,store,settings,start,end,mode,now)
                 while len(curve_cache)>24:curve_cache.popitem(last=False)
             return curve_cache[key]
+
+    @app.get('/api/curve/events')
+    async def curve_events(request: Request,u=Depends(user)):
+        from fastapi.responses import StreamingResponse
+        queue=asyncio.Queue(maxsize=1)
+        if not hasattr(store,'_curve_subscribers'):store._curve_subscribers=set()
+        if len(store._curve_subscribers)>=32:raise HTTPException(429,'Limite de supervisões ao vivo')
+        async def events():
+            store._curve_subscribers.add(queue)
+            try:
+                yield ': connected\n\n'
+                while not await request.is_disconnected():
+                    current=access.session(request.cookies.get('ev_session'))
+                    if not current:break
+                    if current['role']=='root' and request.headers.get('host','').lower().endswith(('.trycloudflare.com','.tunnl.gg')) and access.db.execute("SELECT 1 FROM account_leases WHERE user_id='remote-root-locked'").fetchone():break
+                    try:
+                        revision=await asyncio.wait_for(queue.get(),timeout=5)
+                        yield f'data: {revision}\n\n'
+                    except TimeoutError:yield ': heartbeat\n\n'
+            finally:store._curve_subscribers.discard(queue)
+        return StreamingResponse(events(),media_type='text/event-stream',headers={'Cache-Control':'no-store','X-Accel-Buffering':'no'})
 
     @app.get('/api/curve')
     async def curve_history(start: str=Query('',max_length=64),end: str=Query('',max_length=64),mode: str=Query('',max_length=16),u=Depends(user)):
@@ -628,6 +669,8 @@ def create_app(database=None, background=True, recovery_public_key=None, root_pa
     @app.put('/api/settings')
     async def settings(data: Settings, u=Depends(administrator)):
         current = store.settings()
+        if demonstration and (data.mode!='simulation' or data.cloud_url or data.demo_cloud_url or data.meter.model_dump()!=current['meter']):
+            raise HTTPException(403,'Demonstração permite somente simulação local sem integrações')
         if data.display_colors is None:
             data.display_colors = DisplayColors(**current['display_colors'])
         if u['role'] == 'admin':
@@ -681,6 +724,7 @@ def create_app(database=None, background=True, recovery_public_key=None, root_pa
 
     @app.post('/api/chargers')
     async def charger(data: Charger, u=Depends(technician)):
+        if demonstration and data.transport!='simulator':raise HTTPException(403,'Somente equipamentos simulados')
         old = engine.config(data.id)
         if old and old.get('archived'):
             raise HTTPException(409, 'Identificador já usado no histórico; cadastre outro identificador')
@@ -848,9 +892,14 @@ def create_app(database=None, background=True, recovery_public_key=None, root_pa
         if not valid_host(ws.headers.get('host', '')) or (origin and not same_origin(origin, ws.headers.get('host', ''), 'https' if ws.scope['scheme'] == 'wss' else 'http')) or not get_user(ws.cookies.get('ev_session')) or get_user(ws.cookies.get('ev_session'))['must_change']:
             await ws.close(code=1008)
             return
+        account=get_user(ws.cookies.get('ev_session'))
+        if account and account['role']=='root' and re.fullmatch(r'[a-z0-9-]+\.(trycloudflare\.com|tunnl\.gg)(?::[0-9]+)?',ws.headers.get('host','').lower()) and access.db.execute("SELECT 1 FROM account_leases WHERE user_id='remote-root-locked'").fetchone():
+            await ws.close(code=1008)
+            return
         await ws.accept()
         try:
             while (current_user := get_user(ws.cookies.get('ev_session'))) and not current_user['must_change']:
+                if current_user['role']=='root' and ws.headers.get('host','').lower().endswith(('.trycloudflare.com','.tunnl.gg')) and access.db.execute("SELECT 1 FROM account_leases WHERE user_id='remote-root-locked'").fetchone():break
                 await ws.send_json(engine.snapshot())
                 await asyncio.sleep(1)
             await ws.close(code=1008)
@@ -907,4 +956,13 @@ def create_app(database=None, background=True, recovery_public_key=None, root_pa
         async def index():
             return FileResponse(Path(__file__).parent / 'static/index.html')
 
+    from .commercial import Demonstrations,DemoRouter,permitted
+    if not demonstration:
+        app.state.demonstrations=Demonstrations(access)
+        app.add_middleware(DemoRouter,manager=app.state.demonstrations)
+    else:
+        @app.middleware('http')
+        async def demo_boundary(request,call_next):
+            if not permitted(request.url.path,request.method):return JSONResponse({'detail':'Recurso indisponível na demonstração'},status_code=403)
+            return await call_next(request)
     return app

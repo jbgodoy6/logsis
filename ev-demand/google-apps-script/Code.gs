@@ -7,6 +7,7 @@ const DMAX_DEFAULT_HASH = 'pbkdf2_sha256$600000$0cc644386557630153579d018267d636
 function onOpen() {
   SpreadsheetApp.getUi().createMenu('D-Max')
     .addItem('Preparar aba Tecnicos', 'prepararTecnicos')
+    .addItem('Preparar contas desenvolvedor/comercial', 'prepararContas')
     .addItem('Preparar aba Assinaturas', 'prepararAssinaturas')
     .addItem('Preparar diretório de acesso remoto', 'prepararRemoto')
     .addItem('Autorizar um D-Max', 'autorizarDMax')
@@ -81,6 +82,7 @@ function doPost(event) {
     }
     if(data.action==='snapshot'){
       const result=snapshot_(props);
+      result.accounts=accounts_(props);
       const notice=subscription_(props,data.controller_id);
       if(notice)result.subscription=notice;
       if(data.remote){
@@ -291,4 +293,45 @@ function subscription_(props,id) {
   const signature=Utilities.computeHmacSha256Signature('DMAX-LICENSE-1\n'+payload,props.getProperty('device.'+id),Utilities.Charset.UTF_8)
     .map(b=>('0'+((b+256)%256).toString(16)).slice(-2)).join('');
   return {payload:payload,signature:signature};
+}
+
+/** Optional privileged accounts. Existing Tecnicos rows and credentials stay intact. */
+const DMAX_ACCOUNT_HEADERS=['id','nome','login','perfil','situacao','valido_ate','verificador'];
+function prepararContas(){
+  const book=SpreadsheetApp.openById(DMAX_SHEET_ID);
+  let sheet=book.getSheetByName('Contas');
+  if(!sheet)sheet=book.insertSheet('Contas');
+  if(!sheet.getLastRow()){
+    sheet.getRange(1,1,1,7).setValues([DMAX_ACCOUNT_HEADERS]);sheet.setFrozenRows(1);
+  }
+  if(JSON.stringify(sheet.getRange(1,1,1,7).getValues()[0])!==JSON.stringify(DMAX_ACCOUNT_HEADERS))error_(422,'Cabeçalhos Contas incompatíveis; nada substituído');
+}
+function accounts_(props){
+  const book=SpreadsheetApp.openById(DMAX_SHEET_ID),sheet=book.getSheetByName('Contas');
+  if(!sheet)return [];
+  const values=sheet.getRange(1,1,sheet.getLastRow(),7).getValues();
+  if(JSON.stringify(values[0])!==JSON.stringify(DMAX_ACCOUNT_HEADERS))error_(422,'Cabeçalhos Contas incompatíveis');
+  const ids=new Set(),names=new Set(),records=[];
+  values.slice(1).forEach(c=>{
+    if(c.every(v=>String(v).trim()===''))return;
+    const id=String(c[0]).trim(),full=String(c[1]).trim(),name=String(c[2]).trim().toLowerCase();
+    const role=({desenvolvedor:'developer',comercial:'commercial',developer:'developer',commercial:'commercial'})[String(c[3]).trim().toLowerCase()];
+    const status=String(c[4]).trim().toLowerCase(),hash=String(c[6]).trim();
+    if(!/^[A-Za-z0-9_-]{1,100}$/.test(id)||!/^[a-z0-9._-]{3,40}$/.test(name)||['root','admin'].includes(name)||!full||full.length>100||!role||!validHash_(hash)||ids.has(id)||names.has(name)||!['ativo','bloqueado','excluido','excluído'].includes(status))error_(422,'Conta global inválida');
+    ids.add(id);names.add(name);
+    const expires=date_(c[5],book.getSpreadsheetTimeZone());
+    const record={id:id,name:name,full_name:full,role:role,active:status==='ativo',deleted:['excluido','excluído'].includes(status),expires_at:expires,password:hash,must_change:false,activation_hash:null,credential_version:1,meta_version:0};
+    // Fingerprints provide monotonic versions without storing plain passwords.
+    const previous=props.getProperty('account.'+id),old=previous?JSON.parse(previous):null;
+    if(old&&old.name!==name)error_(409,'Login/id permanente');
+    record.credential_version=old?old.credential_version+(old.password!==hash?1:0):1;
+    record.meta_version=old?old.meta_version+1:1;
+    records.push(record);
+  });
+  if(records.length>1000)error_(422,'Limite de contas excedido');
+  // Validate collisions with legacy technicians before persisting anything.
+  const legacy=refresh_(props).records;
+  if(records.some(r=>legacy.some(t=>t.id===r.id||t.name===r.name)))error_(409,'Conta conflita com técnico existente');
+  records.forEach(r=>props.setProperty('account.'+r.id,JSON.stringify(r)));
+  return records;
 }

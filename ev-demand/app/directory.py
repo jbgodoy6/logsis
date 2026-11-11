@@ -124,6 +124,8 @@ async def synchronize(access, client=None):
             subscription = getattr(access, 'subscription', None)
             if data.get('subscription') is not None and subscription is not None:
                 subscription.receive(data['subscription'], token)
+            if 'accounts' in data:
+                access.apply_snapshot(data['accounts'],scopes=('developer','commercial'))
             access.apply_snapshot(data['technicians'])
             acknowledge(access,remote,data.get('remote_ack'))
             if any(row['payload'].get('_acknowledged_base') for row in access.pending()):
@@ -180,7 +182,9 @@ async def directory_loop(access):
     access.wakeup = asyncio.Event()
     while True:
         await synchronize(access)
-        delay = access.config()['interval_s'] * random.uniform(.95, 1.05)
+        interval=access.config()['interval_s']
+        if access.db.execute("SELECT 1 FROM users WHERE role IN ('developer','commercial') AND active=1 LIMIT 1").fetchone():interval=min(interval,60)
+        delay = interval * random.uniform(.95, 1.05)
         access.status['next_attempt'] = time.time() + delay
         try:
             await asyncio.wait_for(access.wakeup.wait(), timeout=delay)

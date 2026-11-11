@@ -21,7 +21,6 @@ def finite(value):
 
 def record(store,at,meter,ev,ev_valid,settings,fault=''):
     last=getattr(store,'_curve_last',{}).get(settings['mode'])
-    if last and 0<=at-last[0]<5 and last[1]==settings['limit_kw']:return
     valid=bool(meter.get('at') and 0<=at-meter['at']<=settings['freshness_s'] and not meter.get('error') and not fault)
     total=finite(meter.get('total_kw')) if valid else None
     ev=finite(ev) if ev_valid else None
@@ -29,12 +28,22 @@ def record(store,at,meter,ev,ev_valid,settings,fault=''):
     ev_valid=ev_valid and ev is not None
     other=max(0,total-ev) if total is not None and ev is not None else None
     quality='valid' if valid and ev_valid else 'meter_missing' if not valid else 'charger_missing'
+    values=(total,ev,other)
+    adaptive=bool(last and any(a is not None and b is not None and
+        abs(a-b)>max(settings.get('curve_min_delta_kw',1.0),abs(b)*.15)
+        for a,b in zip(values,last[2])))
+    if last and 0<=at-last[0]<5 and last[1]==settings['limit_kw'] and not adaptive and quality==last[3]:return
     if last and at<last[0]:quality='clock_rollback'
     with store.db:
         store.db.execute('INSERT OR REPLACE INTO curve_points VALUES (?,?,?,?,?,?,?,?)',
             (at,settings['mode'],total,ev,other,settings['limit_kw'],meter.get('at') or None,quality))
+    store._curve_generation=getattr(store,'_curve_generation',0)+1
     if not hasattr(store,'_curve_last'):store._curve_last={}
-    store._curve_last[settings['mode']]=(at,settings['limit_kw'])
+    if adaptive:
+        store._curve_revision=getattr(store,'_curve_revision',0)+1
+        for queue in getattr(store,'_curve_subscribers',()):
+            if queue.empty():queue.put_nowait(store._curve_revision)
+    store._curve_last[settings['mode']]=(at,settings['limit_kw'],values,quality)
 
 def parameters(settings,start='',end='',mode='',now=None):
     now=time.time() if now is None else now
@@ -129,7 +138,7 @@ def render(data):
     for field in FIELDS:
         value='sem leitura' if latest[field] is None else f'{latest[field]:.1f} kW'.replace('.',',')
         result+='<span class="curve-legend-item"><i class="curve-dot curve-'+field+'"></i><span>'+LABELS[field]+'<b>'+value+'</b></span></span>'
-    result+='</div><p class="hint">'+str(data['total_samples'])+' registros · '+('REAL' if data['mode']=='physical' else 'SIMULAÇÃO')+' · amostragem e atualização visual a cada 5 s'+(' · visualização reduzida, com extremos preservados' if data['reduced'] else '')+'. Consulte os instantes com mouse ou toque.</p>'
+    result+='</div><p class="hint">'+str(data['total_samples'])+' registros · '+('REAL' if data['mode']=='physical' else 'SIMULAÇÃO')+' · amostragem nominal 5 s · variações acima de 15% antecipam o registro'+(' · visualização reduzida, com extremos preservados' if data['reduced'] else '')+'. Consulte os instantes com mouse ou toque.</p>'
     if data['missing_samples']:result+='<p class="curve-quality">'+str(data['missing_samples'])+' registros com leituras incompletas. As lacunas são preservadas; valores ausentes não são zero.</p>'
     result+='<svg class="server-chart curve-chart" viewBox="0 0 900 275" role="img" aria-label="Curva histórica de demanda">'
     for i in range(6):

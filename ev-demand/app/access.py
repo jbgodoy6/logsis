@@ -9,10 +9,10 @@ import uuid
 from .store import password_hash, password_matches
 
 INITIAL_PASSWORD = '12345678'
-ROLES = ('operator', 'admin', 'technician', 'root')
-TECHNICAL = ('root', 'technician')
-MANAGERS = ('root', 'technician', 'admin')
-SESSION_IDLE = {'operator': 7*86400, 'admin': 86400, 'technician': 12*3600, 'root': 4*3600}
+ROLES = ('operator', 'admin', 'technician', 'root', 'developer', 'commercial')
+TECHNICAL = ('root', 'developer', 'technician')
+MANAGERS = ('root', 'developer', 'technician', 'admin')
+SESSION_IDLE = {'developer': 3600, 'commercial': 900, 'operator': 7*86400, 'admin': 86400, 'technician': 12*3600, 'root': 4*3600}
 
 DIRECTORY_DEFAULTS = {'url': '', 'interval_s': 300, 'enabled': False}
 
@@ -103,6 +103,16 @@ class Access:
                                 (root_password_hash,))
                 self.revoke('root')
             self.store.record('root_recovery_migrated', {'note': 'Política de acesso raiz atualizada; sessões anteriores revogadas'})
+        if not self.db.execute("SELECT 1 FROM sqlite_master WHERE name='account_leases'").fetchone():
+            import sqlite3
+            from pathlib import Path
+            path=self.db.execute('PRAGMA database_list').fetchone()['file']
+            if path and self.db.execute('SELECT 1 FROM users LIMIT 1').fetchone():
+                backup=Path(path).with_name(Path(path).name+f'.before-access-v0140-{time.time_ns()}.sqlite3')
+                backup.touch(mode=0o600,exist_ok=False)
+                with sqlite3.connect(backup) as destination:self.db.backup(destination)
+        self.db.execute('CREATE TABLE IF NOT EXISTS account_leases (user_id TEXT PRIMARY KEY, verified_at REAL NOT NULL)')
+        self.db.commit()
         self.status = {'message': 'Não configurada', 'last_success': None, 'last_attempt': None, 'next_attempt': None}
         self.lock = None  # Bound lazily to the serving event loop.
         self.wakeup = None
@@ -134,8 +144,11 @@ class Access:
         row = self.db.execute('SELECT * FROM users WHERE id=?', (identifier,)).fetchone()
         return dict(row) if row else None
 
-    @staticmethod
-    def usable(row):
+    def usable(self,row):
+        if row and row['role'] in ('developer','commercial'):
+            lease=self.db.execute('SELECT verified_at FROM account_leases WHERE user_id=?',(row['id'],)).fetchone()
+            age=time.time()-lease['verified_at'] if lease else -1
+            if not 0<=age<(3600 if row['role']=='developer' else 300):return False
         return bool(row and row['active'] and not row['deleted']
                     and (row['expires_at'] is None or time.time() < row['expires_at']))
 
@@ -148,7 +161,7 @@ class Access:
         return data
 
     def list_for(self, actor):
-        allowed = {'root': ROLES, 'technician': ('operator', 'admin'), 'admin': ('operator',)}.get(actor['role'], ())
+        allowed = {'root': ROLES, 'developer': ('operator','admin','technician'), 'technician': ('operator', 'admin'), 'admin': ('operator',)}.get(actor['role'], ())
         return [self.public(dict(r)) for r in self.db.execute('SELECT * FROM users ORDER BY full_name,name') if r['role'] in allowed]
 
     def session(self, token):
@@ -172,7 +185,7 @@ class Access:
         self.db.execute('UPDATE users SET epoch=epoch+1 WHERE name=?', (name,))
 
     def authorize_management(self, actor, target_role, target=None):
-        allowed = {'root': ('operator', 'admin', 'technician'), 'technician': ('operator', 'admin'), 'admin': ('operator',)}
+        allowed = {'developer': ('operator','admin','technician'), 'root': ('operator', 'admin', 'technician'), 'technician': ('operator', 'admin'), 'admin': ('operator',)}
         roles = allowed.get(actor['role'], ())
         if target_role not in roles or (target and target['role'] not in roles):
             raise PermissionError('Seu perfil não pode gerenciar essa conta')
@@ -262,6 +275,8 @@ class Access:
 
     def change_password(self, actor, current, new):
         row = self.by_id(actor['id'])
+        if row['role'] in ('developer','commercial'):
+            raise ValueError('Credencial gerenciada pela plataforma; atualize o verificador da conta')
         if row['name'] == 'root':
             raise ValueError('A credencial raiz é definida pelo proprietário no pacote; não pode ser alterada por esta instalação')
         if not password_matches(current, row['password']):
@@ -278,13 +293,15 @@ class Access:
                            self.directory_record(self.by_id(row['id'])) | {'base_version': row['credential_version']})
         self.store.record('password_changed', {'user_id': row['id'], 'user': row['name']})
 
-    def apply_snapshot(self, records, central_ids=None):
+    def apply_snapshot(self, records, central_ids=None, scopes=('technician',)):
         """Validate a complete snapshot first; malformed responses never revoke a partial set."""
         if not isinstance(records, list) or len(records) > 5000:
             raise ValueError('Snapshot de técnicos inválido')
         seen_ids, seen_names, normalized = set(), set(), []
         for item in records:
             r = dict(item)
+            r['role']=r.get('role','technician')
+            if r['role'] not in scopes:raise ValueError('Perfil global inválido')
             if not re.fullmatch('[A-Za-z0-9_-]{1,100}', r.get('id', '')):
                 raise ValueError('ID global inválido')
             r['name'] = username(r['name'])
@@ -307,7 +324,7 @@ class Access:
             old = self.by_id(r['id'])
             if conflict and conflict['id'] != r['id']:
                 raise ValueError('Login global conflita com conta local; intervenção do raiz necessária')
-            if old and (old['role'] != 'technician' or old['name'] != r['name']):
+            if old and (old['role'] not in scopes or old['name'] != r['name']):
                 raise ValueError('Identidade global alterada; não é permitido assumir conta local')
             seen_ids.add(r['id']);seen_names.add(r['name']);normalized.append(r)
         audit = []
@@ -325,20 +342,23 @@ class Access:
                         self.revoke(old['name'])
                     continue
                 changed = old and any(old.get(k) != r.get(k, 0) for k in
-                                      ('password', 'active', 'deleted', 'expires_at', 'must_change', 'credential_version'))
+                                      ('password', 'active', 'deleted', 'expires_at', 'must_change', 'credential_version', 'role'))
                 self.db.execute('''INSERT INTO users(name,password,role,id,full_name,active,deleted,expires_at,source,
                     must_change,activation_hash,credential_version,meta_version) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)
-                    ON CONFLICT(name) DO UPDATE SET password=excluded.password,full_name=excluded.full_name,
+                    ON CONFLICT(name) DO UPDATE SET password=excluded.password,role=excluded.role,full_name=excluded.full_name,
                     active=excluded.active,deleted=excluded.deleted,expires_at=excluded.expires_at,source=excluded.source,
                     must_change=excluded.must_change,activation_hash=excluded.activation_hash,
                     credential_version=excluded.credential_version,meta_version=excluded.meta_version''',
-                    (r['name'],r['password'],'technician',r['id'],r['full_name'],int(r['active']),int(r.get('deleted',False)),
+                    (r['name'],r['password'],r['role'],r['id'],r['full_name'],int(r['active']),int(r.get('deleted',False)),
                      r['expires_at'],'directory',int(r.get('must_change',False)),r.get('activation_hash'),
                      r['credential_version'],r.get('meta_version',0)))
+                if r['role'] in ('developer','commercial'):
+                    self.db.execute('INSERT OR REPLACE INTO account_leases VALUES (?,?)',(r['id'],time.time()))
                 if changed:
                     self.revoke(r['name'])
                     audit.append({'user_id': r['id'], 'active': r['active'], 'deleted': r.get('deleted', False)})
-            for old in self.db.execute("SELECT * FROM users WHERE source='directory' AND role='technician'").fetchall():
+            for old in self.db.execute("SELECT * FROM users WHERE source='directory'").fetchall():
+                if old['role'] not in scopes:continue
                 if old['id'] not in seen_ids:
                     self.db.execute('UPDATE users SET active=0,deleted=1 WHERE id=?', (old['id'],))
                     self.revoke(old['name'])

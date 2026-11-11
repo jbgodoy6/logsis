@@ -148,6 +148,9 @@ class PackageSecurityTests(unittest.TestCase):
             c=TestClient(app,base_url='http://127.0.0.1',client=('127.0.0.1',50000))
             self.assertEqual(c.post('/api/setup',json={'admin_password':'fixture-old-admin'}).status_code,200)
             with sqlite3.connect(incoming) as db:app.state.store.db.backup(db)
+            with app.state.store.db:
+                app.state.store.db.execute("INSERT INTO account_leases VALUES ('remote-root-locked',123)")
+                app.state.store.db.execute("INSERT INTO account_leases VALUES ('old-privileged-lease',123)")
             root=app.state.access.by_name('root')['password'];identity=app.state.store.entities('system')[0]['controller_id']
             app.state.engine.subscription.receive(envelope(app.state.store),TOKEN)
             deadline=app.state.engine.subscription.row['deadline']
@@ -158,7 +161,9 @@ class PackageSecurityTests(unittest.TestCase):
             self.assertEqual(restored.db.execute("select password from users where name='root'").fetchone()[0],root)
             self.assertEqual(restored.entities('system')[0]['controller_id'],identity)
             self.assertEqual(restored.get('subscription','current')['deadline'],deadline)
-            self.assertTrue((backups/'controller.sqlite3').is_file());restored.db.close()
+            self.assertTrue((backups/'controller.sqlite3').is_file())
+            self.assertEqual([r[0] for r in restored.db.execute('SELECT user_id FROM account_leases')],['remote-root-locked'])
+            restored.db.close()
 
 class CommandDiagnosticsTests(unittest.IsolatedAsyncioTestCase):
     async def test_meter_error_preserves_reading_age_but_blocks_demand_admission(self):

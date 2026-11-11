@@ -19,7 +19,7 @@ from .meter import MEASUREMENTS, FORMATS, normalize_serial_port
 from .plant_view import render_plant
 from .live_dom import view_tree
 
-VERSION = '0.13.0'
+VERSION = '0.14.0'
 PAGES = {
     'overview': 'Visão geral', 'chargers': 'Carregadores', 'vehicles': 'Veículos',
     'schedule': 'Horários', 'history': 'Histórico', 'meter': 'Multimedidor',
@@ -31,7 +31,7 @@ PAGES = {
     'remote': 'Acesso remoto',
     'remoteclients': 'Buscar clientes remotos',
 }
-ROLES = {'root': 'Raiz', 'technician': 'Técnico / instalador', 'admin': 'Administrador', 'operator': 'Operador'}
+ROLES = {'root': 'Raiz', 'technician': 'Técnico / instalador', 'admin': 'Administrador', 'operator': 'Operador', 'developer': 'Desenvolvedor', 'commercial': 'Comercial'}
 
 
 def esc(value):
@@ -120,6 +120,7 @@ def install(app):
                 self.nonce = secrets.token_urlsafe(32)
             self.session = request.cookies.get('ev_session', '')
             self.user = app.state.access.session(self.session)
+            self.demonstration=getattr(app.state,'demonstration',False)
             self.cookies = []
             self.state = None
 
@@ -227,7 +228,7 @@ def install(app):
                 content = note + self.password_form() + self.form('logout', submit='Sair')
                 return self.finish(HTMLResponse(self.document('<main class="initial-password">' + panel('Troque a senha inicial', content) + '</main>'), status_code=status))
             allowed = {'meter': self.technical, 'settings': self.manager, 'users': self.manager,
-                       'directory': self.user['role'] == 'root', 'remoteclients': self.user['role'] == 'root', 'simulation': self.technical and app.state.store.settings()['mode'] == 'simulation', 'maintenance': self.technical, 'audit': self.manager, 'remote': self.technical}
+                       'directory': self.user['role'] in ('root','developer'), 'remoteclients': self.user['role'] in ('root','developer'), 'simulation': self.technical and app.state.store.settings()['mode'] == 'simulation', 'maintenance': self.technical and not self.demonstration, 'audit': self.manager, 'remote': self.technical and not self.demonstration}
             if not allowed.get(page, True):
                 page, note, status = 'overview', '<div class="notice">Acesso não permitido para seu perfil.</div>', 403
             self.state = await self.api('GET', '/api/state')
@@ -260,7 +261,7 @@ def install(app):
                 content=panel('Alterações e liberações', '<form method="get">'+field('Login de quem alterou','actor',actor)+'<button>Filtrar</button></form>'+table(['Horário','Evento','Responsável e alteração'],[[esc(__import__('datetime').datetime.fromtimestamp(e['ts']).isoformat()),esc(e['kind']),esc(e['payload'])] for e in audit['events']])+link('audit','Próximos registros',actor=actor,offset=offset+100))
             elif page == 'maintenance':
                 content = '<article class="panel"><h3>Backup e manutenção</h3><p>O backup contém dados privados da instalação. Guarde em local seguro.</p><a href="/api/maintenance/backup">Baixar backup SQLite</a><p>Restauração e atualização exigem raiz e carregadores físicos desconectados. O serviço reinicia durante a operação.</p>'
-                if self.user['role'] == 'root':
+                if self.user['role'] in ('root','developer'):
                     content += '<label>Backup desta instalação<input id="restore-file" type="file" accept=".sqlite3"></label><button type="button" data-maintenance="restore">Restaurar backup</button><label>Pacote ARM64 assinado<input id="update-file" type="file" accept=".zip"></label><button type="button" data-maintenance="update">Validar e atualizar</button>'
                 content += '<p id="maintenance-status" role="status"></p></article><script src="/static/maintenance.js?v='+VERSION+'" defer></script>'
             elif page == 'users':
@@ -275,7 +276,7 @@ def install(app):
                 content = panel('Minha senha', self.password_form())
             live = page in ('overview', 'monitor') and status == 200
             if live:
-                content = '<div class="live-status" data-live-status role="status">Atualização automática em segundo plano</div><div class="live-content" data-live-page="' + page + '">' + content + '</div><noscript><p>Ative JavaScript para atualização automática. O botão Atualizar continua disponível.</p></noscript>'
+                content = '<div class="live-status" data-live-status role="status">Atualização automática em segundo plano</div><div class="live-content" data-curve-revision="'+str(getattr(app.state.store,'_curve_revision',0))+'" data-live-page="' + page + '">' + content + '</div><noscript><p>Ative JavaScript para atualização automática. O botão Atualizar continua disponível.</p></noscript>'
             if page == 'overview' and self.technical and self.state['settings']['mode'] == 'simulation':
                 content += self.simulation()
             network = getattr(app.state, 'web_network', None)
@@ -293,10 +294,10 @@ def install(app):
                     '<img src="/static/d-max-logo.png" alt="D-Max by EnergyCube" class="dmax-logo"></a>'
                     '<div class="sidebar-label">CONTROLADOR DE DEMANDA</div><nav>' + nav + '</nav>'
                     '<div class="sidebar-bottom"><b>' + esc(self.user['full_name'] or self.user['name']) + '</b><p>'
-                    + esc(ROLES[self.user['role']]) + '</p>' + self.form('logout', submit='Sair') + '</div></aside>'
+                    + esc('Comercial · demonstração' if self.demonstration else ROLES[self.user['role']]) + '</p>' + self.form('logout', submit='Sair') + '</div></aside>'
                     '<main><header><div><div class="eyebrow" data-live-site>' + esc(self.state['settings']['site_name']) + '</div>'
                     '<h1>' + esc(PAGES[page]) + '</h1></div><a class="secondary" href="/ui/' + page + '">Atualizar</a></header>'
-                    + subscription_banner(self.state) + note + content + '<footer class="app-footer"><span>EnergyCube D-Max · Controle local</span><span>Versão instalada: <b data-dmax-version>v' + VERSION + '</b></span></footer></main></div>')
+                    + ('<div class="notice">Demonstração comercial descartável · dados fictícios · sair apaga esta sessão.</div>' if self.demonstration else subscription_banner(self.state)) + note + content + '<footer class="app-footer"><span>EnergyCube D-Max · Controle local</span><span>Versão instalada: <b data-dmax-version>v' + VERSION + '</b></span></footer></main></div>')
             response = self.finish(HTMLResponse(self.document(body, PAGES[page], live=live), status_code=status))
             if live:
                 response.headers['X-DMax-Live'] = '1'
@@ -306,11 +307,11 @@ def install(app):
 
         @property
         def technical(self):
-            return self.user and self.user['role'] in ('root', 'technician')
+            return self.user and self.user['role'] in ('root', 'developer', 'technician')
 
         @property
         def manager(self):
-            return self.user and self.user['role'] in ('root', 'technician', 'admin')
+            return self.user and self.user['role'] in ('root', 'developer', 'technician', 'admin')
 
         def password_form(self):
             if self.user and self.user['name'] == 'root':
@@ -468,7 +469,7 @@ def install(app):
             fields += field('Demanda operacional · kW', 'limit_kw', s['limit_kw'], 'number', min=0.1, step='any', required='')
             if self.technical:
                 fields += select('Modo', 'mode', [('simulation', 'Simulação'), ('physical', 'Equipamentos físicos · piloto')], s['mode'])
-                for key, title in [('technical_limit_kw', 'Teto técnico · kW'), ('margin_kw', 'Margem · kW'), ('freshness_s', 'Leitura válida · segundos'), ('ramp_kw_s', 'Rampa · kW/s'), ('retain_days', 'Retenção de leituras sincronizadas · dias')]:
+                for key, title in [('technical_limit_kw', 'Teto técnico · kW'), ('margin_kw', 'Margem · kW'), ('freshness_s', 'Leitura válida · segundos'), ('ramp_kw_s', 'Rampa · kW/s'), ('curve_min_delta_kw', 'Curva · tolerância mínima · kW'), ('retain_days', 'Retenção de leituras sincronizadas · dias')]:
                     fields += field(title, key, s[key], 'number', step='any', required='')
                 fields += field('Fuso horário', 'timezone', s['timezone'], required='') + field('API de nuvem real · HTTPS', 'cloud_url', s['cloud_url'], 'url')
                 fields += field('API de demonstração separada · HTTPS', 'demo_cloud_url', s.get('demo_cloud_url',''), 'url')
@@ -489,7 +490,7 @@ def install(app):
                     field('Identificador', 'id', required='', maxlength=40)
                     + field('Nome', 'name', required='', maxlength=100)
                     + field('Limite · kW', 'limit_kw', 100, 'number', step='any', min=0.1, required=''), page='settings'))
-            if self.user['role'] == 'root':
+            if self.user['role'] in ('root','developer'):
                 content += panel('Recuperar administrador', self.form('recover',
                     field('Nova senha do administrador', 'password', kind='password', minlength=8, maxlength=200, required='', autocomplete='new-password'),
                     'Redefinir e encerrar sessões', page='settings'))
@@ -564,12 +565,12 @@ def install(app):
             users = (await self.api('GET', '/api/users'))['users']
             rows = [[esc(u['full_name']), esc(u['name']), esc(ROLES[u['role']]), 'Excluído' if u['deleted'] else 'Ativo' if u['active'] else 'Bloqueado',
                      'Pendente de envio' if u['source'] == 'local_pending' else 'Global' if u['source'] == 'directory' else 'Local',
-                     link('users', 'Editar', edit=u['id']) + self.form('reset_user', submit='Redefinir senha inicial', page='users', id=u['id']) if u['role'] != 'root' else 'Recuperação']
+                     link('users', 'Editar', edit=u['id']) + self.form('reset_user', submit='Redefinir senha inicial', page='users', id=u['id']) if u['role'] not in ('root','developer','commercial') else ('Recuperação' if u['role']=='root' else 'Gerenciada na plataforma')]
                     for u in users]
             content = panel('Contas gerenciáveis', table(['Nome', 'Login', 'Perfil', 'Situação', 'Sincronização', ''], rows))
-            old = next((u for u in users if u['id'] == self.request.query_params.get('edit') and u['role'] != 'root'), None)
+            old = next((u for u in users if u['id'] == self.request.query_params.get('edit') and u['role'] not in ('root','developer','commercial')), None)
             u = old or dict(name='', full_name='', role='operator', active=True, deleted=False, expires_at=None, can_emergency=False)
-            choices = ['technician'] if u['role'] == 'technician' else ['operator', 'admin', 'technician'] if self.user['role'] == 'root' else ['operator', 'admin'] if self.technical else ['operator']
+            choices = ['technician'] if u['role'] == 'technician' else ['operator', 'admin', 'technician'] if self.user['role'] in ('root','developer') else ['operator', 'admin'] if self.technical else ['operator']
             fields = hidden('id', old['id'] if old else '') + field('Nome completo', 'full_name', u['full_name'], required='', maxlength=100)
             fields += field('Login permanente', 'name', u['name'], required='', minlength=3, maxlength=40, readonly='' if old else None)
             fields += select('Perfil', 'role', [(r, ROLES[r]) for r in choices], u['role'])
@@ -630,6 +631,8 @@ def install(app):
             await console.load_curve()
             content = console.overview(controls=False)
             return console.finish(JSONResponse({'schema_version': 1, 'version': VERSION,
+                'curve_push': not app.state.demonstration,
+                'curve_revision': getattr(app.state.store,'_curve_revision',0),
                 'observed_at': console.state['time'], 'site_name': console.state['settings']['site_name'],
                 'subscription_nodes': view_tree(subscription_banner(console.state)),
                 'colors': console.state['settings']['display_colors'], 'nodes': view_tree(content)}))
@@ -733,7 +736,7 @@ def install(app):
                         for key in ('site_name', 'timezone', 'mode', 'cloud_url', 'demo_cloud_url'):
                             if key in form:
                                 settings[key] = value(key)
-                        for key in ('limit_kw', 'technical_limit_kw', 'margin_kw', 'freshness_s', 'ramp_kw_s'):
+                        for key in ('limit_kw', 'technical_limit_kw', 'margin_kw', 'freshness_s', 'ramp_kw_s', 'curve_min_delta_kw'):
                             if key in form:
                                 settings[key] = float(value(key))
                         if 'retain_days' in form:

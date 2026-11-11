@@ -1,0 +1,44 @@
+const assert=require('node:assert/strict');
+const {chromium}=require('playwright');
+(async()=>{
+ const browser=await chromium.launch({executablePath:'/usr/bin/chromium',headless:true,args:['--no-sandbox']});
+ const base='http://127.0.0.1:8114',external=[],errors=[];
+ try {
+  const context=await browser.newContext(),page=await context.newPage();
+  await context.request.post(base+'/api/setup',{data:{admin_password:'fixture-admin-password'}});
+  assert((await context.request.post(base+'/api/login',{data:{username:'root',password:'fixture-root-password'}})).ok());
+  assert((await context.request.post(base+'/fixture/accounts')).ok());
+  await context.request.post(base+'/api/demo');
+  const pushReady=page.waitForResponse(r=>r.url().endsWith('/api/curve/events'));
+  await page.goto(base+'/ui/overview');
+  page.on('pageerror',e=>errors.push(e.message));
+  await page.waitForFunction(()=>document.querySelector('[data-live-status]')?.textContent.startsWith('Atualizado'));
+  await pushReady;
+  await context.request.post(base+'/fixture/peak');
+  await page.waitForFunction(()=>document.querySelector('.curve-legend')?.textContent.includes('777'),{},{timeout:4000});
+  const data=await (await context.request.get(base+'/api/curve')).json();
+  assert(data.points.some(p=>p.total_kw===777));
+  const csv=await (await context.request.get(base+'/api/curve/export.csv')).text();assert(csv.includes('777,000000'));
+  const pdf=await context.request.get(base+'/api/curve/report.pdf');assert((await pdf.body()).subarray(0,4).equals(Buffer.from('%PDF')));
+  const sales=await browser.newContext(),other=await browser.newContext();
+  const p=await sales.newPage();p.on('pageerror',e=>errors.push(e.message));
+  p.on('request',r=>{if(new URL(r.url()).origin!==base)external.push(r.url())});
+  await p.goto(base);
+  const form=p.locator('form').filter({has:p.locator('input[name=_action][value="login"]')});
+  await form.locator('[name=username]').fill('sales.test');await form.locator('[name=password]').fill('fixture-sales-password');
+  await Promise.all([p.waitForNavigation(),form.locator('button').click()]);
+  await p.locator('.curve-chart').waitFor();assert((await p.textContent('body')).includes('Demonstração comercial descartável'));
+  const bad=await sales.request.post(base+'/api/meter/test',{data:{}});assert.equal(bad.status(),403);
+  assert((await sales.request.post(base+'/api/users',{data:{name:'ficticio','full_name':'Cadastro fictício','role':'operator'}})).ok());
+  assert((await other.request.post(base+'/api/login',{data:{username:'sales.test',password:'fixture-sales-password'}})).ok());
+  const list=await (await other.request.get(base+'/api/users')).json();assert(!list.users.some(u=>u.name==='ficticio'));
+  await p.goto(base+'/ui/users');assert((await p.textContent('body')).includes('Cadastro fictício'));
+  const logout=p.locator('form').filter({has:p.locator('input[name=_action][value="logout"]')});
+  await Promise.all([p.waitForNavigation(),logout.locator('button').click()]);
+  assert.equal((await sales.request.get(base+'/api/state')).status(),401);
+  const prod=await (await context.request.get(base+'/api/users')).json();assert(!prod.users.some(u=>u.name==='ficticio'));
+  assert.deepEqual(external,[]);assert.deepEqual(errors,[]);
+  await other.request.post(base+'/api/logout');
+  console.log('Browser 0.14.0 passed: adaptive push, peak CSV/PDF, commercial form login/logout, isolated users, hardware denial, no external requests or script errors.');
+ } finally {await browser.close()}
+})().catch(e=>{console.error(e);process.exitCode=1});

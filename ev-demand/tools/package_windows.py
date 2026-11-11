@@ -10,10 +10,10 @@ import re
 import zipfile
 
 
-VERSION = '0.13.0'
+VERSION = '0.14.0'
 STATIC = ('style.css', 'energycube.css', 'server.css', 'plant.css', 'live.css', 'live.js', 'maintenance.js', 'remote.js', 'd-max-logo.png', 'energycube-logo.png', 'd-max-report.jpg', 'energycube-report.jpg')
 PYTHON = (
-    '__init__.py', 'access.py', 'control.py', 'directory.py', 'engine.py', 'main.py',
+    '__init__.py', 'commercial.py', 'access.py', 'control.py', 'directory.py', 'engine.py', 'main.py',
     'meter.py', 'supervision.py', 'root_auth.py', 'recovery.py', 'network.py', 'ocpp_server.py', 'security.py', 'server_ui.py', 'services.py', 'store.py', 'live_dom.py', 'licensing.py', 'reports.py', 'maintenance.py', 'remote_tunnel.py', 'remote_registry.py', 'remote_clients.py', 'curve.py', 'plant_view.py', 'telemetry.py',
 )
 
@@ -37,6 +37,8 @@ def package(root, wheels, output):
         include(root / name, name)
     include(root / 'docs/instalar-windows-v071.md', 'LEIA-ME.txt')
     include(root / 'tools/recovery_admin.py', 'recuperacao-admin.py')
+    include(root / 'tools/account_verifier.py', 'tools/account_verifier.py')
+    include(root / 'docs/release-v0140.md', 'NOVIDADES-0.14.0.md')
     include(root / 'docs/acesso-raiz.md', 'RECUPERACAO.txt')
     include(root / 'docs/recuperacao-assinada.md', 'RECUPERACAO-ALTERNATIVA.txt')
     include(root / 'app/root-credential.json', 'app/root-credential.json')

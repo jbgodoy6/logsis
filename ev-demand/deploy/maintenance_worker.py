@@ -46,6 +46,7 @@ def restore(source,backup_dir):
             validate_backup(source,identity)
             with closing(sqlite3.connect(backup_dir/'controller.sqlite3')) as saved:current.backup(saved)
             protected=list(current.execute("SELECT kind,id,payload FROM entities WHERE kind IN ('subscription','system','remote_registration')"))
+            locked=current.execute("SELECT verified_at FROM account_leases WHERE user_id='remote-root-locked'").fetchone() if current.execute("SELECT 1 FROM sqlite_master WHERE name='account_leases'").fetchone() else None
             root=current.execute("SELECT password FROM users WHERE name='root'").fetchone()[0]
             secret=list(current.execute('SELECT * FROM directory_secret'))
             directory=list(current.execute('SELECT * FROM directory_config'))
@@ -53,6 +54,9 @@ def restore(source,backup_dir):
         with closing(sqlite3.connect(source)) as incoming:
             incoming.execute('PRAGMA trusted_schema=OFF')
             incoming.execute('DELETE FROM logins')
+            incoming.execute('CREATE TABLE IF NOT EXISTS account_leases (user_id TEXT PRIMARY KEY,verified_at REAL NOT NULL)')
+            incoming.execute('DELETE FROM account_leases')
+            if locked:incoming.execute("INSERT INTO account_leases VALUES ('remote-root-locked',?)",locked)
             incoming.execute("UPDATE users SET password=?,active=1,deleted=0,role='root',must_change=0,expires_at=NULL WHERE name='root'",(root,))
             for kind,identifier,payload in protected:
                 incoming.execute('INSERT OR REPLACE INTO entities(kind,id,payload) VALUES (?,?,?)',(kind,identifier,payload))
