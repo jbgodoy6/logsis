@@ -1,31 +1,26 @@
-D-Max Acesso Desktop 1.0.1 — aplicativo nativo para Windows 10/11 de 64 bits
+D-Max Acesso Desktop 1.1 — Completo (Windows 10/11 x64)
+
+Esta versão inclui o runtime Microsoft necessário. Não instale .NET Framework, .NET Desktop Runtime, Python ou SDK separadamente para usar o aplicativo.
 
 Instalação:
-1. Execute D-Max-Acesso-Desktop-1.0.1.msi. O MSI apenas instala e termina; ele não abre o aplicativo automaticamente. O instalador padrão do Windows coloca o aplicativo na pasta de programas do seu usuário e cria atalhos no menu Iniciar e na área de trabalho.
-2. Abra D-Max Acesso Desktop pelo atalho. Não há Python, BAT, navegador local, servidor, serviço, driver ou inicialização automática.
-3. Antes do primeiro login, atualize o Code.gs COMPLETO da implantação existente da planilha com o Code.gs desta entrega. Selecione Nova versão em Gerenciar implantações, mantendo a URL e as propriedades. O arquivo não vem dentro do MSI.
-4. Na janela do programa, informe a URL /exec e seu login e senha da aba Usuarios.
+1. Execute D-Max-Acesso-Desktop-1.1.0-Completo.msi no mesmo usuário Windows da instalação anterior. O instalador atualiza as versões 1.0/1.0.1 e preserva a URL configurada.
+2. Ao terminar, abra D-Max Acesso Desktop pelo menu Iniciar ou pelo atalho da área de trabalho. O MSI só instala; não abre a janela automaticamente.
+3. Entre com sua URL /exec e seu login e senha da planilha. Se já aplicou o Code.gs da versão Desktop, não precisa alterá-lo novamente. Se nunca aplicou essa versão, use o Code.gs completo do Desktop 1.0 e atualize a implantação existente, mantendo a URL e as propriedades.
 
-Requisito: Microsoft .NET Framework 4.8, normalmente já presente no Windows 10/11. Se faltar, instale pelo site oficial da Microsoft. Não é preciso instalar .NET 10; esse SDK foi usado somente na compilação em desenvolvimento.
+O runtime é instalado somente junto dos arquivos do aplicativo. Não modifica a instalação global do .NET do Windows. O programa não usa servidor local nem serviço e não inicializa com o Windows. A instalação não executa scripts ou ações customizadas. Cria somente os atalhos e os marcadores próprios no registro do usuário.
 
-Apenas a URL pública da plataforma é salva em %LOCALAPPDATA%\EnergyCube\DMaxAcessoDesktop\settings.json. Senhas, verificadores e tokens de sessão não são gravados em disco. Cada pessoa deve usar sua própria conta Windows.
+Somente a URL pública é salva em %LOCALAPPDATA%\EnergyCube\DMaxAcessoDesktop\settings.json. Senhas, verificadores e sessões ficam em memória. Logs técnicos de abertura em Logs registram versão, etapas e tipos/pilhas de erro, sem dados dos formulários ou mensagens arbitrárias de exceção.
 
-Perfis:
-- Desenvolvedor: clientes, simulação, configurações e gestão de contas de desenvolvedor, comercial e técnico. Pode criar, editar, bloquear, excluir, reativar e definir novas senhas. Alterações exigem a própria senha novamente; o servidor verifica o perfil e a senha.
-- Comercial e técnico: busca de clientes, botão Acessar cliente e simulação fictícia. Não podem administrar membros.
-- Não há root ou administrador local na central. O primeiro desenvolvedor precisa existir na planilha.
+Desenvolvedor: busca e acesso aos clientes, simulação, configurações e gestão de membros desenvolvedor/comercial/técnico. Criação, edição, bloqueio, exclusão, reativação e novas senhas/verificadores exigem sua senha novamente. Comercial e técnico: clientes e simulação, sem gestão de usuários. A central exige internet para validar as contas.
 
-Acessar cliente abre somente o endereço remoto validado no navegador padrão. O aplicativo não transmite credenciais ao cliente e não envia comandos aos carregadores. Faça login no D-Max remoto com sua conta. O modo comercial do Raspberry continua em demonstração isolada.
+Acessar cliente abre o endereço validado no navegador padrão, sem transmitir senhas ou comandos ao equipamento. O aplicativo em si tem janela nativa e não usa interface de navegador.
 
-Simulação: quatro carregadores fictícios, 60 kW disponíveis, bateria de 60 kWh e tempo acelerado 60 vezes. A carga para em 100%. Dados ficam em memória, separados por sessão, e são descartados ao sair. Comercial encerra após 15 minutos sem interação. O programa confere a autorização na planilha a cada minuto e em cada operação protegida; exige internet.
+Simulação: quatro carregadores fictícios, 60 kW, bateria de 60 kWh, tempo acelerado 60 vezes e parada em 100%. Dados são descartados ao sair. Comercial encerra após 15 minutos sem interação; situação/perfil/validade são conferidos online em cada operação protegida e periodicamente.
 
-Ao recriar uma conta, use novo ID e novo login. Para reativar a mesma identidade, edite a conta existente e preserve o ID/login. O histórico não é apagado.
+Para trocar um login, crie uma nova conta e exclua/bloqueie a anterior. Para reativar a mesma conta, preserve o ID e o login.
 
-Desinstalação: Configurações do Windows > Aplicativos > D-Max Acesso Desktop. Preferências pessoais são preservadas. O instalador não modifica o Defender, não cria exclusões e não roda scripts ou comandos extras.
+Desinstalação: Configurações do Windows > Aplicativos > D-Max Acesso Desktop. Preferências pessoais são preservadas. Não é preciso desinstalar os runtimes globais do Windows.
 
-Validação e assinatura:
-O MSI foi construído com ferramentas verificadas e o EXE foi compilado de código C# legível, sem empacotadores ou ofuscação. O runtime pertence ao Windows/Microsoft. Testes locais cobriram o modelo de simulação, a API e o conteúdo do MSI. Não houve execução nativa no Windows nem teste do Defender nesta máquina Linux.
-O instalador e o EXE ainda não possuem certificado Authenticode de publicação da EnergyCube. Portanto não há garantia de aprovação pelo Defender/SmartScreen. Se houver alerta de ameaça, mantenha o bloqueio; não desative a proteção. Uma assinatura reconhecida exige certificado de assinatura de código da empresa.
+Microsoft .NET 10.0.15 e Windows Desktop Runtime 10.0.15 estão incluídos. Licenças/notas de terceiros acompanham o aplicativo na pasta Licencas. Não há empacotador de arquivo executável único nem ofuscação; os arquivos oficiais do runtime são distribuídos individualmente.
 
-Revisão 1.0.1 — abertura:
-O instalador confere o .NET Framework 4.8. A janela é ajustada à área útil da tela. Falhas de abertura exibem uma mensagem e gravam relatório em %LOCALAPPDATA%\EnergyCube\DMaxAcessoDesktop\Logs (ou pasta temporária quando necessário). O relatório contém versão, etapas e tipos/pilhas de erro, sem senhas, tokens ou dados dos formulários. A abertura da janela foi exercitada em Mono/WinForms no Linux; isso não substitui a execução no Windows.
+Testes locais cobriram o núcleo, o JSON/HTTP, a configuração autossuficiente e o conteúdo do MSI. A execução do runtime Windows e a instalação no Windows/Defender não foram realizadas nesta máquina Linux. O executável da aplicação e o MSI ainda não possuem certificado Authenticode da empresa. Não é possível garantir a aprovação pelo Defender/SmartScreen. Não desative proteção nem crie exceções diante de um alerta de ameaça.

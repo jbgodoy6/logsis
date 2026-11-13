@@ -1,19 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
- <Product Id="*" Name="D-Max Acesso Desktop 1.0.1" Language="1046" Version="1.0.1" Manufacturer="EnergyCube" UpgradeCode="E67F8748-BFC6-4CDA-A80B-E11D403DBD08">
-  <Package InstallerVersion="500" Compressed="yes" InstallScope="perUser" Description="Central nativa de acesso aos clientes e simulação"/>
-  <Property Id="NETFRAMEWORK48"><RegistrySearch Id="FrameworkRelease" Root="HKLM" Key="SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full" Name="Release" Type="raw"/></Property>
-  <Condition Message="O aplicativo requer Microsoft .NET Framework 4.8. Instale o runtime pelo site oficial da Microsoft antes de continuar.">Installed OR (NETFRAMEWORK48 AND NETFRAMEWORK48 &gt;= "#528040")</Condition>
+ <Product Id="*" Name="D-Max Acesso Desktop 1.1 — Completo" Language="1046" Version="1.1.0" Manufacturer="EnergyCube" UpgradeCode="E67F8748-BFC6-4CDA-A80B-E11D403DBD08">
+  <Package InstallerVersion="500" Compressed="yes" InstallScope="perUser" Description="Aplicativo Windows com runtime Microsoft incluído"/>
   <MajorUpgrade DowngradeErrorMessage="Uma versão mais recente já está instalada."/>
   <Media Id="1" Cabinet="DMaxDesktop.cab" EmbedCab="yes"/>
   <Directory Id="TARGETDIR" Name="SourceDir">
-   <Directory Id="LocalAppDataFolder"><Directory Id="ProgramsFolder" Name="Programs"><Directory Id="EnergyCubeFolder" Name="EnergyCube"><Directory Id="INSTALLFOLDER" Name="D-Max Acesso Desktop">
-    <Component Id="Application" Guid="70C7CC08-93C2-4FA9-A91A-9692045BF6E1" Win64="yes">
-     <File Id="DMaxExecutable" Name="DMaxAcesso.exe" Source="$(var.PublishDir)/DMaxAcesso.exe" KeyPath="yes"/>
-     <File Id="DMaxConfiguration" Name="DMaxAcesso.exe.config" Source="$(var.PublishDir)/DMaxAcesso.exe.config"/>
-     <File Id="Readme" Name="LEIA-ME.txt" Source="$(var.SourceDir)/LEIA-ME.txt"/>
-    </Component>
-   </Directory></Directory></Directory></Directory>
+   <Directory Id="LocalAppDataFolder"><Directory Id="ProgramsFolder" Name="Programs"><Directory Id="EnergyCubeFolder" Name="EnergyCube"><Directory Id="INSTALLFOLDER" Name="D-Max Acesso Desktop"/></Directory></Directory></Directory>
    <Directory Id="ProgramMenuFolder"><Directory Id="ApplicationProgramsFolder" Name="EnergyCube">
     <Component Id="MenuShortcut" Guid="3B662D39-1FD4-43DF-877F-766FA872EA78" Win64="yes">
      <Shortcut Id="StartMenuShortcut" Name="D-Max Acesso Desktop" Description="Clientes e simulação" Target="[INSTALLFOLDER]DMaxAcesso.exe" WorkingDirectory="INSTALLFOLDER"/>
@@ -28,6 +20,6 @@
     </Component>
    </Directory>
   </Directory>
-  <Feature Id="Complete" Title="D-Max Acesso Desktop" Level="1"><ComponentRef Id="Application"/><ComponentRef Id="MenuShortcut"/><ComponentRef Id="DesktopShortcut"/></Feature>
+  <Feature Id="Complete" Title="D-Max completo" Level="1"><ComponentGroupRef Id="PublishedRuntime"/><ComponentRef Id="MenuShortcut"/><ComponentRef Id="DesktopShortcut"/></Feature>
  </Product>
 </Wix>

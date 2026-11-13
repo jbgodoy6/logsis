@@ -28,7 +28,7 @@ namespace EnergyCube.DMax {
   private readonly List<Label[]> simLabels=new List<Label[]>();
   private readonly List<Button[]> simButtons=new List<Button[]>();
   public MainWindow() {
-   Text="D-Max Acesso Desktop 1.0.1";Width=1250;Height=850;MinimumSize=new Size(800,560);StartPosition=FormStartPosition.CenterScreen;Font=new Font("Segoe UI",10);BackColor=background;
+   Text="D-Max Acesso Desktop 1.1.0";Width=1250;Height=850;MinimumSize=new Size(800,560);StartPosition=FormStartPosition.CenterScreen;Font=new Font("Segoe UI",10);BackColor=background;
    sidebar.BackColor=navy;
    var brand=new Label{Dock=DockStyle.Top,Height=110,Text="D-Max\nACESSO DESKTOP",Font=new Font("Segoe UI",22,FontStyle.Bold),ForeColor=Color.White,TextAlign=ContentAlignment.MiddleCenter};
    var menuHost=new Panel{Dock=DockStyle.Fill};menuHost.Controls.Add(menu);
@@ -73,7 +73,7 @@ namespace EnergyCube.DMax {
    menu.Controls.Add(Button("Simulação",ShowSimulation));
    if(IsDeveloper){menu.Controls.Add(Button("Usuários",()=>{var ignored=Run(ShowMembers);}));menu.Controls.Add(Button("Configurações",ShowSettings));}
    menu.Controls.Add(Button("Sair",()=>{var ignored=Run(SignOut);}));
-   identity.Text=Values.Text(actor,"full_name")+"\n"+Role(Values.Text(actor,"role"))+"\nDesktop 1.0.1";
+   identity.Text=Values.Text(actor,"full_name")+"\n"+Role(Values.Text(actor,"role"))+"\nDesktop 1.1.0";
   }
   private void ShowLogin() {
    sidebar.Visible=false;var page=Page("D-Max Acesso Desktop");var section=Stack();page.Controls.Add(section);

@@ -1,0 +1,23 @@
+[
+  {
+    "package": "microsoft.netcore.app.runtime.win-x64",
+    "version": "10.0.15",
+    "nuget_sha512": "MEGAkRGHrAXYA2t/Lo0mDxH+/O5NLqgWTcVh70iOZJTpoOCL/jKfOgDqYoDi3W9WcnviL4DhMl+5lWC8cxttSw==",
+    "sha256": "7423f58917342b9e4bf276fb164d5726d2c90fe2fe989c552b9e39056256a035",
+    "source": "https://api.nuget.org/v3/index.json"
+  },
+  {
+    "package": "microsoft.windowsdesktop.app.runtime.win-x64",
+    "version": "10.0.15",
+    "nuget_sha512": "vUp++3z72ONuBlzCplThiiZHdunYILGH37bfKjzzWG75nsllieq9m63DSGkf6budzAgOXQ9/+jWBeaS4qlUUEw==",
+    "sha256": "a036c174bac57a716e21dedccf96459804e4d8d8c31a08e3a8de649bf7684497",
+    "source": "https://api.nuget.org/v3/index.json"
+  },
+  {
+    "package": "microsoft.netcore.app.host.win-x64",
+    "version": "10.0.15",
+    "nuget_sha512": "V8gSxJdJ3p167B4PbNNJyTckE89iv74T4adJmX1V3d+Ko8HmXVLZxCoYJeNjO5mER9wmG83OVoFzKGGwPe772A==",
+    "sha256": "41d6989224d9e273880072041c0fa7a2d8c92f1cf11e989e8967d3d589a066ad",
+    "source": "https://api.nuget.org/v3/index.json"
+  }
+]

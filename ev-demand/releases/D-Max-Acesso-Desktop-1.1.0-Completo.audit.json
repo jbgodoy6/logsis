@@ -1,0 +1,24 @@
+{
+  "product": "D-Max Acesso Desktop 1.1 \u2014 Completo",
+  "version": "1.1.0",
+  "self_contained": true,
+  "included_frameworks": {
+    "Microsoft.NETCore.App": "10.0.15",
+    "Microsoft.WindowsDesktop.App": "10.0.15"
+  },
+  "framework_installation_required": false,
+  "msi_sha256": "aab21afbba9e9b4713d0e0b6ca38ac8e50920ba3c3ca0e4553ebbcdc7c5f9f83",
+  "exe_sha256": "a66c2050b3be1504e5b501f7c5fc9f8edb76c7c2ea38f346138458bbca8e4b3a",
+  "file_count": 228,
+  "payload_bytes": 114917538,
+  "custom_actions": 0,
+  "services": 0,
+  "environment_changes": 0,
+  "registry": "two HKCU shortcut markers only",
+  "shortcuts": 2,
+  "installation_scope": "current user",
+  "single_file_packing": false,
+  "authenticode_signed": false,
+  "windows_execution_tested": false,
+  "defender_tested": false
+}

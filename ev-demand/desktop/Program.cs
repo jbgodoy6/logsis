@@ -38,7 +38,7 @@ namespace EnergyCube.DMax {
   static int CountInputs(Control root){int count=root is TextBox?1:0;foreach(Control child in root.Controls)count+=CountInputs(child);return count;}
   [MethodImpl(MethodImplOptions.NoInlining)]
   static void ShowStartupFailure(Exception error) {
-   try{MessageBox.Show("O D-Max não conseguiu abrir a janela.\n\nErro: "+error.GetType().Name+"\n\nDiagnóstico local:\n"+(StartupDiagnostics.LogPath??"Não foi possível gravar o relatório.")+"\n\nEsta versão requer Microsoft .NET Framework 4.8.","D-Max — falha de abertura",MessageBoxButtons.OK,MessageBoxIcon.Error);}catch{}
+   try{MessageBox.Show("O D-Max não conseguiu abrir a janela.\n\nErro: "+error.GetType().Name+"\n\nDiagnóstico local:\n"+(StartupDiagnostics.LogPath??"Não foi possível gravar o relatório.")+"\n\nEsta versão inclui o runtime necessário. Não exige instalar .NET Framework.","D-Max — falha de abertura",MessageBoxButtons.OK,MessageBoxIcon.Error);}catch{}
   }
  }
 }

@@ -16,6 +16,10 @@ class SimulationTests {
   var folder=System.IO.Path.Combine(System.IO.Path.GetTempPath(),"dmax-startup-test-"+Guid.NewGuid());
   StartupDiagnostics.Initialize(folder);StartupDiagnostics.Failure(new InvalidOperationException("fixture-sensitive-value"));
   var report=System.IO.File.ReadAllText(StartupDiagnostics.LogPath);Check(report.Contains("InvalidOperationException"),"startup failure type logged");Check(!report.Contains("fixture-sensitive-value"),"exception message not copied into diagnostics");System.IO.Directory.Delete(folder,true);
-  Console.WriteLine("15 native core assertions passed, including safe startup diagnostics.");
+  var parsed=Json.Object("{\"ok\":true,\"user\":{\"role\":\"developer\"},\"clients\":[{\"updated_at\":1770000000.5}],\"none\":null}");
+  Check(Values.Flag(parsed,"ok"),"JSON booleans are native booleans");Check(Values.Text(Values.Object(parsed,"user"),"role")=="developer","nested JSON object");Check(Values.Number(Values.Rows(parsed,"clients")[0],"updated_at")==1770000000.5,"JSON catalog arrays preserve numeric timestamps");
+  var restored=Json.Object(Json.Serialize(new System.Collections.Generic.Dictionary<string,object>{{"name","João 🔋"},{"key","fixture"}}));Check(Values.Text(restored,"name")=="João 🔋","Unicode JSON round trip");
+  TransportTests.Run();
+  Console.WriteLine("24 native core/transport assertions passed, including standalone JSON and safe redirects.");
  }
 }
