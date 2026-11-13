@@ -19,7 +19,7 @@ from .meter import MEASUREMENTS, FORMATS, normalize_serial_port
 from .plant_view import render_plant
 from .live_dom import view_tree
 
-VERSION = '0.14.1'
+VERSION = '0.14.2'
 PAGES = {
     'overview': 'Visão geral', 'chargers': 'Carregadores', 'vehicles': 'Veículos',
     'schedule': 'Horários', 'history': 'Histórico', 'meter': 'Multimedidor',
@@ -179,7 +179,7 @@ def install(app):
                     + '<link rel="icon" type="image/png" href="/static/energycube-logo.png">'
                     + styles
                     + ('<link rel="stylesheet" href="/ui-colors.css">' if self.user and not self.user['must_change'] else '')
-                    + '</head><body>' + content
+                    + ('<script src="/static/position.js?v=' + VERSION + '" defer></script>' if self.user else '') + '</head><body>' + content
                     + ('<script src="/static/live.js?v=' + VERSION + '" defer></script>' if live else '')
                     + ('<div class="login-version">EnergyCube D-Max · <span data-dmax-version>v' + VERSION + '</span></div>' if not self.user else '')
                     + '</body></html>')
@@ -227,8 +227,8 @@ def install(app):
             if self.user['must_change']:
                 content = note + self.password_form() + self.form('logout', submit='Sair')
                 return self.finish(HTMLResponse(self.document('<main class="initial-password">' + panel('Troque a senha inicial', content) + '</main>'), status_code=status))
-            allowed = {'meter': self.technical, 'settings': self.manager, 'users': self.manager,
-                       'directory': self.user['role'] in ('root','developer'), 'remoteclients': self.user['role'] in ('root','developer'), 'simulation': self.technical and app.state.store.settings()['mode'] == 'simulation', 'maintenance': self.technical and not self.demonstration, 'audit': self.manager, 'remote': self.technical and not self.demonstration}
+            allowed = {'meter': self.technical, 'settings': self.manager, 'users': self.manager and self.user['role'] != 'root',
+                       'directory': False, 'remoteclients': self.user['role'] == 'developer', 'simulation': False, 'maintenance': self.technical and not self.demonstration, 'audit': self.manager, 'remote': self.technical and self.user['role'] != 'root' and not self.demonstration}
             if not allowed.get(page, True):
                 page, note, status = 'overview', '<div class="notice">Acesso não permitido para seu perfil.</div>', 403
             self.state = await self.api('GET', '/api/state')
@@ -243,6 +243,8 @@ def install(app):
                 content = self.schedules()
             elif page == 'settings':
                 content = self.settings()
+                if self.user['role'] in ('root', 'developer'):
+                    content += await self.directory()
             elif page == 'meter':
                 serial = await self.api('GET', '/api/meter/ports')
                 content = self.meter(diagnostic, serial['ports'])
@@ -252,7 +254,7 @@ def install(app):
                 content=await self.remote_clients()
             elif page == 'remote':
                 remote=await self.api('GET','/api/remote')
-                content=panel('Cloudflare · acesso remoto e diretório', '<p id="remote-state">'+esc('Conectado' if remote['connected'] else 'Sem conexão confirmada')+'</p><p id="remote-message">'+esc(remote['message'])+'</p><p><a id="remote-url" href="'+esc(remote.get('url') or '#')+'" target="_blank" rel="noopener noreferrer">'+esc(remote.get('url') or 'Endereço ainda não disponível')+'</a></p><p>Identificador da instalação: <code>'+esc(remote['controller_id'])+'</code></p><p id="remote-publication">'+esc('Planilha: plataforma desativada; configure Técnicos globais para registrar o endereço' if not remote['publication']['directory_enabled'] else 'Planilha: envio pendente' if remote['publication']['pending'] else 'Planilha: consulte a última confirmação no diretório')+'</p><p>Ative no Raspberry pelo instalador de acesso remoto. Cada equipamento usa sua própria identidade. O Quick Tunnel gera um endereço automático que pode mudar. O novo endereço é enviado ao diretório da planilha quando a plataforma está configurada.</p><p>O serviço gratuito tem limites de tráfego e disponibilidade. O D-Max local e a integração Grafana permanecem independentes.</p>')+'<script src="/static/remote.js?v='+VERSION+'" defer></script>'
+                content=panel('Cloudflare · acesso remoto e diretório', '<p id="remote-state">'+esc('Conectado' if remote['connected'] else 'Sem conexão confirmada')+'</p><p id="remote-message">'+esc(remote['message'])+'</p><p><a id="remote-url" href="'+esc(remote.get('url') or '#')+'" target="_blank" rel="noopener noreferrer">'+esc(remote.get('url') or 'Endereço ainda não disponível')+'</a></p><p>Identificador da instalação: <code>'+esc(remote['controller_id'])+'</code></p><p id="remote-publication">'+esc('Planilha: plataforma desativada; configure a plataforma em Configurações para registrar o endereço' if not remote['publication']['directory_enabled'] else 'Planilha: envio pendente' if remote['publication']['pending'] else 'Planilha: consulte a última confirmação no diretório')+'</p><p>Ative no Raspberry pelo instalador de acesso remoto. Cada equipamento usa sua própria identidade. O Quick Tunnel gera um endereço automático que pode mudar. O novo endereço é enviado ao diretório da planilha quando a plataforma está configurada.</p><p>O serviço gratuito tem limites de tráfego e disponibilidade. O D-Max local e a integração Grafana permanecem independentes.</p>')+'<script src="/static/remote.js?v='+VERSION+'" defer></script>'
             elif page == 'audit':
                 actor=self.request.query_params.get('actor','')
                 try: offset=max(0,int(self.request.query_params.get('offset','0')))
@@ -299,10 +301,7 @@ def install(app):
                     '<h1>' + esc(PAGES[page]) + '</h1></div><a class="secondary" href="/ui/' + page + '">Atualizar</a></header>'
                     + ('<div class="notice">Demonstração comercial descartável · dados fictícios · sair apaga esta sessão.</div>' if self.demonstration else subscription_banner(self.state)) + note + content + '<footer class="app-footer"><span>EnergyCube D-Max · Controle local</span><span>Versão instalada: <b data-dmax-version>v' + VERSION + '</b></span></footer></main></div>')
             response = self.finish(HTMLResponse(self.document(body, PAGES[page], live=live), status_code=status))
-            if live:
-                response.headers['X-DMax-Live'] = '1'
-            if page in ('maintenance','remote'):
-                response.headers['X-DMax-Live'] = '1'
+            response.headers['X-DMax-Live'] = '1'
             return response
 
         @property
@@ -374,6 +373,7 @@ def install(app):
             content = '<h3>' + esc(charger['name']) + '</h3><small>' + esc(port['key']) + '</small>'
             content += '<div class="charger-vehicle">' + esc(vehicle['name'] if vehicle else 'Veículo não identificado') + (' ★ PRIORITÁRIO' if vehicle and vehicle['priority'] else '') + '</div>'
             content += '<div class="charger-power"><strong>' + number(port['power_kw']) + ' kW</strong><small>' + ('Potência definida pelo carregador' if port.get('native_mode') else 'Limite ' + number(port['limit_kw']) + ' kW') + '</small></div>'
+            content += '<p>SOC da bateria: ' + (number(port.get('soc')) + '%' if port.get('soc') is not None and port['connected'] else 'Não informado pelo veículo') + '</p>'
             content += '<p>' + esc(port['status']) + '</p>'
             if controls:
                 if port['connected']:
@@ -610,9 +610,9 @@ def install(app):
                 [esc('Situação'), esc(data['status']['message'])], [esc('Chave'), 'Configurada' if data['token_present'] else 'Pendente'],
                 [esc('Alterações locais pendentes'), esc(data['pending'])]])
             subscription = self.state.get('subscription', {})
-            billing = panel('Assinatura deste equipamento', '<p>Estado: <b>' + esc(subscription.get('state')) + '</b> · Revisão ' + esc(subscription.get('revision')) + '</p><p>O controle comercial usa a aba Assinaturas da mesma planilha. Configure uma linha com o identificador acima e situação regular ou pendente. O aviso recebido continua válido sem internet; apagar a linha não cancela a pendência.</p><p class="hint">Exige o Apps Script atualizado fornecido com a v0.9.0. Para medir tempo desligado sem internet, use RTC com bateria. Administradores do sistema operacional podem alterar o banco: este mecanismo não é proteção contra acesso root ao Linux.</p>')
-            return (billing + panel('Google Planilhas e Apps Script', self.form('directory', fields, page='directory'))
-                    + panel('Sincronização', status + self.form('sync', submit='Sincronizar agora', page='directory'))
+            billing = panel('Assinatura deste equipamento', '<p>Estado: <b>' + esc(subscription.get('state')) + '</b> · Revisão ' + esc(subscription.get('revision')) + '</p><p>O controle comercial usa as colunas de assinatura em DMax_Remoto após a migração; antes dela, usa Assinaturas. Configure uma linha com o identificador acima e situação regular ou pendente. O aviso recebido continua válido sem internet; apagar a linha não cancela a pendência.</p><p class="hint">Exige o Apps Script atualizado fornecido com a v0.9.0. Para medir tempo desligado sem internet, use RTC com bateria. Administradores do sistema operacional podem alterar o banco: este mecanismo não é proteção contra acesso root ao Linux.</p>')
+            return (billing + panel('Google Planilhas e Apps Script', self.form('directory', fields, page='settings'))
+                    + panel('Sincronização', status + self.form('sync', submit='Sincronizar agora', page='settings'))
                     + '<p class="hint">Sem internet, permanece exatamente a validade recebida na última consulta.</p>')
 
     class UIError(Exception):

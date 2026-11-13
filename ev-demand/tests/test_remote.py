@@ -85,8 +85,8 @@ class GatewayTests(unittest.TestCase):
     def test_remote_status_and_grafana_settings_remain_independent(self):
         self.login();before=self.app.state.store.settings()
         r=self.c.get('/api/remote');self.assertEqual(r.status_code,200)
-        page=self.c.get('/ui/remote');self.assertEqual(page.status_code,200)
-        self.assertIn('Grafana',page.text)
+        page=self.c.get('/ui/remote');self.assertEqual(page.status_code,403)
+        self.assertIn('Acesso não permitido',page.text)
         self.assertEqual(self.app.state.store.settings(),before)
     def test_unavailable_backend_returns_controlled_error_without_changing_controller(self):
         before=self.app.state.store.settings()

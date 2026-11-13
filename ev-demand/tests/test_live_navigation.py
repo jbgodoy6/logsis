@@ -32,12 +32,13 @@ class LiveNavigationTests(unittest.TestCase):
             self.assertEqual(data.headers['x-frame-options'],'DENY')
             self.assertIn('data-dmax-version',shell.text)
 
-    def test_configuration_and_credentials_do_not_run_scripts_or_auto_refresh(self):
+    def test_configuration_preserves_position_without_live_polling_or_refresh(self):
         for page in ['settings','chargers','profile']:
             response=self.client.get('/ui/'+page)
             self.assertNotIn('http-equiv="refresh"',response.text)
-            self.assertNotIn('<script',response.text)
-            self.assertIn("script-src 'none'",response.headers['content-security-policy'])
+            self.assertIn('/static/position.js',response.text)
+            self.assertNotIn('/static/live.js',response.text)
+            self.assertIn("script-src 'self'",response.headers['content-security-policy'])
             self.assertEqual(response.headers['x-frame-options'],'DENY')
         self.assertEqual(self.client.get('/ui-data/settings').status_code,404)
 

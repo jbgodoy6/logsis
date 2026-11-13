@@ -133,7 +133,7 @@ class ServerUITests(unittest.TestCase):
 
     def test_account_first_password_change_without_code_and_operator_restrictions(self):
         self.setup_login()
-        response = self.submit('user', '/ui/users', name='ui.operator', full_name='Operador UI', role='operator')
+        response = self.client.post('/api/users', json=dict(name='ui.operator', full_name='Operador UI', role='operator'))
         self.assertEqual(response.status_code, 200, response.text)
         self.assertNotIn('activation_result', response.text)
         self.assertNotIn('Código de ativação', response.text)
@@ -194,12 +194,12 @@ class ServerUITests(unittest.TestCase):
     def test_directory_device_key_is_not_returned_after_save(self):
         self.setup_login()
         key = 'fixture-private-key-' + 'x' * 40
-        response = self.submit('directory', '/ui/directory',
+        response = self.submit('directory', '/ui/settings',
                                url='https://script.google.com/macros/s/FIXTURE/exec',
                                device_token=key, interval_s='600')
         self.assertEqual(response.status_code, 200, response.text)
         self.assertNotIn(key, response.text)
-        self.assertNotIn(key, self.client.get('/ui/directory').text)
+        self.assertNotIn(key, self.client.get('/ui/settings').text)
         self.assertEqual(self.app.state.access.config()['interval_s'], 600)
 
     def test_real_client_address_is_used_for_login_limits(self):

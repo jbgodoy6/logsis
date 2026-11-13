@@ -6,9 +6,9 @@ sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 from app.store import password_hash
 
 def main():
-    password=getpass.getpass('Senha individual (mínimo 12 caracteres): ')
+    password=getpass.getpass('Senha individual (mínimo 8 caracteres): ')
     confirm=getpass.getpass('Confirme: ')
-    if password!=confirm or len(password)<12 or len(password)>200:
+    if password!=confirm or len(password)<8 or len(password)>200:
         raise SystemExit('Senhas divergentes ou tamanho inválido')
     print(password_hash(password))
 

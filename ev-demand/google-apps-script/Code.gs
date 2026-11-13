@@ -7,7 +7,7 @@ const DMAX_DEFAULT_HASH = 'pbkdf2_sha256$600000$0cc644386557630153579d018267d636
 function onOpen() {
   SpreadsheetApp.getUi().createMenu('D-Max')
     .addItem('Preparar/migrar usuários (aba única)', 'migrarUsuarios')
-    .addItem('Preparar aba Assinaturas', 'prepararAssinaturas')
+    .addItem('Unificar assinaturas e acesso remoto', 'unificarEquipamentos')
     .addItem('Preparar diretório de acesso remoto', 'prepararRemoto')
     .addItem('Autorizar um D-Max', 'autorizarDMax')
     .addItem('Revogar chave de um D-Max', 'revogarDMax').addToUi();
@@ -120,7 +120,7 @@ function remoteDirectory_(){
   if(sheet.getLastRow()>1001)error_(422,'Limite de 1000 clientes');
   const rows=sheet.getLastRow()>1?sheet.getRange(2,1,sheet.getLastRow()-1,7).getValues():[];
   rows.forEach(row=>{
-    if(row.every(v=>String(v).trim()===''))return;
+    if(row.every(v=>String(v).trim()==='') || !String(row[2]).trim())return;
     const id=String(row[0]).trim(),name=String(row[1]).trim(),url=String(row[2]).trim(),stamp=row[4] instanceof Date?row[4].getTime():Date.parse(String(row[4]));
     if(!/^[A-Za-z0-9_-]{1,100}$/.test(id)||seen[id]||!name||name.length>100||
        !/^https:\/\/[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.trycloudflare\.com$/.test(url)||
@@ -253,16 +253,23 @@ function prepararAssinaturas() {
   SpreadsheetApp.getUi().alert('Use uma linha por D-Max. Situação: regular ou pendente. O prazo é fixo de dez dias; aviso_em e prazo_final são preenchidos pelo serviço. Para liberar, altere para regular. Apagar a linha não libera o equipamento.');
 }
 function subscription_(props,id) {
-  const book=SpreadsheetApp.openById(DMAX_SHEET_ID),sheet=book.getSheetByName('Assinaturas');
+  const book=SpreadsheetApp.openById(DMAX_SHEET_ID);
+  const unified=book.getSheetByName(DMAX_REMOTE_TAB);
+  if(unified && unified.getRange(1,8,1,4).getValues()[0].join(',')==='situacao,aviso_em,prazo_final,mensagem')return unifiedSubscription_(props,id,unified);
+  const sheet=book.getSheetByName('Assinaturas');
   if(!sheet||sheet.getLastRow()<2)return null;
   if(JSON.stringify(sheet.getRange(1,1,1,6).getValues()[0])!==JSON.stringify(DMAX_SUB_HEADERS))error_(422,'Cabeçalhos de assinaturas inválidos');
   const matches=sheet.getRange(2,1,sheet.getLastRow()-1,6).getValues().map((v,i)=>({v:v,row:i+2})).filter(r=>String(r.v[0]).trim()===id);
   if(!matches.length)return null;
   if(matches.length!==1)error_(422,'Assinatura duplicada');
-  const row=matches[0],status=String(row.v[2]).trim().toLowerCase();
+  const row=matches[0];
+  return subscriptionFromRow_(props,id,row.v,dates=>sheet.getRange(row.row,4,1,2).setValues([dates]));
+}
+function subscriptionFromRow_(props,id,values,writeDates){
+  const status=String(values[2]).trim().toLowerCase();
   if(!['regular','pendente'].includes(status))error_(422,'Situação de assinatura inválida');
   const state=status==='pendente'?'pending':'regular',now=Math.floor(Date.now()/1000);
-  const message=String(row.v[5]||'Regularize sua assinatura com o fornecedor.').trim();
+  const message=String(values[5]||'Regularize sua assinatura com o fornecedor.').trim();
   if(message.length>300)error_(422,'Mensagem muito longa');
   const property='subscription.'+id,old=JSON.parse(props.getProperty(property)||'null');
   let record=old;
@@ -274,7 +281,7 @@ function subscription_(props,id) {
     props.setProperty(property,JSON.stringify(record));
   }
   const dates=[new Date(record.issued_at*1000).toISOString(),record.deadline?new Date(record.deadline*1000).toISOString():''];
-  sheet.getRange(row.row,4,1,2).setValues([dates]);
+  writeDates(dates);
   const payload=JSON.stringify(Object.assign({},record,{server_time:now}));
   const signature=Utilities.computeHmacSha256Signature('DMAX-LICENSE-1\n'+payload,props.getProperty('device.'+id),Utilities.Charset.UTF_8)
     .map(b=>('0'+((b+256)%256).toString(16)).slice(-2)).join('');
@@ -463,4 +470,43 @@ function migrarUsuarios(){
     [tech,accounts].filter(Boolean).forEach(sheet=>sheet.hideSheet());
     SpreadsheetApp.getUi().alert('Usuarios pronta: '+(output.length-1)+' contas. Edite somente Usuarios. Tecnicos/Contas e backups foram preservados e ocultados.');
   } finally {lock.releaseLock();}
+}
+
+/** Explicit migration: validate first, back up both sheets, preserve old rows. */
+function unificarEquipamentos(){
+  const lock=LockService.getScriptLock();if(!lock.tryLock(10000))throw new Error('Migração em andamento');
+  try {
+    const book=SpreadsheetApp.openById(DMAX_SHEET_ID),remote=remoteSheet_(),old=book.getSheetByName('Assinaturas');
+    const extra=['situacao','aviso_em','prazo_final','mensagem'];
+    if(remote.getRange(1,8,1,4).getValues()[0].join(',')===extra.join(','))return;
+    const data=remote.getRange(1,1,remote.getLastRow(),11).getValues();
+    if(data.some(row=>row.slice(7).some(v=>String(v)!=='')))throw new Error('Colunas H:K ocupadas; nenhum dado alterado');
+    const seen=new Set();data.slice(1).forEach(row=>{if(seen.has(String(row[0])))throw new Error('D-Max duplicado');seen.add(String(row[0]));});
+    const billing=old&&old.getLastRow()?old.getRange(1,1,old.getLastRow(),6).getValues():[DMAX_SUB_HEADERS];
+    if(JSON.stringify(billing[0])!==JSON.stringify(DMAX_SUB_HEADERS))throw new Error('Cabeçalhos de assinaturas inválidos');
+    const billed=new Set();
+    billing.slice(1).forEach(row=>{
+      const id=String(row[0]).trim();if(!id)return;
+      if(billed.has(id))throw new Error('Assinatura duplicada');billed.add(id);
+      if(!['regular','pendente'].includes(String(row[2]).trim().toLowerCase()))throw new Error('Situação inválida');
+      let target=data.slice(1).find(r=>String(r[0]).trim()===id);
+      if(!target){target=[id,row[1],'','DESCONECTADO','','',0];data.push(target);}
+      target.splice(7,4,...row.slice(2,6));
+    });
+    const stamp=Date.now();remote.copyTo(book).setName('Backup_remoto_'+stamp).hideSheet();
+    if(old)old.copyTo(book).setName('Backup_assinaturas_'+stamp).hideSheet();
+    data[0]=DMAX_REMOTE_HEADERS.concat(extra);
+    remote.getRange(1,1,data.length,11).setValues(data.map(row=>Array.from({length:11},(_,i)=>row[i]??'')));
+    SpreadsheetApp.flush();if(old)old.hideSheet();
+    SpreadsheetApp.getUi().alert('DMax_Remoto reúne acesso remoto e assinaturas. Backups preservados; edite a situação nas colunas H:K.');
+  } finally {lock.releaseLock();}
+}
+function unifiedSubscription_(props,id,sheet){
+  const rows=sheet.getLastRow()>1?sheet.getRange(2,1,sheet.getLastRow()-1,11).getValues():[];
+  const matches=rows.map((r,i)=>({r,index:i+2})).filter(x=>String(x.r[0]).trim()===id);
+  if(matches.length>1)error_(422,'Assinatura duplicada');
+  if(!matches.length||!String(matches[0].r[7]).trim())return null;
+  const match=matches[0];
+  // Delegate signing and deadline semantics to the legacy implementation.
+  return subscriptionFromRow_(props,id,[match.r[0],match.r[1],...match.r.slice(7,11)],dates=>sheet.getRange(match.index,9,1,2).setValues([dates]));
 }

@@ -29,6 +29,6 @@ O instalador agora também copia o gerador de verificadores para o local documen
 /opt/d-max/.venv/bin/python /opt/d-max/tools/account_verifier.py
 ```
 
-Escolha uma senha individual com 12 a 200 caracteres e cole somente o verificador completo na coluna `verificador`. Para mudar o perfil de uma conta, altere apenas `perfil`, preservando `id` e `login`. A mudança revoga sessões antigas; autentique novamente. Os prazos offline e o isolamento das demonstrações da 0.14.0 permanecem.
+Escolha uma senha individual com 8 a 200 caracteres e cole somente o verificador completo na coluna `verificador`. Para mudar o perfil de uma conta, altere apenas `perfil`, preservando `id` e `login`. A mudança revoga sessões antigas; autentique novamente. Os prazos offline e o isolamento das demonstrações da 0.14.0 permanecem.
 
 Não houve implantação nesta conta Google nem acesso ao Raspberry por este ambiente. Testes locais não substituem a confirmação no equipamento.

@@ -16,7 +16,7 @@ Atualize o código da implantação existente do Apps Script com `google-apps-sc
 
 Use ID/login permanentes e individuais. Perfis: `desenvolvedor` ou `comercial`; situações: `ativo`, `bloqueado`, `excluido`. A validade segue as mesmas regras de data e fuso da aba Tecnicos. Aba Tecnicos, suas credenciais, Assinaturas e diretório remoto permanecem compatíveis. O novo snapshot acrescenta `accounts`; servidores antigos continuam recebendo `technicians`.
 
-Gere o verificador em um computador confiável com `python tools/account_verifier.py`. O programa pede e confirma a senha sem exibi-la, exigindo 12 a 200 caracteres, e imprime somente PBKDF2-SHA256 (600.000 iterações, sal aleatório). Cole apenas esse verificador na coluna correspondente. Nunca escreva a senha nas células. Restrinja acesso à planilha e aos verificadores. Alterações de senha/perfil/situação/validade são feitas na plataforma; dispositivos não podem criar desenvolvedores/comerciais locais.
+Gere o verificador em um computador confiável com `python tools/account_verifier.py`. O programa pede e confirma a senha sem exibi-la, exigindo 8 a 200 caracteres, e imprime somente PBKDF2-SHA256 (600.000 iterações, sal aleatório). Cole apenas esse verificador na coluna correspondente. Nunca escreva a senha nas células. Restrinja acesso à planilha e aos verificadores. Alterações de senha/perfil/situação/validade são feitas na plataforma; dispositivos não podem criar desenvolvedores/comerciais locais.
 
 Configure a URL e a chave de equipamento já existentes; nenhuma nova autorização individual por equipamento é exigida para listar clientes remotos. A publicação no Google não foi executada neste ambiente.
 

@@ -153,3 +153,27 @@ unified.data.find(r=>r[0]==='TEC-4')[6]=changed.password;assert.equal(call('snap
 const snapshotProperties=JSON.stringify(properties);unified.data.push([...unified.data[1]]);assert.equal(call('snapshot').code,422);assert.equal(JSON.stringify(properties),snapshotProperties);unified.data.pop();
 const deletedIndex=unified.data.findIndex(r=>r[0]==='NEW-USER');unified.data.splice(deletedIndex,1);assert.equal(call('snapshot').technicians.find(r=>r.id==='NEW-USER').deleted,true);
 console.log('Unified users contract passed: backups, identity merge, idempotent migration, archived tabs ignored, role separation, credential edits, revocation, retry and no partial snapshot writes.');
+
+// Unified device tab keeps remote updates separate from signed billing columns.
+remoteRows.splice(0,remoteRows.length,
+ ['controller_id','instalacao','url','ultimo_estado_informado','ultima_comunicacao','ultimo_sinal_tunel','revisao'],
+ ['controller','Garagem','https://site.trycloudflare.com','CONECTADO',new Date().toISOString(),new Date().toISOString(),1]);
+remote=makeTab(remoteRows,'DMax_Remoto');
+subRows=[['controller_id','instalacao','situacao','aviso_em','prazo_final','mensagem'],
+ ['controller','Garagem','pendente','','','Regularize'],['offline-device','Sem túnel','regular','','','']];
+subscriptions=makeTab(subRows,'Assinaturas');
+const beforeMerge=verifyNotice(call('snapshot').subscription);
+context.unificarEquipamentos();
+assert.equal(subscriptions.hidden,true);
+assert.equal(remoteRows[0][7],'situacao');
+assert.equal(remoteRows[1][7],'pendente');
+const merged=verifyNotice(call('snapshot').subscription);
+assert.equal(merged.deadline,beforeMerge.deadline);
+assert.equal(merged.revision,beforeMerge.revision);
+const copyCount=Object.keys(extraSheets).length;
+context.unificarEquipamentos();assert.equal(Object.keys(extraSheets).length,copyCount);
+register({...registration,revision:5});assert.equal(remoteRows[1][7],'pendente');
+assert.equal(verifyNotice(call('snapshot').subscription).deadline,beforeMerge.deadline);
+assert.equal(call('remote_directory').clients.some(x=>x.controller_id==='offline-device'),false);
+remoteRows[1][7]='regular';assert.equal(verifyNotice(call('snapshot').subscription).state,'regular');
+console.log('Unified device contract passed: backups, idempotence, preserved deadlines, billing-only rows and independent remote updates.');

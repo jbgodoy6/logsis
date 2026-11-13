@@ -76,11 +76,24 @@ class Engine:
         if p['connected']:
             raise ValueError('Conector já ocupado')
         p.update(connected=True, arrival=time.time(), manual_pause=False, emergency_until=0,
-                 acceptance_kw=acceptance_kw or c['max_kw'], meter_kwh=0.0)
+                 acceptance_kw=acceptance_kw or c['max_kw'], meter_kwh=0.0, soc=20.0,
+                 battery_capacity_kwh=60.0, charge_complete=False)
         vehicle = next((v for v in self.store.entities('vehicle') if v['id'] == vehicle_id), None)
         self.identify(p, vehicle['identifiers'][0] if vehicle and vehicle.get('identifiers') else None)
         p['vehicle_id'] = vehicle_id
         self.store.record('connected', {'port': key, 'vehicle': vehicle_id, 'mode': 'simulation'})
+
+    def simulate_energy(self, p, power, elapsed):
+        # Explicit demo defaults: 60 kWh battery, 20% on each new connection.
+        capacity = p.setdefault('battery_capacity_kwh', 60.0)
+        p.setdefault('soc', 20.0)
+        remaining = max(0.0, (100.0 - p['soc']) * capacity / 100.0)
+        energy = min(remaining, max(0.0, power * elapsed / 3600.0))
+        soc = min(100.0, p['soc'] + energy / capacity * 100.0)
+        self.telemetry(p, power, (p.get('meter_kwh') or 0) + energy, soc)
+        if soc >= 100.0:
+            self.finish(p, 'Bateria carregada a 100%')
+            p.update(charge_complete=True, power_kw=0.0, status='Carga completa · 100%')
 
     def finish(self, p, reason):
         if p.get('session_id'):
@@ -95,6 +108,7 @@ class Engine:
     def disconnect(self, key):
         p = self.ports[key]
         self.finish(p, 'Veículo desconectado')
+        p.pop('soc', None)
         p.update(connected=False, vehicle_id=None, identifier=None, power_kw=0.0,
                  emergency_until=0, manual_pause=False, status='Disponível', start_pending_at=0.0)
         self.store.record('disconnected', {'port': key})
@@ -218,7 +232,7 @@ class Engine:
                 self.store.record('test_finished', result)
             if c['transport'] == 'simulator' and simulation:
                 power = min(p['limit_kw'], p.get('acceptance_kw', c['max_kw'])) if p['running'] and p['connected'] else 0.0
-                self.telemetry(p, power, (p.get('meter_kwh') or 0) + power * elapsed / 3600)
+                self.simulate_energy(p, power, elapsed)
         if simulation:
             total = self.other_kw + sum(p['power_kw'] * self.config(p['charger']).get('input_factor', 1.0) for p in ports)
             self.meter.update(total_kw=total, at=now, error='')
@@ -237,7 +251,7 @@ class Engine:
         demands = []
         for p in ports:
             c = chargers[p['charger']]
-            if not p['connected'] or not c['enabled'] or not c['commissioned'] or p['manual_pause']:
+            if not p['connected'] or not c['enabled'] or not c['commissioned'] or p['manual_pause'] or p.get('charge_complete'):
                 continue
             if (c['transport'] == 'simulator') != simulation:
                 continue
@@ -319,6 +333,8 @@ class Engine:
                             self.store.record('start_failed', {'port': p['key'], 'error': str(exc)[:200]})
             if not p['connected']:
                 p['status'] = 'Disponível'
+            elif p.get('charge_complete'):
+                p['status'] = 'Carga completa · 100%'
             elif not c['commissioned']:
                 p['status'] = 'Aguardando comissionamento'
             elif not fresh:
@@ -357,11 +373,11 @@ class Engine:
             cp = self.connections.get(c['id'])
             if c['transport'] == 'simulator':
                 p['native_released'] = True
-                if p['connected'] and not p['running'] and not p['manual_pause'] and c['enabled'] and c['commissioned']:
+                if p['connected'] and not p['running'] and not p['manual_pause'] and not p.get('charge_complete') and c['enabled'] and c['commissioned']:
                     self.start_session(p)
                 peers = sum(q['charger'] == c['id'] and q['connected'] and not q['manual_pause'] for q in ports)
                 power = min(c['connector_max_kw'], c['max_kw'] / max(1, peers), p.get('acceptance_kw', c['max_kw'])) if p['running'] else 0.0
-                self.telemetry(p, power, (p.get('meter_kwh') or 0) + power * elapsed / 3600)
+                self.simulate_energy(p, power, elapsed)
             elif cp:
                 async with slots:
                     if not p.get('native_released') and now - p.get('native_attempt', 0) >= 30:

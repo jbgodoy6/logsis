@@ -57,6 +57,10 @@ class CatalogPermissionTests(unittest.TestCase):
             self.assertEqual(c.get('/ui/remoteclients').status_code,403);fetcher.assert_not_called()
             c.post('/api/login',json={'username':'root','password':'fixture-catalog-root'})
             c.get('/ui/overview');c.get('/api/remote');fetcher.assert_not_called()
+            self.assertEqual(c.get('/ui/remoteclients').status_code,403)
+            from test_v0140 import record, PASSWORD
+            app.state.access.apply_snapshot([record()],scopes=('developer','commercial'))
+            c.post('/api/login',json={'username':'developer-one','password':PASSWORD})
             page=c.get('/ui/remoteclients');self.assertEqual(page.status_code,200);self.assertEqual(fetcher.await_count,1)
             self.assertIn('&lt;script&gt;Cliente&lt;/script&gt;',page.text);self.assertIn('Sem comunicação recente',page.text)
             self.assertIn('rel="noopener noreferrer"',page.text);self.assertNotIn('data-live-page="remoteclients"',page.text)
