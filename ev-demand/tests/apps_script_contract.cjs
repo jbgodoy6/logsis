@@ -177,3 +177,40 @@ assert.equal(verifyNotice(call('snapshot').subscription).deadline,beforeMerge.de
 assert.equal(call('remote_directory').clients.some(x=>x.controller_id==='offline-device'),false);
 remoteRows[1][7]='regular';assert.equal(verifyNotice(call('snapshot').subscription).state,'regular');
 console.log('Unified device contract passed: backups, idempotence, preserved deadlines, billing-only rows and independent remote updates.');
+
+// Deleted canonical identities must override stale pre-migration role caches.
+const canonicalDeleted=JSON.parse(properties['identity.NEW-USER']);
+assert.equal(canonicalDeleted.deleted,true);
+properties['user.NEW-USER']=JSON.stringify({...canonicalDeleted,name:'obsolete.login',deleted:false,active:true,password:changed.password});
+assert.equal(call('snapshot').complete,true);
+assert.equal(call('snapshot').technicians.find(r=>r.id==='NEW-USER').name,canonicalDeleted.name);
+assert.equal(call('snapshot').technicians.find(r=>r.id==='NEW-USER').deleted,true);
+const canonicalActive=JSON.parse(properties['identity.TEC-4']);
+properties['account.TEC-4']=JSON.stringify({...canonicalActive,name:'obsolete.account'});
+assert.equal(call('snapshot').complete,true);
+// Removing each global role publishes a revocation; repeated sync stays stable.
+for(const role of ['technician','developer','commercial']){
+ const id='DELETE-'+role,name='delete.'+role;
+ unified.data.push([id,'Delete fixture',name,role,'ativo','',changed.password]);
+ assert.equal(call('snapshot').complete,true);
+ unified.data.splice(unified.data.findIndex(r=>r[0]===id),1);
+ const result=call('snapshot');assert.equal(result.complete,true);
+ const deleted=[...result.technicians,...result.accounts].find(r=>r.id===id);
+ assert.equal(deleted.active,false);assert.equal(deleted.deleted,true);
+ const meta=deleted.meta_version;
+ assert.equal([...call('snapshot').technicians,...call('snapshot').accounts].find(r=>r.id===id).meta_version,meta);
+}
+// Canonical identities still reserve their login; conflicting new IDs are rejected.
+unified.data.push(['TAKEOVER','Unsafe','delete.developer','developer','ativo','',changed.password]);
+const beforeConflict=JSON.stringify(properties);
+assert.equal(call('snapshot').code,409);assert.equal(JSON.stringify(properties),beforeConflict);
+unified.data.pop();
+console.log('Deleted users contract passed: canonical precedence, three-role revocations, idempotence and takeover protection.');
+// Ambiguous legacy identities without a canonical record still fail safely.
+properties['user.LEGACY-CONFLICT']=JSON.stringify({...canonicalDeleted,id:'LEGACY-CONFLICT',name:'legacy.one'});
+properties['account.LEGACY-CONFLICT']=JSON.stringify({...canonicalDeleted,id:'LEGACY-CONFLICT',name:'legacy.two'});
+assert.equal(call('snapshot').code,409);
+delete properties['user.LEGACY-CONFLICT'];delete properties['account.LEGACY-CONFLICT'];
+const beforeDiagnosis=JSON.stringify(properties),beforeDiagnosisSheet=JSON.stringify(unified.data);
+context.diagnosticarUsuarios();
+assert.equal(JSON.stringify(properties),beforeDiagnosis);assert.equal(JSON.stringify(unified.data),beforeDiagnosisSheet);

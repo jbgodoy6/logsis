@@ -351,15 +351,25 @@ function userRows_(sheet,book){
   return rows;
 }
 function historicalUsers_(all){
-  const byId={},byName={};
-  // Canonical records supersede archived role records for the same identity.
-  ['user.','account.','identity.'].forEach(prefix=>{
+  const byId=Object.create(null),byName=Object.create(null);
+  // Resolve precedence BEFORE checking login uniqueness. Canonical identities
+  // (including revocations) supersede obsolete technician/account caches.
+  // Keep the archived properties intact for recovery; never reactivate from them.
+  ['identity.','account.','user.'].forEach(prefix=>{
     Object.keys(all).filter(k=>k.startsWith(prefix)).forEach(k=>{
       const r=JSON.parse(all[k]);
-      if(byId[r.id]&&byId[r.id].name!==r.name)error_(409,'ID histórico tem logins divergentes: '+r.id);
-      if(byName[r.name]&&byName[r.name]!==r.id)error_(409,'Login histórico tem IDs divergentes: '+r.name);
-      byId[r.id]=Object.assign({role:prefix==='user.'?'technician':r.role},r);byName[r.name]=r.id;
+      if(Object.prototype.hasOwnProperty.call(byId,r.id)){
+        if(!Object.prototype.hasOwnProperty.call(all,'identity.'+r.id)&&byId[r.id].name!==r.name)
+          error_(409,'ID histórico tem logins divergentes: '+r.id);
+        return;
+      }
+      byId[r.id]=Object.assign({role:prefix==='user.'?'technician':r.role},r);
     });
+  });
+  Object.values(byId).forEach(r=>{
+    if(Object.prototype.hasOwnProperty.call(byName,r.name)&&byName[r.name]!==r.id)
+      error_(409,'Login histórico tem IDs divergentes: '+r.name);
+    byName[r.name]=r.id;
   });
   return {byId:byId,byName:byName};
 }
@@ -509,4 +519,23 @@ function unifiedSubscription_(props,id,sheet){
   const match=matches[0];
   // Delegate signing and deadline semantics to the legacy implementation.
   return subscriptionFromRow_(props,id,[match.r[0],match.r[1],...match.r.slice(7,11)],dates=>sheet.getRange(match.index,9,1,2).setValues([dates]));
+}
+
+/** Editor-only read-only diagnosis. Never logs credentials or full records. */
+function diagnosticarUsuarios(){
+  try {
+    const props=PropertiesService.getScriptProperties(),all=props.getProperties();
+    const book=SpreadsheetApp.openById(DMAX_SHEET_ID),sheet=unifiedSheet_(props);
+    const rows=sheet?userRows_(sheet,book):rows_().rows;
+    const history=historicalUsers_(all);
+    rows.forEach(r=>{
+      if(history.byId[r.id]&&history.byId[r.id].name!==r.name)
+        error_(409,'Login/id permanente no ID: '+r.id);
+      if(history.byName[r.name]&&history.byName[r.name]!==r.id)
+        error_(409,'Login associado a outro ID: '+r.name);
+    });
+    console.log('Validação de usuários OK. Cadastro unificado: '+Boolean(sheet)+'. Linhas: '+rows.length+'. Nenhum dado alterado.');
+  } catch(e){
+    console.log('Diagnóstico de usuários: código '+(e.code||503)+'; '+e.message);
+  }
 }
