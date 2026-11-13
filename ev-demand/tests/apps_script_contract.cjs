@@ -214,3 +214,39 @@ delete properties['user.LEGACY-CONFLICT'];delete properties['account.LEGACY-CONF
 const beforeDiagnosis=JSON.stringify(properties),beforeDiagnosisSheet=JSON.stringify(unified.data);
 context.diagnosticarUsuarios();
 assert.equal(JSON.stringify(properties),beforeDiagnosis);assert.equal(JSON.stringify(unified.data),beforeDiagnosisSheet);
+
+// Developer-only company bridge management verifies the actual password.
+const devPassword='fixture-bridge-developer-pass';
+const realHash=password=>{const salt='13579bdf'.repeat(4);return 'pbkdf2_sha256$600000$'+salt+'$'+crypto.pbkdf2Sync(password,Buffer.from(salt,'hex'),600000,32,'sha256').toString('hex');};
+unified.data.push(['BRIDGE-DEV','Bridge developer','bridge.dev','developer','ativo','',realHash(devPassword)]);
+assert.equal(call('snapshot').complete,true);
+const manage=(record,login='bridge.dev',password=devPassword)=>JSON.parse(context.doPost({postData:{contents:JSON.stringify({action:'manage_user',controller_id:'controller',key:'fixture-device-key',actor_login:login,actor_password:password,record})}}).text);
+const member={id:'MEMBER-NEW',name:'member.new',full_name:'Novo membro',role:'commercial',status:'ativo',expires:'',password:realHash('fixture-new-member-pass')};
+assert.equal(manage(member,'', '').code,401);
+assert.equal(manage(member,'delete.commercial',devPassword).code,403);
+assert.equal(manage(member,'bridge.dev','wrong-password').code,401);
+assert.equal(manage(member).acknowledged_id,member.id);
+assert.equal(call('snapshot').accounts.find(r=>r.id===member.id).role,'commercial');
+assert.equal(manage({...member,role:'technician'}).acknowledged_id,member.id);
+assert.equal(call('snapshot').technicians.find(r=>r.id===member.id).role,'technician');
+assert.equal(manage({...member,role:'developer',status:'bloqueado'}).acknowledged_id,member.id);
+assert.equal(call('snapshot').accounts.find(r=>r.id===member.id).active,false);
+assert.equal(manage({...member,status:'excluido'}).acknowledged_id,member.id);
+assert.equal(call('snapshot').accounts.find(r=>r.id===member.id).deleted,true);
+assert.equal(manage({...member,role:'root'}).code,422);
+assert.equal(manage({...member,name:'renamed.user'}).code,409);
+assert.equal(manage({...member,id:'TAKEOVER-ID'}).code,409);
+// Verifier cannot be used as a password proof even though snapshots include it.
+assert.equal(manage(member,'bridge.dev',realHash(devPassword)).code,401);
+assert.equal(JSON.stringify(properties).includes(devPassword),false);
+assert.equal(JSON.stringify(unified.data).includes(devPassword),false);
+assert.equal(context.verifyPlatformPassword_('Senha áç 🔋',realHash('Senha áç 🔋')),true);
+console.log('Bridge management contract passed: password proof, creation, role changes, revocation, immutable identity and no password storage.');
+// An active commercial with the correct password still cannot manage members.
+assert.equal(manage(member).acknowledged_id,member.id);
+assert.equal(manage({...member,id:'FORBIDDEN-MEMBER',name:'forbidden.member'},member.name,'fixture-new-member-pass').code,403);
+// Bounded authentication attempts also apply to direct calls, not only the UI.
+const attemptProperty='bridge.attempt.'+crypto.createHash('sha256').update('controller').digest('hex');
+delete properties[attemptProperty];
+for(let i=0;i<5;i++)assert.equal(manage(member,'missing.user','invalid').code,403);
+assert.equal(manage(member).code,429);delete properties[attemptProperty];
