@@ -151,3 +151,39 @@ class HTTPTests(unittest.TestCase):
         self.assertEqual(self.client.get('/api/simulation').status_code,401)
 
 if __name__=='__main__':unittest.main()
+
+class SourcePackageTests(unittest.TestCase):
+    def test_minimal_package_manifest_and_tamper_detection(self):
+        import tempfile
+        from pathlib import Path
+        import zipfile
+        from tools.package_bridge import package
+        from bridge.main import verify_package
+        root=Path(__file__).resolve().parents[1]
+        with tempfile.TemporaryDirectory() as temp:
+            folder=Path(temp)
+            first=folder/'one.zip';second=folder/'two.zip'
+            count,sha=package(root,first)
+            self.assertEqual(count,5)
+            self.assertEqual(package(root,second)[1],sha)
+            with zipfile.ZipFile(first) as archive:
+                self.assertEqual(set(archive.namelist()),{'D-Max-Acesso-Windows/'+name for name in ['DMaxAcesso.py','style.css','portal.js','LEIA-ME.md','SHA256SUMS.txt']})
+                for item in archive.infolist():
+                    archive.read(item).decode('utf-8')
+                    self.assertFalse(item.flag_bits & 1)
+                archive.extractall(folder)
+            shipped=folder/'D-Max-Acesso-Windows'
+            with patch('bridge.main.ROOT',shipped):
+                verify_package()
+                (shipped/'portal.js').write_text('changed')
+                with self.assertRaisesRegex(ValueError,'Arquivo ausente ou alterado'):
+                    verify_package()
+    def test_manifest_rejects_path_traversal(self):
+        import tempfile
+        from pathlib import Path
+        from bridge.main import verify_package
+        with tempfile.TemporaryDirectory() as temp:
+            root=Path(temp)
+            (root/'SHA256SUMS.txt').write_text('0'*64+'  ../../outside\n')
+            with patch('bridge.main.ROOT',root),self.assertRaisesRegex(ValueError,'Manifesto inválido'):
+                verify_package()

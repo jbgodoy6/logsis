@@ -1,4 +1,4 @@
-"""D-Max Acesso Windows 1.0: local company portal, never a demand controller.
+"""D-Max Acesso Windows 1.0.1: local company portal, never a demand controller.
 
 Python standard library only. Google Sheets remains the account authority.
 """
@@ -22,9 +22,8 @@ import time
 from urllib.error import HTTPError, URLError
 from urllib.parse import parse_qs, urlencode, urlsplit
 from urllib.request import Request, build_opener, HTTPRedirectHandler
-import webbrowser
 
-VERSION = '1.0'
+VERSION = '1.0.1'
 ROLES = {'developer': 'Desenvolvedor', 'commercial': 'Comercial', 'technician': 'Técnico'}
 LEASE = {'developer': 3600, 'commercial': 300, 'technician': 3600}
 HASH_RE = re.compile(r'pbkdf2_sha256\$600000\$[0-9a-f]{32}\$[0-9a-f]{64}')
@@ -378,7 +377,7 @@ def choose(label, name, options, selected):
 
 def handler_for(bridge):
     class Handler(BaseHTTPRequestHandler):
-        server_version = 'D-Max-Acesso/1.0'
+        server_version = 'D-Max-Acesso/1.0.1'
 
         def log_message(self, format, *args):
             # No query strings, request bodies, credentials or remote addresses.
@@ -440,10 +439,10 @@ def handler_for(bridge):
                 if self.user['role'] == 'developer':
                     nav += '<a href="/users">Usuários</a><a href="/settings">Configurações</a>'
                 nav += '<div class="identity"><b>' + esc(self.user['full_name']) + '</b><span>' + ROLES[self.user['role']] + '</span>' + self.form('/logout', button='Sair') + '</div>'
-                sidebar = '<aside><img src="/logo.png" alt="D-Max"><p>ACESSO WINDOWS · v1.0</p><nav>' + nav + '</nav></aside>'
+                sidebar = '<aside><div class="brand">D-Max<span>by EnergyCube</span></div><p>ACESSO WINDOWS · v1.0.1</p><nav>' + nav + '</nav></aside>'
             else:
                 sidebar = ''
-            markup = '<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>' + esc(title) + ' · D-Max Acesso</title><link rel="stylesheet" href="/style.css"><script src="/portal.js" defer></script></head><body>' + sidebar + '<main><header><h1>' + esc(title) + '</h1><span>D-Max Acesso · v1.0</span></header>' + ('<p class="notice" role="status">' + esc(note) + '</p>' if note else '') + content + '</main></body></html>'
+            markup = '<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>' + esc(title) + ' · D-Max Acesso</title><link rel="stylesheet" href="/style.css"><script src="/portal.js" defer></script></head><body>' + sidebar + '<main><header><h1>' + esc(title) + '</h1><span>D-Max Acesso · v1.0.1</span></header>' + ('<p class="notice" role="status">' + esc(note) + '</p>' if note else '') + content + '</main></body></html>'
             self.response(markup, status)
 
         def settings(self, note=''):
@@ -462,7 +461,7 @@ def handler_for(bridge):
         def login_page(self, note='', status=200):
             fields = field('Login', 'name', extra='required autocomplete="username" maxlength="40"')
             fields += field('Senha', 'password', '', 'password', 'required autocomplete="current-password" maxlength="200"')
-            self.page('Entrar na central', '<section class="login"><img src="/logo.png" alt="D-Max"><p>Acesso aos clientes e demonstração local de funcionamento.</p>' + self.form('/login', fields, 'Entrar') + '</section>', note, status)
+            self.page('Entrar na central', '<section class="login"><div class="brand">D-Max<span>by EnergyCube</span></div><p>Acesso aos clientes e demonstração local de funcionamento.</p>' + self.form('/login', fields, 'Entrar') + '</section>', note, status)
 
         def overview(self, note=''):
             text = '<section><form method="get" action="/"><label>Buscar cliente<input name="q" value="' + esc(self.query.get('q', [''])[0][:100]) + '"></label><button>Buscar</button></form><a class="button secondary" href="/?refresh=1">Atualizar clientes</a></section><div class="cards" id="clients">'
@@ -528,7 +527,7 @@ def handler_for(bridge):
         def do_GET(self):
             try:
                 self.context()
-                static = {'/style.css': ('style.css', 'text/css'), '/portal.js': ('portal.js', 'application/javascript'), '/logo.png': ('logo.png', 'image/png')}
+                static = {'/style.css': ('style.css', 'text/css'), '/portal.js': ('portal.js', 'application/javascript')}
                 if self.path_only in static:
                     name, kind = static[self.path_only]
                     return self.response((ROOT / name).read_bytes(), content_type=kind)
@@ -607,21 +606,38 @@ def handler_for(bridge):
     return Handler
 
 
+def verify_package():
+    manifest = ROOT / 'SHA256SUMS.txt'
+    if not manifest.is_file():
+        raise ValueError('SHA256SUMS.txt ausente. Extraia o ZIP completo antes de iniciar.')
+    expected_names = {'DMaxAcesso.py', 'style.css', 'portal.js', 'LEIA-ME.md'}
+    entries = {}
+    for line in manifest.read_text(encoding='utf-8').splitlines():
+        digest, name = line.split('  ', 1)
+        if name not in expected_names or name in entries or not re.fullmatch('[0-9a-f]{64}', digest):
+            raise ValueError('Manifesto inválido. Obtenha novamente o pacote completo.')
+        path = ROOT / name
+        if path.is_symlink() or not path.is_file() or hashlib.sha256(path.read_bytes()).hexdigest() != digest:
+            raise ValueError('Arquivo ausente ou alterado: ' + name)
+        entries[name] = digest
+    if set(entries) != expected_names:
+        raise ValueError('Manifesto incompleto.')
+
+
 def main():
-    parser = argparse.ArgumentParser(description='D-Max Acesso Windows 1.0')
+    parser = argparse.ArgumentParser(description='D-Max Acesso Windows 1.0.1')
     parser.add_argument('--port', type=int, default=8765)
-    parser.add_argument('--no-browser', action='store_true')
     args = parser.parse_args()
+    verify_package()
     (ROOT / 'data').mkdir(exist_ok=True)
     bridge = Bridge()
     server = ThreadingHTTPServer(('127.0.0.1', args.port), handler_for(bridge))
     server.daemon_threads = True
     threading.Thread(target=bridge.loop, daemon=True).start()
     url = 'http://127.0.0.1:' + str(server.server_port)
-    print('D-Max Acesso Windows v1.0 · ' + url)
+    print('D-Max Acesso Windows v1.0.1 · ' + url, flush=True)
+    print('Abra o endereço acima no navegador deste computador.', flush=True)
     print('Central de acesso e simulação. Ctrl+C encerra. Não é controlador de demanda.')
-    if not args.no_browser:
-        webbrowser.open(url)
     try:
         server.serve_forever()
     except KeyboardInterrupt:

@@ -1,4 +1,4 @@
-# D-Max Acesso Windows v1.0
+# D-Max Acesso Windows v1.0.1
 
 Central simples para os computadores da empresa acessarem os clientes. Não é um controlador de demanda: não abre OCPP, Modbus, serial, túneis ou portas de controle. A simulação usa somente dados fictícios em memória, separados por login.
 
@@ -6,7 +6,16 @@ Central simples para os computadores da empresa acessarem os clientes. Não é u
 
 1. Instale Python 3.11, 3.12, 3.13 ou 3.14 do site https://www.python.org/downloads/windows/, incluindo o Python Launcher. Não precisa instalar bibliotecas, banco externo ou Node.
 2. Extraia TODO o ZIP em uma pasta própria, por exemplo Documentos\D-Max-Acesso. Não extraia sobre a instalação do controlador antigo. Preserve a pasta `data` nas próximas atualizações.
-3. Abra `iniciar-windows.bat`. O navegador abre automaticamente em http://127.0.0.1:8765. Mantenha o terminal aberto; Ctrl+C encerra. Outra porta: `iniciar-windows.bat --port 8766`.
+3. Abra o Terminal na pasta extraída e execute `py DMaxAcesso.py`. Não precisa abrir como administrador. O programa confere o manifesto e mostra o endereço http://127.0.0.1:8765; abra-o manualmente no navegador. Mantenha o terminal aberto; Ctrl+C encerra. Outra porta: `py DMaxAcesso.py --port 8766`.
+
+Esta revisão distribui somente cinco arquivos de texto: DMaxAcesso.py, style.css, portal.js, LEIA-ME.md e SHA256SUMS.txt. Foram retirados o BAT, o verificador auxiliar, a imagem com metadados e o código da planilha do ZIP Windows. Não abre o navegador por comandos do sistema e não instala serviços ou componentes. As funções de acesso, simulação e gestão de membros foram mantidas.
+
+Se você já configurou a v1.0 e ela foi executada, encerre o programa antes de transferir somente a pasta `data` para a pasta nova. Não misture os arquivos de programa das versões.
+
+## Sobre o alerta de antivírus
+
+O Defender bloqueou a distribuição anterior no computador do usuário; o nome da ameaça não foi disponibilizado. Não houve teste com o Defender nesta máquina Linux. Esta reconstrução reduz e torna explícito o conteúdo da distribuição; não é uma certificação de ausência de ameaças nem garantia de que o Defender aceitará o download. Não desative a proteção nem crie exceções para instalar.
+
 
 ## Configuração única por computador
 
@@ -17,7 +26,7 @@ Central simples para os computadores da empresa acessarem os clientes. Não é u
 
 ## Apps Script necessário
 
-O ZIP inclui `planilha/Code.gs` completo e o manifesto. Antes de gerenciar membros pela central, atualize o Code.gs da implantação EXISTENTE, salve e em Implantar → Gerenciar implantações → Editar selecione Nova versão. Preserve a URL, propriedades, chaves e abas.
+O Apps Script é distribuído separadamente do ZIP Windows: https://raw.githubusercontent.com/jbgodoy6/logsis/321139998b782ab987fab8ca722a7d672fbf5913/ev-demand/google-apps-script/Code.gs . Se você já aplicou esse código completo da central v1.0, não precisa reaplicá-lo para a v1.0.1. Antes de gerenciar membros pela central, atualize o Code.gs da implantação EXISTENTE, salve e em Implantar → Gerenciar implantações → Editar selecione Nova versão. Preserve a URL, propriedades, chaves e abas.
 
 O script mantém sincronização, assinaturas e catálogo dos Raspberry compatíveis. A operação de gerenciamento exige a chave da central E a senha atual de um desenvolvedor ativo. Recalcula PBKDF2-HMAC-SHA256, 600.000 iterações, no servidor. A senha não é escrita na planilha, propriedades nem logs. Contas não desenvolvedoras não podem usar essa operação, mesmo fazendo chamadas diretas. Esse cálculo pode tornar a confirmação mais demorada; aguarde antes de repetir.
 
