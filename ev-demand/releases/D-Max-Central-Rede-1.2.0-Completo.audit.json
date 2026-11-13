@@ -1,0 +1,25 @@
+{
+  "product": "D-Max Central de Acesso 1.2 \u2014 Servidor da rede",
+  "version": "1.2.0",
+  "self_contained": true,
+  "included_frameworks": {
+    "Microsoft.NETCore.App": "10.0.15",
+    "Microsoft.WindowsDesktop.App": "10.0.15",
+    "Microsoft.AspNetCore.App": "10.0.15"
+  },
+  "framework_installation_required": false,
+  "msi_sha256": "ddb57e132c776f76934e0e1359bd1fa4eb686dcd6989cfea6fc368d6c004be50",
+  "exe_sha256": "f1d799421e8ed817043a07f97df1a7581d05ddb1156e40fbf57460d0ac406fc7",
+  "file_count": 375,
+  "payload_bytes": 143285300,
+  "custom_actions": 0,
+  "services": 0,
+  "environment_changes": 0,
+  "registry": "two HKCU shortcut markers only",
+  "shortcuts": 2,
+  "installation_scope": "current user",
+  "single_file_packing": false,
+  "authenticode_signed": false,
+  "windows_execution_tested": false,
+  "defender_tested": false
+}

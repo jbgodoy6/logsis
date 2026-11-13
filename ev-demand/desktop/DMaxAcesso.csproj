@@ -14,11 +14,11 @@
     <LangVersion>7.3</LangVersion>
     <AssemblyName>DMaxAcesso</AssemblyName>
     <RootNamespace>EnergyCube.DMax</RootNamespace>
-    <Version>1.1.0</Version>
-    <AssemblyVersion>1.1.0.0</AssemblyVersion>
-    <FileVersion>1.1.0.0</FileVersion>
+    <Version>1.2.0</Version>
+    <AssemblyVersion>1.2.0.0</AssemblyVersion>
+    <FileVersion>1.2.0.0</FileVersion>
     <Company>EnergyCube</Company>
-    <Product>D-Max Acesso Desktop</Product>
+    <Product>D-Max Central de Acesso</Product>
     <Description>Central de acesso aos clientes e simulação local</Description>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <Deterministic>true</Deterministic>
@@ -28,5 +28,8 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Remove="tests/**/*.cs" />
+    <Compile Remove="MainWindow.cs;Service.cs;Values.cs;Json.cs" />
+    <ProjectReference Include="../lan/DMaxLan.Core.csproj" />
+    <Content Include="../lan/assets/**/*" Link="assets/%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>

@@ -19,5 +19,12 @@
     "nuget_sha512": "V8gSxJdJ3p167B4PbNNJyTckE89iv74T4adJmX1V3d+Ko8HmXVLZxCoYJeNjO5mER9wmG83OVoFzKGGwPe772A==",
     "sha256": "41d6989224d9e273880072041c0fa7a2d8c92f1cf11e989e8967d3d589a066ad",
     "source": "https://api.nuget.org/v3/index.json"
+  },
+  {
+    "package": "microsoft.aspnetcore.app.runtime.win-x64",
+    "version": "10.0.15",
+    "nuget_sha512": "GbC1BsO6jqVOj7LrAagG7x4Qi9rFt7ylOEHqXmZw+k9zeKMAlt8A4QBHt0C6XDg/cN93LBsL/WWTPEZAnEWJ7g==",
+    "sha256": "d2a18c23269c91106c7d87695600f7fc25d56672dcdb9c59ed947f8f71611a72",
+    "source": "https://api.nuget.org/v3/index.json"
   }
 ]

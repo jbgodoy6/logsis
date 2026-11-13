@@ -1,26 +1,27 @@
-D-Max Acesso Desktop 1.1 — Completo (Windows 10/11 x64)
+D-Max Central de Acesso 1.2 — Servidor da rede (Windows 10/11 x64)
 
-Esta versão inclui o runtime Microsoft necessário. Não instale .NET Framework, .NET Desktop Runtime, Python ou SDK separadamente para usar o aplicativo.
+Instale em UM computador da empresa. Os outros computadores abrem a página no navegador, sem instalar o programa. Inclui os runtimes Microsoft necessários: não é preciso instalar .NET Framework, .NET Runtime, Python ou SDK separadamente.
 
-Instalação:
-1. Execute D-Max-Acesso-Desktop-1.1.0-Completo.msi no mesmo usuário Windows da instalação anterior. O instalador atualiza as versões 1.0/1.0.1 e preserva a URL configurada.
-2. Ao terminar, abra D-Max Acesso Desktop pelo menu Iniciar ou pelo atalho da área de trabalho. O MSI só instala; não abre a janela automaticamente.
-3. Entre com sua URL /exec e seu login e senha da planilha. Se já aplicou o Code.gs da versão Desktop, não precisa alterá-lo novamente. Se nunca aplicou essa versão, use o Code.gs completo do Desktop 1.0 e atualize a implantação existente, mantendo a URL e as propriedades.
+1. Execute D-Max-Central-Rede-1.2.0-Completo.msi no usuário Windows que usará o servidor. Atualiza as versões Desktop anteriores nesse usuário.
+2. Conclua a instalação e abra o atalho D-Max Central de Acesso no menu Iniciar ou na área de trabalho. O MSI apenas instala.
+3. Na janela do servidor, configure a URL Google Apps Script /exec da plataforma existente. Nome padrão: d-max. Porta padrão: 80. Clique em Salvar e iniciar/reiniciar e em Abrir página. Não informe uma chave de equipamento.
+4. Entre na página com seu login e senha da planilha. Se a implantação já possui as operações desktop_* do Desktop anterior, não precisa atualizar o Apps Script. Caso contrário, a plataforma precisará do Code.gs desta versão e de uma nova versão na implantação existente, preservando URL, planilha e propriedades.
+5. Nos demais computadores da MESMA REDE, abra http://d-max.local:80 no navegador. Cada pessoa entra com seu próprio login. Não copie a URL localhost para outros computadores.
 
-O runtime é instalado somente junto dos arquivos do aplicativo. Não modifica a instalação global do .NET do Windows. O programa não usa servidor local nem serviço e não inicializa com o Windows. A instalação não executa scripts ou ações customizadas. Cria somente os atalhos e os marcadores próprios no registro do usuário.
+O servidor anuncia d-max.local por mDNS e o serviço HTTP com a porta configurada. Nome e porta podem ser alterados em Configurações por desenvolvedor, com confirmação da senha; o servidor reinicia e as pessoas entram novamente no novo endereço. Se a nova porta estiver ocupada, o servidor tenta restaurar a configuração anterior. Também é possível configurar pela janela no computador servidor, sob a conta Windows proprietária.
 
-Somente a URL pública é salva em %LOCALAPPDATA%\EnergyCube\DMaxAcessoDesktop\settings.json. Senhas, verificadores e sessões ficam em memória. Logs técnicos de abertura em Logs registram versão, etapas e tipos/pilhas de erro, sem dados dos formulários ou mensagens arbitrárias de exceção.
+Rede: se o Windows solicitar acesso, permita o aplicativo somente em redes privadas. O acesso usa TCP 80 (ou a porta escolhida) e mDNS UDP 5353. Não desative firewall/antivírus. O roteador deve permitir comunicação entre os computadores e multicast; rede de convidados/VLANs isoladas podem impedir o acesso. Se .local não resolver, teste o endereço IP mostrado na janela do servidor. Se outro equipamento já anunciar d-max.local, escolha outro nome em um deles. O nome não altera o nome do computador Windows.
 
-Desenvolvedor: busca e acesso aos clientes, simulação, configurações e gestão de membros desenvolvedor/comercial/técnico. Criação, edição, bloqueio, exclusão, reativação e novas senhas/verificadores exigem sua senha novamente. Comercial e técnico: clientes e simulação, sem gestão de usuários. A central exige internet para validar as contas.
+HTTP local não cifra o tráfego entre computadores: use apenas rede privada confiável. O programa recusa origens externas, protege formulários contra requisições de outros sites e guarda as sessões em cookies HttpOnly. A conexão do servidor à plataforma Google é HTTPS. Senhas não são gravadas no servidor; o token da plataforma fica em memória e não é entregue ao navegador.
 
-Acessar cliente abre o endereço validado no navegador padrão, sem transmitir senhas ou comandos ao equipamento. O aplicativo em si tem janela nativa e não usa interface de navegador.
+Fechar a janela do servidor mantém o programa ativo na bandeja perto do relógio. Para encerrar: ícone do D-Max > Encerrar servidor. O computador deve permanecer ligado e com o usuário Windows conectado. O programa não inicia automaticamente com o Windows e não instala serviço. Depois de reiniciar o computador, abra o atalho para disponibilizar a central novamente. A URL configurada é reutilizada; a página abre automaticamente quando o servidor inicia.
 
-Simulação: quatro carregadores fictícios, 60 kW, bateria de 60 kWh, tempo acelerado 60 vezes e parada em 100%. Dados são descartados ao sair. Comercial encerra após 15 minutos sem interação; situação/perfil/validade são conferidos online em cada operação protegida e periodicamente.
+Desenvolvedor: acesso completo à central, clientes, simulação, configurações e criação/edição/bloqueio/exclusão/reativação de membros desenvolvedor, comercial e técnico; gera verificadores. Alterações de membros exigem sua senha novamente. Comercial e técnico: busca, acesso aos clientes e demonstração. A plataforma confere conta, situação e validade online. Cada acesso ao D-Max remoto continua sujeito às permissões do equipamento.
 
-Para trocar um login, crie uma nova conta e exclua/bloqueie a anterior. Para reativar a mesma conta, preserve o ID e o login.
+A visão geral mostra clientes, última conexão informada e botão Acessar cliente. O endereço não aparece como texto. O botão abre o cliente em outra aba e não transmite credenciais nem comandos. A central NÃO é controlador de demanda.
 
-Desinstalação: Configurações do Windows > Aplicativos > D-Max Acesso Desktop. Preferências pessoais são preservadas. Não é preciso desinstalar os runtimes globais do Windows.
+Simulação fictícia de cada navegador: quatro carregadores, SOC, bateria de 60 kWh, limite de 60 kW, tempo 60 vezes acelerado e parada em 100%. Não interfere nos carregamentos reais ou em outras sessões. Sair descarta os dados. Comercial encerra após 15 minutos sem interação. O navegador precisa permanecer ativo para a demonstração avançar.
 
-Microsoft .NET 10.0.15 e Windows Desktop Runtime 10.0.15 estão incluídos. Licenças/notas de terceiros acompanham o aplicativo na pasta Licencas. Não há empacotador de arquivo executável único nem ofuscação; os arquivos oficiais do runtime são distribuídos individualmente.
+Configuração pública em %LOCALAPPDATA%\EnergyCube\DMaxAcessoLan\server.json. Chaves de proteção dos cookies em Keys, protegidas pelo usuário Windows (DPAPI). Logs de abertura sem senhas/formulários na pasta de diagnóstico do aplicativo. Desinstalar remove os arquivos do programa e os atalhos; configurações locais são preservadas.
 
-Testes locais cobriram o núcleo, o JSON/HTTP, a configuração autossuficiente e o conteúdo do MSI. A execução do runtime Windows e a instalação no Windows/Defender não foram realizadas nesta máquina Linux. O executável da aplicação e o MSI ainda não possuem certificado Authenticode da empresa. Não é possível garantir a aprovação pelo Defender/SmartScreen. Não desative proteção nem crie exceções diante de um alerta de ameaça.
+Instalador sem ações customizadas, scripts, serviço, regras de firewall automáticas ou alterações globais do .NET. Binários Microsoft oficiais acompanhados das respectivas licenças. O MSI e o executável não possuem assinatura Authenticode. Esta compilação não foi executada em um Windows real nem submetida ao Defender; não há garantia de aceitação pelo antivírus. O servidor, protocolo mDNS e página foram testados no ambiente de desenvolvimento.

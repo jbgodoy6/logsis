@@ -1,0 +1,43 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Net;
+using System.Net.Sockets;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+namespace EnergyCube.DMax.Lan {
+ internal static class MdnsWire {
+  internal sealed class Record {public string Name;public ushort Type;public uint Ttl;public byte[] Data;}
+  private static ushort U16(byte[] data,int offset){if(offset<0||offset+2>data.Length)throw new InvalidDataException();return (ushort)((data[offset]<<8)|data[offset+1]);}
+  private static void W16(Stream stream,int value){stream.WriteByte((byte)(value>>8));stream.WriteByte((byte)value);}
+  private static void W32(Stream stream,uint value){W16(stream,(int)(value>>16));W16(stream,(int)value);}
+  internal static string Name(byte[] data,ref int offset){var labels=new List<string>();int cursor=offset,after=-1,total=0;var seen=new HashSet<int>();for(int step=0;step<128;step++){if(cursor>=data.Length||!seen.Add(cursor))throw new InvalidDataException();int length=data[cursor++];if(length==0){offset=after<0?cursor:after;return string.Join(".",labels).ToLowerInvariant();}if((length&0xc0)==0xc0){if(cursor>=data.Length)throw new InvalidDataException();if(after<0)after=cursor+1;cursor=((length&0x3f)<<8)|data[cursor];continue;}if(length>63||cursor+length>data.Length||total+length>255)throw new InvalidDataException();labels.Add(Encoding.UTF8.GetString(data,cursor,length));total+=length+1;cursor+=length;}throw new InvalidDataException();}
+  private static void WriteName(Stream stream,string value){foreach(var label in value.TrimEnd('.').Split('.')){var bytes=Encoding.UTF8.GetBytes(label);if(bytes.Length==0||bytes.Length>63)throw new InvalidDataException();stream.WriteByte((byte)bytes.Length);stream.Write(bytes,0,bytes.Length);}stream.WriteByte(0);}
+  private static byte[] EncodedName(string name){using(var stream=new MemoryStream()){WriteName(stream,name);return stream.ToArray();}}
+  internal static byte[] Probe(string host){using(var stream=new MemoryStream()){W16(stream,0);W16(stream,0);W16(stream,1);for(int i=0;i<3;i++)W16(stream,0);WriteName(stream,host);W16(stream,255);W16(stream,1);return stream.ToArray();}}
+  internal static bool Relevant(byte[] data,string host,string service,out bool unicast){unicast=false;if(data.Length<12||(U16(data,2)&0x8000)!=0)return false;int count=U16(data,4);if(count>64)return false;int offset=12;bool found=false;for(int i=0;i<count;i++){var name=Name(data,ref offset);ushort type=U16(data,offset),cls=U16(data,offset+2);offset+=4;if((name==host&&(type==1||type==255))||name=="_http._tcp.local"||name==service||name=="_services._dns-sd._udp.local"){found=true;unicast|=(cls&0x8000)!=0;}}return found;}
+  internal static List<Record> Answers(byte[] data){var result=new List<Record>();if(data.Length<12)throw new InvalidDataException();int questions=U16(data,4),records=U16(data,6)+U16(data,8)+U16(data,10),offset=12;if(questions>64||records>256)throw new InvalidDataException();for(int i=0;i<questions;i++){Name(data,ref offset);offset+=4;if(offset>data.Length)throw new InvalidDataException();}for(int i=0;i<records;i++){string name=Name(data,ref offset);ushort type=U16(data,offset),size=U16(data,offset+8);uint ttl=((uint)U16(data,offset+4)<<16)|U16(data,offset+6);offset+=10;if(offset+size>data.Length)throw new InvalidDataException();result.Add(new Record{Name=name,Type=type,Ttl=ttl,Data=data.Skip(offset).Take(size).ToArray()});offset+=size;}return result;}
+  internal static byte[] Response(string host,string service,int port,IEnumerable<IPAddress> addresses,uint ttl=120){var records=new List<Tuple<string,ushort,ushort,byte[]>>();foreach(var address in addresses){var bytes=address.GetAddressBytes();if(bytes.Length==4)records.Add(Tuple.Create(host,(ushort)1,(ushort)0x8001,bytes));}
+   records.Add(Tuple.Create("_http._tcp.local",(ushort)12,(ushort)1,EncodedName(service)));records.Add(Tuple.Create("_services._dns-sd._udp.local",(ushort)12,(ushort)1,EncodedName("_http._tcp.local")));
+   using(var srv=new MemoryStream()){W16(srv,0);W16(srv,0);W16(srv,port);WriteName(srv,host);records.Add(Tuple.Create(service,(ushort)33,(ushort)0x8001,srv.ToArray()));}
+   var txt=Encoding.UTF8.GetBytes("path=/");records.Add(Tuple.Create(service,(ushort)16,(ushort)0x8001,new[]{(byte)txt.Length}.Concat(txt).ToArray()));
+   using(var stream=new MemoryStream()){W16(stream,0);W16(stream,0x8400);W16(stream,0);W16(stream,records.Count);W16(stream,0);W16(stream,0);foreach(var record in records){WriteName(stream,record.Item1);W16(stream,record.Item2);W16(stream,record.Item3);W32(stream,ttl);W16(stream,record.Item4.Length);stream.Write(record.Item4,0,record.Item4.Length);}return stream.ToArray();}
+ }
+ }
+ internal sealed class MdnsAnnouncer : IAsyncDisposable {
+  private readonly string host,service;private readonly int port;private readonly Func<IPAddress[]> getAddresses;private readonly CancellationTokenSource stop=new CancellationTokenSource();private readonly SemaphoreSlim sending=new SemaphoreSlim(1,1);private UdpClient udp;private IPAddress[] addresses=Array.Empty<IPAddress>();private Task receiver,periodic;private volatile bool conflict,ready;
+  public string Status {get;private set;}="Aguardando anúncio";
+  internal MdnsAnnouncer(string name,int port,Func<IPAddress[]> addresses){host=name+".local";service=name+"._http._tcp.local";this.port=port;getAddresses=addresses;}
+  public async Task StartAsync(){try{addresses=getAddresses();if(addresses.Length==0){Status="Sem IPv4 de rede privada; use o acesso local";return;}udp=new UdpClient(AddressFamily.InterNetwork);udp.ExclusiveAddressUse=false;udp.Client.SetSocketOption(SocketOptionLevel.Socket,SocketOptionName.ReuseAddress,true);udp.Client.Bind(new IPEndPoint(IPAddress.Any,5353));udp.Ttl=255;udp.Client.SetSocketOption(SocketOptionLevel.IP,SocketOptionName.MulticastTimeToLive,255);foreach(var ip in addresses)try{udp.JoinMulticastGroup(IPAddress.Parse("224.0.0.251"),ip);}catch{}
+   receiver=Receive();for(int i=0;i<3&&!conflict;i++){await Send(MdnsWire.Probe(host));await Task.Delay(250,stop.Token);}if(conflict){Status="Nome .local já em uso; altere o nome nas configurações";return;}
+   ready=true;await Announce();Status="Nome anunciado: "+host;periodic=Repeat();
+  }catch(Exception e)when(e is SocketException||e is InvalidOperationException||e is OperationCanceledException){Status="Anúncio indisponível; confira multicast/UDP 5353 e use o IP";}}
+  private async Task Send(byte[] packet,IPEndPoint unicast=null){if(udp==null)return;await sending.WaitAsync();try{if(unicast!=null){await udp.SendAsync(packet,unicast,stop.Token);return;}foreach(var ip in addresses){try{udp.Client.SetSocketOption(SocketOptionLevel.IP,SocketOptionName.MulticastInterface,ip.GetAddressBytes());await udp.SendAsync(packet,new IPEndPoint(IPAddress.Parse("224.0.0.251"),5353),stop.Token);}catch(SocketException){}}}finally{sending.Release();}}
+  private Task Announce(uint ttl=120){return Send(MdnsWire.Response(host,service,port,addresses,ttl));}
+  private async Task Receive(){while(!stop.IsCancellationRequested){try{var packet=await udp.ReceiveAsync(stop.Token);if(packet.Buffer.Length>9000||!LanServer.Private(packet.RemoteEndPoint.Address))continue;var records=MdnsWire.Answers(packet.Buffer);if(records.Any(r=>r.Name==host&&r.Type==1&&r.Ttl>0&&r.Data.Length==4&&!addresses.Contains(new IPAddress(r.Data)))){conflict=true;Status="Nome .local já em uso; altere o nome nas configurações";continue;}bool unicast;if(ready&&!conflict&&MdnsWire.Relevant(packet.Buffer,host,service,out unicast))await Send(MdnsWire.Response(host,service,port,addresses),unicast||packet.RemoteEndPoint.Port!=5353?packet.RemoteEndPoint:null);}catch(Exception e)when(e is InvalidDataException||e is SocketException||e is OperationCanceledException||e is ObjectDisposedException){if(stop.IsCancellationRequested)return;}}}
+  private async Task Repeat(){try{using(var timer=new PeriodicTimer(TimeSpan.FromSeconds(45)))while(await timer.WaitForNextTickAsync(stop.Token)){if(conflict)continue;var current=getAddresses();if(!current.OrderBy(a=>a.ToString()).SequenceEqual(addresses.OrderBy(a=>a.ToString()))){await Announce(0);foreach(var ip in current.Except(addresses))try{udp.JoinMulticastGroup(IPAddress.Parse("224.0.0.251"),ip);}catch(SocketException){}addresses=current;}await Announce();}}catch(OperationCanceledException){}}
+  public async ValueTask DisposeAsync(){try{if(udp!=null&&!conflict)await Announce(0);}catch{}stop.Cancel();udp?.Dispose();try{if(receiver!=null)await receiver;if(periodic!=null)await periodic;}catch(OperationCanceledException){}stop.Dispose();}
+ }
+}

@@ -59,7 +59,7 @@ namespace EnergyCube.DMax {
   }
   public void Dispose(){http.Dispose();}
  }
- internal static class Settings {
+ public static class Settings {
   private static string DirectoryPath {get{return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"EnergyCube","DMaxAcessoDesktop");}}
   public static string Load() {try {var path=Path.Combine(DirectoryPath,"settings.json");if(!File.Exists(path))return "";var data=Json.Object(File.ReadAllText(path));return data==null?"":Values.Text(data,"platform_url");}catch{return "";}}
   public static void Save(string url){Directory.CreateDirectory(DirectoryPath);File.WriteAllText(Path.Combine(DirectoryPath,"settings.json"),Json.Serialize(new{platform_url=url}),new UTF8Encoding(false));}

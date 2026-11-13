@@ -24,10 +24,10 @@ namespace EnergyCube.DMax {
    StartupDiagnostics.Write("Preparando interface gráfica");
    Application.EnableVisualStyles();
    Application.SetCompatibleTextRenderingDefault(false);
-   using(var window=new MainWindow()) {
+   using(var window=new ServerWindow(selfTest)) {
     StartupDiagnostics.Write("Janela criada");
     bool shown=false;
-    window.Shown+=(sender,eventArgs)=>{shown=true;StartupDiagnostics.Write("Janela de login exibida");if(selfTest){if(CountInputs(window)<3||window.ClientSize.Width<700||window.ClientSize.Height<450)throw new InvalidOperationException("Janela de login incompleta");var timer=new Timer{Interval=500};timer.Tick+=(s,e)=>{timer.Stop();timer.Dispose();window.Close();};timer.Start();}};
+    window.Shown+=(sender,eventArgs)=>{shown=true;StartupDiagnostics.Write("Janela do servidor exibida");if(selfTest){if(CountInputs(window)<2||window.ClientSize.Width<700||window.ClientSize.Height<450)throw new InvalidOperationException("Janela de login incompleta");var timer=new Timer{Interval=500};timer.Tick+=(s,e)=>{timer.Stop();timer.Dispose();window.Close();};timer.Start();}};
     Application.Run(window);
     if(threadFailure!=null)throw new InvalidOperationException("Falha na interface gráfica",threadFailure);
     if(selfTest&&!shown)throw new InvalidOperationException("Janela não exibida no teste de abertura.");

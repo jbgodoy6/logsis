@@ -6,8 +6,10 @@ from tools.package_desktop import REQUIRED, runtime_layout, component_source
 
 class RuntimePackageTests(unittest.TestCase):
     def layout(self, path):
-        for name in REQUIRED:(path/name).write_bytes(b'fixture')
-        (path/'DMaxAcesso.runtimeconfig.json').write_text(json.dumps({'runtimeOptions':{'includedFrameworks':[{'name':'Microsoft.NETCore.App','version':'10.0.15'},{'name':'Microsoft.WindowsDesktop.App','version':'10.0.15'}]}}))
+        for name in REQUIRED:
+            (path/name).parent.mkdir(parents=True,exist_ok=True)
+            (path/name).write_bytes(b'fixture')
+        (path/'DMaxAcesso.runtimeconfig.json').write_text(json.dumps({'runtimeOptions':{'includedFrameworks':[{'name':'Microsoft.NETCore.App','version':'10.0.15'},{'name':'Microsoft.WindowsDesktop.App','version':'10.0.15'},{'name':'Microsoft.AspNetCore.App','version':'10.0.15'}]}}))
         (path/'DMaxAcesso.deps.json').write_text(json.dumps({'runtimeTarget':{'name':'.NETCoreApp,Version=v10.0/win-x64'}}))
     def test_external_framework_rejected(self):
         with tempfile.TemporaryDirectory() as temp:
@@ -26,5 +28,5 @@ class RuntimePackageTests(unittest.TestCase):
             files,frameworks,ids=component_source(published,project,root/'files.wxs')
             self.assertIn('pt-BR/example.resources.dll',files)
             self.assertEqual(len(ids),len(files))
-            self.assertEqual(set(frameworks),{'Microsoft.NETCore.App','Microsoft.WindowsDesktop.App'})
+            self.assertEqual(set(frameworks),{'Microsoft.NETCore.App','Microsoft.WindowsDesktop.App','Microsoft.AspNetCore.App'})
             self.assertIn('pt-BR',(root/'files.wxs').read_text())

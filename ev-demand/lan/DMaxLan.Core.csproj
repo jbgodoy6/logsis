@@ -1,0 +1,4 @@
+<Project Sdk="Microsoft.NET.Sdk">
+ <PropertyGroup><TargetFramework>net10.0</TargetFramework><LangVersion>latest</LangVersion><ImplicitUsings>disable</ImplicitUsings><Nullable>disable</Nullable><EnableDefaultCompileItems>false</EnableDefaultCompileItems></PropertyGroup>
+ <ItemGroup><InternalsVisibleTo Include="DMaxLan.Tests"/><FrameworkReference Include="Microsoft.AspNetCore.App"/><Compile Include="LanServer.cs"/><Compile Include="Mdns.cs"/><Compile Include="../desktop/Service.cs" Link="Service.cs"/><Compile Include="../desktop/Values.cs" Link="Values.cs"/><Compile Include="../desktop/Json.cs" Link="Json.cs"/></ItemGroup>
+</Project>

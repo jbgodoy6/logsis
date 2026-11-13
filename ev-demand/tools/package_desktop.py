@@ -12,7 +12,7 @@ import xml.etree.ElementTree as ET
 WIX='http://schemas.microsoft.com/wix/2006/wi'
 ET.register_namespace('',WIX)
 NAMESPACE=uuid.UUID('e67f8748-bfc6-4cda-a80b-e11d403dbd08')
-REQUIRED={'DMaxAcesso.exe','DMaxAcesso.dll','DMaxAcesso.deps.json','DMaxAcesso.runtimeconfig.json','coreclr.dll','clrjit.dll','hostfxr.dll','hostpolicy.dll','System.Private.CoreLib.dll','System.Windows.Forms.dll','System.Drawing.Common.dll'}
+REQUIRED={'DMaxAcesso.exe','DMaxAcesso.dll','DMaxAcesso.deps.json','DMaxAcesso.runtimeconfig.json','coreclr.dll','clrjit.dll','hostfxr.dll','hostpolicy.dll','System.Private.CoreLib.dll','System.Windows.Forms.dll','System.Drawing.Common.dll','DMaxLan.Core.dll','Microsoft.AspNetCore.Server.Kestrel.Core.dll','assets/index.html','assets/app.js','assets/style.css','assets/d-max-logo.png'}
 
 
 def table(tool,msi,name,env):
@@ -27,7 +27,7 @@ def runtime_layout(published):
     config=json.loads(files['DMaxAcesso.runtimeconfig.json'].read_text())['runtimeOptions']
     if config.get('framework') or config.get('frameworks'):raise ValueError('Publicação ainda exige runtime externo')
     frameworks={r['name']:r['version'] for r in config.get('includedFrameworks',[])}
-    if set(frameworks)!={'Microsoft.NETCore.App','Microsoft.WindowsDesktop.App'}:raise ValueError('Runtimes incluídos não confirmados')
+    if set(frameworks)!={'Microsoft.NETCore.App','Microsoft.WindowsDesktop.App','Microsoft.AspNetCore.App'}:raise ValueError('Runtimes incluídos não confirmados')
     deps=json.loads(files['DMaxAcesso.deps.json'].read_text())
     if not deps['runtimeTarget']['name'].endswith('/win-x64'):raise ValueError('A publicação deve ser win-x64')
     if 'DMaxAcesso.exe.config' in files:raise ValueError('Configuração antiga do .NET Framework presente')
