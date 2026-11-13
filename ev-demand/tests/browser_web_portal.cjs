@@ -1,0 +1,31 @@
+const {chromium}=require('playwright'),assert=require('node:assert/strict');
+(async()=>{const browser=await chromium.launch({executablePath:'/usr/bin/chromium',headless:true,args:['--no-sandbox']});try{
+ const page=await browser.newPage({viewport:{width:1365,height:900}}),errors=[];
+ page.on('pageerror',e=>errors.push(e.message));
+ await page.goto('http://127.0.0.1:8771');
+ await page.locator('#login-form').getByLabel('Login',{exact:true}).fill('developer');await page.locator('#login-form').getByLabel('Senha',{exact:true}).fill('fixture-web-developer');await page.getByRole('button',{name:'Entrar',exact:true}).click();
+ await page.getByRole('heading',{name:'Visão geral',exact:true}).waitFor();
+ await page.getByRole('link',{name:'Acessar cliente',exact:true}).waitFor();
+ assert.equal(await page.getByText('https://fixture-client.trycloudflare.com',{exact:true}).count(),0);
+ assert.equal(await page.getByRole('link',{name:'Acessar cliente'}).getAttribute('href'),'https://fixture-client.trycloudflare.com/');
+ await page.screenshot({path:'/tmp/dmax-web-overview.png',fullPage:true});
+ await page.getByRole('button',{name:'Usuários',exact:true}).click();
+ await page.getByRole('heading',{name:'Membros da empresa',exact:true}).waitFor();
+ await page.getByLabel('Nome completo',{exact:true}).fill('Novo Comercial Web');await page.locator('#member-form input[name="name"]').fill('new.web');
+ await page.getByLabel('Nova senha · 8 a 200 caracteres; vazio mantém a existente',{exact:true}).fill('fixture-new-web-password');await page.getByLabel('Confirme a nova senha',{exact:true}).fill('fixture-new-web-password');await page.getByLabel('Sua senha de desenvolvedor · autorizar alteração').fill('fixture-web-developer');
+ await page.getByRole('button',{name:'Salvar na planilha e gerar verificador'}).click();
+ await page.getByRole('heading',{name:'Alteração confirmada na planilha'}).waitFor({timeout:90000});
+ assert.ok((await page.getByLabel('Verificador gerado',{exact:true}).inputValue()).startsWith('pbkdf2_sha256$600000$'));
+ await page.getByRole('button',{name:'Simulação',exact:true}).click();await page.locator('#sim-soc-0').waitFor();
+ const before=await page.locator('#sim-soc-0').textContent();await page.waitForTimeout(2500);assert.notEqual(await page.locator('#sim-soc-0').textContent(),before);
+ // The simulation cannot issue any hardware or demand-control RPC.
+ const requests=[];page.on('request',r=>{if(r.url().endsWith('/rpc'))requests.push(JSON.parse(r.postData()||'{}').name);});
+ await page.getByRole('button',{name:'Pausar',exact:true}).first().click();assert.equal(requests.length,0);
+ await page.getByRole('button',{name:'Sair',exact:true}).click();
+ await page.locator('#login-form').getByLabel('Login',{exact:true}).fill('new.web');await page.locator('#login-form').getByLabel('Senha',{exact:true}).fill('fixture-new-web-password');await page.getByRole('button',{name:'Entrar',exact:true}).click();await page.getByRole('link',{name:'Acessar cliente',exact:true}).waitFor({timeout:90000});
+ assert.equal(await page.getByRole('button',{name:'Usuários',exact:true}).count(),0);
+ await page.getByRole('button',{name:'Simulação',exact:true}).click();assert.equal(await page.locator('#sim-status-0').textContent(),'Aguardando potência');
+ await page.setViewportSize({width:390,height:844});assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
+ assert.equal(errors.length,0,errors.join('\n'));
+ console.log('Web portal browser passed: account login, client buttons, developer creation, verifier, isolated simulation, logout and commercial restrictions.');
+}finally{await browser.close();}})().catch(e=>{console.error(e);process.exitCode=1;});

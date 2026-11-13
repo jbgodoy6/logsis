@@ -250,3 +250,36 @@ const attemptProperty='bridge.attempt.'+crypto.createHash('sha256').update('cont
 delete properties[attemptProperty];
 for(let i=0;i<5;i++)assert.equal(manage(member,'missing.user','invalid').code,403);
 assert.equal(manage(member).code,429);delete properties[attemptProperty];
+
+// Browser portal uses individual account authentication, never the device key.
+const webLogin=context.portalLogin('bridge.dev',devPassword);
+assert.equal(webLogin.ok,true);assert.match(webLogin.token,/^[0-9a-f]{64}$/);
+assert.equal(webLogin.user.role,'developer');assert.equal(webLogin.user.password,undefined);
+assert.equal(context.portalMembers('not-a-session').code,401);
+let webMembers=context.portalMembers(webLogin.token);assert.equal(webMembers.ok,true);
+assert.equal(JSON.stringify(webMembers).includes('pbkdf2_sha256'),false);
+const webSave=context.portalSaveUser(webLogin.token,{id:'',name:'web.sales',full_name:'Comercial web',role:'commercial',status:'ativo',expires:'',password:'fixture-web-sales-pass',confirmation:'fixture-web-sales-pass',actor_password:devPassword});
+assert.equal(webSave.ok,true);assert.match(webSave.verifier,/^pbkdf2_sha256\$600000\$/);
+const webCommercial=context.portalLogin('web.sales','fixture-web-sales-pass');assert.equal(webCommercial.ok,true);
+assert.equal(context.portalMembers(webCommercial.token).code,403);
+assert.equal(context.portalSaveUser(webCommercial.token,{}).code,403);
+assert.equal(context.portalClients(webCommercial.token).ok,true);
+assert.equal(JSON.stringify(properties).includes('fixture-web-sales-pass'),false);
+assert.equal(JSON.stringify(properties).includes(webCommercial.token),false);
+// Revocation is checked against the current sheet on each operation, without sync delay.
+unified.data.find(r=>r[2]==='web.sales')[4]='bloqueado';
+assert.equal(context.portalClients(webCommercial.token).code,401);
+assert.equal(context.portalState(webCommercial.token).code,401);
+assert.equal(context.portalLogout(webLogin.token).ok,true);
+assert.equal(context.portalMembers(webLogin.token).code,401);
+// Public editor menu helpers cannot mutate data from the web-app RPC context.
+const beforeWebMenu=JSON.stringify(properties),beforeWebSheet=JSON.stringify(unified.data);
+const previousUi=context.SpreadsheetApp.getUi;
+context.SpreadsheetApp.getUi=()=>{throw Error('No bound spreadsheet UI in web app');};
+for(const fn of ['migrarUsuarios','unificarEquipamentos','prepararAssinaturas','prepararRemoto'])assert.throws(()=>context[fn](),/No bound spreadsheet/);
+assert.equal(JSON.stringify(properties),beforeWebMenu);assert.equal(JSON.stringify(unified.data),beforeWebSheet);
+context.SpreadsheetApp.getUi=previousUi;
+console.log('Web portal contract passed: password login, private sessions, no verifier disclosure, developer management, immediate revocation and protected editor actions.');
+context.HtmlService={createHtmlOutput:html=>({html,setTitle(){return this;},addMetaTag(){return this;}})};
+assert.equal(context.doGet().html,fs.readFileSync(require('node:path').join(require('node:path').dirname(process.argv[2]),'Acesso.html'),'utf8'));
+assert.equal(context.doGet().html.includes(devPassword),false);

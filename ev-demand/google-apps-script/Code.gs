@@ -49,7 +49,7 @@ function validHash_(hash) {return typeof hash==='string'&&/^pbkdf2_sha256\$60000
 function error_(code,message) {const e=new Error(message);e.code=code;throw e;}
 function json_(value) {return ContentService.createTextOutput(JSON.stringify(value)).setMimeType(ContentService.MimeType.JSON);}
 
-function doGet() {return json_({ok:false,code:405,message:'Use POST autenticado. Nenhum cadastro é público.'});}
+function doGet() {return HtmlService.createHtmlOutput(DMAX_ACCESS_HTML_).setTitle('D-Max Acesso Web v1.0').addMetaTag('viewport','width=device-width, initial-scale=1');}
 function doPost(event) {
   let lock, acquired=false;
   try {
@@ -96,7 +96,9 @@ function remoteSheet_(){
   if(JSON.stringify(sheet.getRange(1,1,1,DMAX_REMOTE_HEADERS.length).getValues()[0])!==JSON.stringify(DMAX_REMOTE_HEADERS))error_(422,'Cabeçalhos remotos incompatíveis');
   return sheet;
 }
-function prepararRemoto(){remoteSheet_();}
+function prepararRemoto(){
+  SpreadsheetApp.getUi(); // Requires the bound spreadsheet editor, not the public web app.
+remoteSheet_();}
 function sheetText_(value){return /^[=+\-@\t\r]/.test(value)?"'"+value:value;}
 function remote_(id,data){
   if(!data||Object.keys(data).sort().join(',')!=='connected,heartbeat_at,provider,revision,site_name,url'||
@@ -241,6 +243,8 @@ function update_(props,r) {
 /** Optional per-installation billing. Missing/deleted rows never cancel a notice. */
 const DMAX_SUB_HEADERS=['controller_id','instalacao','situacao','aviso_em','prazo_final','mensagem'];
 function prepararAssinaturas() {
+  SpreadsheetApp.getUi(); // Requires the bound spreadsheet editor, not the public web app.
+
   const book=SpreadsheetApp.openById(DMAX_SHEET_ID);
   let sheet=book.getSheetByName('Assinaturas');
   if(!sheet)sheet=book.insertSheet('Assinaturas');
@@ -430,6 +434,8 @@ function updateUnified_(props,r){
   return {ok:true,acknowledged_id:r.id};
 }
 function migrarUsuarios(){
+  SpreadsheetApp.getUi(); // Requires the bound spreadsheet editor, not the public web app.
+
   const lock=LockService.getScriptLock();
   if(!lock.tryLock(5000))throw new Error('Sincronização ocupada; tente novamente');
   try {
@@ -485,6 +491,8 @@ function migrarUsuarios(){
 
 /** Explicit migration: validate first, back up both sheets, preserve old rows. */
 function unificarEquipamentos(){
+  SpreadsheetApp.getUi(); // Requires the bound spreadsheet editor, not the public web app.
+
   const lock=LockService.getScriptLock();if(!lock.tryLock(10000))throw new Error('Migração em andamento');
   try {
     const book=SpreadsheetApp.openById(DMAX_SHEET_ID),remote=remoteSheet_(),old=book.getSheetByName('Assinaturas');
@@ -524,6 +532,8 @@ function unifiedSubscription_(props,id,sheet){
 
 /** Editor-only read-only diagnosis. Never logs credentials or full records. */
 function diagnosticarUsuarios(){
+  SpreadsheetApp.getUi(); // Requires the bound spreadsheet editor, not the public web app.
+
   try {
     const props=PropertiesService.getScriptProperties(),all=props.getProperties();
     const book=SpreadsheetApp.openById(DMAX_SHEET_ID),sheet=unifiedSheet_(props);
@@ -1277,3 +1287,178 @@ sjcl.misc.pbkdf2 = function (password, salt, count, length, Prff) {
 
   return out;
 };
+
+/** D-Max Acesso Web 1.0. No device credentials or verifiers enter the browser. */
+function portalReply_(operation){
+  let lock,acquired=false;
+  try {
+    lock=LockService.getScriptLock();
+    acquired=lock.tryLock(5000);
+    if(!acquired)error_(503,'Ocupado');
+    return Object.assign({ok:true},operation(PropertiesService.getScriptProperties()));
+  } catch(e) {
+    const code=e.code||503;
+    const messages={401:'Login, senha ou sessão inválidos. Entre novamente.',403:'Seu perfil não permite esta operação.',409:'Conflito de ID/login. Preserve a identidade existente ou crie outra conta com novo login.',422:'Confira os campos e a aba Usuarios.',429:'Muitas tentativas. Aguarde cinco minutos.',503:'Não foi possível consultar a planilha. Tente novamente.'};
+    return {ok:false,code:code,message:messages[code]||messages[503]};
+  } finally {if(acquired)lock.releaseLock();}
+}
+function portalRoster_(props){
+  const book=SpreadsheetApp.openById(DMAX_SHEET_ID),sheet=unifiedSheet_(props);
+  if(!sheet)error_(422,'Prepare a aba Usuarios');
+  const rows=userRows_(sheet,book),history=historicalUsers_(props.getProperties()),seen=new Set();
+  const records=rows.map(r=>{
+    const old=history.byId[r.id];
+    if(old&&old.name!==r.name)error_(409,'Identidade permanente');
+    if(history.byName[r.name]&&history.byName[r.name]!==r.id)error_(409,'Login histórico');
+    seen.add(r.id);
+    return Object.assign({},r,{must_change:old&&old.password===r.password?Boolean(old.must_change):r.role==='technician'&&r.password===DMAX_DEFAULT_HASH});
+  });
+  Object.values(history.byId).forEach(r=>{if(!seen.has(r.id))records.push(Object.assign({},r,{active:false,deleted:true}));});
+  return records;
+}
+function portalPublic_(r){
+  return {id:r.id,name:r.name,full_name:r.full_name,role:r.role,active:r.active,deleted:r.deleted,expires_at:r.expires_at};
+}
+function portalUsable_(r){
+  return Boolean(r&&['developer','commercial','technician'].includes(r.role)&&r.active&&!r.deleted&&!r.must_change&&(r.expires_at===null||r.expires_at>Date.now()/1000));
+}
+function portalFingerprint_(r){
+  return sha_(JSON.stringify([r.id,r.name,r.role,r.password,r.active,r.deleted,r.expires_at,Boolean(r.must_change)]));
+}
+function portalSession_(props,token){
+  if(typeof token!=='string'||!/^[0-9a-f]{64}$/.test(token))error_(401,'Sessão inválida');
+  const key='portal.session.'+sha_(token),session=JSON.parse(props.getProperty(key)||'null');
+  if(!session||session.until<=Date.now()/1000){props.deleteProperty(key);error_(401,'Sessão encerrada');}
+  const rows=portalRoster_(props),actor=rows.find(r=>r.id===session.id);
+  if(!portalUsable_(actor)||portalFingerprint_(actor)!==session.fingerprint){props.deleteProperty(key);error_(401,'Acesso alterado');}
+  session.until=Date.now()/1000+(actor.role==='commercial'?900:3600);
+  props.setProperty(key,JSON.stringify(session));
+  return {actor:actor,rows:rows};
+}
+function portalLogin(name,password){
+  return portalReply_(props=>{
+    if(typeof name!=='string'||!(/^[a-z0-9._-]{3,40}$/).test(name.trim().toLowerCase())||typeof password!=='string'||!password||password.length>200)error_(401,'Credenciais inválidas');
+    name=name.trim().toLowerCase();
+    const now=Date.now()/1000,all=props.getProperties();
+    Object.keys(all).filter(k=>k.startsWith('portal.attempt.')||k.startsWith('portal.session.')).forEach(k=>{
+      const r=JSON.parse(all[k]);if((k.startsWith('portal.session.')?r.until:r.at+300)<=now)props.deleteProperty(k);
+    });
+    const attemptKey='portal.attempt.'+sha_(name),globalKey='portal.attempt.global';
+    const counter=k=>{const old=JSON.parse(props.getProperty(k)||'null');return old&&now-old.at<300?old:{at:now,count:0};};
+    const attempt=counter(attemptKey),global=counter(globalKey);
+    if(attempt.count>=5||global.count>=60)error_(429,'Limite de tentativas');
+    attempt.count++;global.count++;props.setProperty(attemptKey,JSON.stringify(attempt));props.setProperty(globalKey,JSON.stringify(global));
+    const actor=portalRoster_(props).find(r=>r.name===name);
+    const valid=verifyPlatformPassword_(password,actor?actor.password:DMAX_DEFAULT_HASH);
+    if(!valid||!portalUsable_(actor))error_(401,'Credenciais inválidas');
+    const active=Object.keys(props.getProperties()).filter(k=>k.startsWith('portal.session.'));
+    if(active.length>=64)error_(503,'Limite de sessões');
+    const token=(Utilities.getUuid()+Utilities.getUuid()).replace(/-/g,'');
+    props.setProperty('portal.session.'+sha_(token),JSON.stringify({id:actor.id,fingerprint:portalFingerprint_(actor),until:now+(actor.role==='commercial'?900:3600)}));
+    props.deleteProperty(attemptKey);
+    return {token:token,user:portalPublic_(actor)};
+  });
+}
+function portalState(token){
+  return portalReply_(props=>({user:portalPublic_(portalSession_(props,token).actor)}));
+}
+function portalLogout(token){
+  return portalReply_(props=>{
+    if(typeof token==='string'&&/^[0-9a-f]{64}$/.test(token))props.deleteProperty('portal.session.'+sha_(token));
+    return {};
+  });
+}
+function portalClients(token){
+  return portalReply_(props=>{
+    portalSession_(props,token);
+    const data=remoteDirectory_();
+    return {clients:data.clients,fetched_at:Date.now()/1000};
+  });
+}
+function portalMembers(token){
+  return portalReply_(props=>{
+    const session=portalSession_(props,token);
+    if(session.actor.role!=='developer')error_(403,'Somente desenvolvedor');
+    return {users:session.rows.map(portalPublic_)};
+  });
+}
+function portalSaveUser(token,fields){
+  return portalReply_(props=>{
+    const session=portalSession_(props,token),actor=session.actor;
+    if(actor.role!=='developer')error_(403,'Somente desenvolvedor');
+    if(!fields||typeof fields!=='object'||typeof fields.actor_password!=='string'||fields.actor_password.length>200)error_(422,'Campos inválidos');
+    let encoded;
+    const old=session.rows.find(r=>r.id===fields.id);
+    if(fields.password){
+      if(typeof fields.password!=='string'||fields.password.length<8||fields.password.length>200||fields.password!==fields.confirmation)error_(422,'Senha inválida');
+      const salt=Utilities.getUuid().replace(/-/g,'');
+      encoded='pbkdf2_sha256$600000$'+salt+'$'+sjcl.codec.hex.fromBits(sjcl.misc.pbkdf2(fields.password,sjcl.codec.hex.toBits(salt),600000,256));
+    } else if(old)encoded=old.password;
+    else error_(422,'Informe uma senha');
+    const record={id:fields.id||'USR-'+Utilities.getUuid().replace(/-/g,'').slice(0,16),name:fields.name,full_name:fields.full_name,role:fields.role,status:fields.status,expires:fields.expires||'',password:encoded};
+    const result=bridgeManageUser_(props,{controller_id:'WEB-'+actor.id,actor_login:actor.name,actor_password:fields.actor_password,record:record});
+    // Only a developer who just proved their password receives the new verifier.
+    return {acknowledged_id:result.acknowledged_id,verifier:encoded};
+  });
+}
+
+// Self-contained browser interface; no extra project files are required.
+const DMAX_ACCESS_HTML_ = String.raw`<!doctype html>
+<html lang="pt-BR">
+<head>
+<base target="_top">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>D-Max Acesso Web</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f3f6fb;color:#103b60;font:15px 'Segoe UI',Arial,sans-serif}aside{position:fixed;inset:0 auto 0 0;width:230px;padding:24px 18px;background:#092c50;color:white;display:flex;flex-direction:column}.brand{font-size:35px;font-weight:800;background:white;color:#092c50;border-radius:12px;padding:14px;text-align:center}.brand small{display:block;font-size:11px;font-weight:500;margin-top:3px}aside p{font-size:10px;letter-spacing:1px;margin:22px 0}nav{display:flex;flex-direction:column;gap:8px}nav button{background:transparent;text-align:left;color:#e8f2ff}.identity{margin-top:auto;padding-top:30px}.identity span{display:block;margin:7px 0 18px;font-size:13px}main{margin-left:230px;padding:36px;max-width:1600px}body.login main{margin:auto;max-width:620px}header{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #dce6f1;margin-bottom:26px;padding-bottom:16px}h1{margin:0;font-size:29px}header>span{font-size:12px;color:#647d94}section{background:white;border:1px solid #dce6f1;border-radius:14px;padding:25px;margin:0 0 22px}h2{font-size:21px}p{line-height:1.6}label{display:block;font-size:13px;margin:15px 0;color:#45617b}input,select,textarea{display:block;width:100%;padding:12px;border:1px solid #cbdbea;border-radius:7px;font:inherit;color:#103b60;background:white;margin-top:7px}input[readonly]{background:#f2f6fa}button,.button{display:inline-block;background:#087bc8;color:white;border:0;border-radius:7px;padding:12px 18px;font:600 14px 'Segoe UI',sans-serif;text-decoration:none;cursor:pointer;margin:8px 8px 8px 0}button:disabled{opacity:.55;cursor:wait}.secondary{background:#e5eff9;color:#164f7b}.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:20px}.cards section{margin:0}.client small{display:block;color:#6a7f92}.client .button{display:block;text-align:center;margin-top:25px}.badge{font-size:11px;background:#f1f3f5;color:#627387;border-radius:20px;padding:7px 12px;display:inline-block}.badge.online{background:#e4f7ee;color:#1a7653}.notice{padding:18px;background:#fff7e6;border:1px solid #efd6a1;border-radius:10px;color:#876022}.table{overflow:auto}table{border-collapse:collapse;width:100%;font-size:13px}td,th{padding:13px;border-bottom:1px solid #e3eaf2;text-align:left}a{color:#086eb7}.soc{font-size:34px;font-weight:700}[hidden]{display:none!important}@media(max-width:800px){aside{position:static;width:100%}nav{flex-direction:row;flex-wrap:wrap}.identity{margin:0;padding-top:10px}main{margin:0;padding:20px}header{gap:12px;align-items:flex-start;flex-direction:column}}
+</style>
+</head>
+<body class="login">
+<aside id="sidebar" hidden><div class="brand">D-Max<small>by EnergyCube</small></div><p>ACESSO WEB · v1.0</p><nav><button type="button" data-view="overview">Visão geral</button><button type="button" data-view="simulation">Simulação</button><button type="button" data-view="members" id="members-nav" hidden>Usuários</button></nav><div class="identity"><b id="actor-name"></b><span id="actor-role"></span><button type="button" id="logout">Sair</button></div></aside>
+<main>
+<header><h1 id="page-title">Entrar na central</h1><span>D-Max Acesso Web · v1.0</span></header>
+<p id="notice" class="notice" role="status" hidden></p>
+<div id="login-view"><section><div class="brand">D-Max<small>by EnergyCube</small></div><p>Clientes da empresa e demonstração de funcionamento. Sem instalar programa no computador.</p><form id="login-form"><label>Login<input name="name" required maxlength="40" autocomplete="username"></label><label>Senha<input name="password" type="password" required maxlength="200" autocomplete="current-password"></label><button>Entrar</button></form></section></div>
+<div id="overview-view" hidden><section><form id="search-form"><label>Buscar cliente<input id="query" maxlength="100"></label><button>Buscar</button><button id="refresh-clients" type="button" class="secondary">Atualizar clientes</button></form></section><div class="cards" id="clients"></div><p>O estado é o último informado pelo equipamento. Acessar cliente abre o D-Max em outra aba; entre nele com seu login. A central não envia comandos aos equipamentos.</p></div>
+<div id="simulation-view" hidden><section><h2>Demonstração local desta sessão</h2><p>Somente dados fictícios. Baterias de 60 kWh, tempo acelerado 60× e encerramento em 100%. Sair descarta a simulação.</p><strong id="sim-total">0 kW</strong><span> · limite fictício de 60 kW</span><form id="load-form"><label>Outras cargas · kW<input name="other" type="number" min="0" max="1000" step="0.1" value="10" required></label><button>Aplicar carga</button></form></section><div class="cards" id="sim-cards"></div></div>
+<div id="members-view" hidden><section><h2>Membros da empresa</h2><button id="refresh-members" type="button">Atualizar membros</button><div class="table"><table><thead><tr><th>Nome</th><th>Login</th><th>Perfil</th><th>Situação</th><th></th></tr></thead><tbody id="member-rows"></tbody></table></div><button id="new-member" class="secondary" type="button">Criar novo membro</button></section><section><h2 id="member-title">Novo membro</h2><form id="member-form"><label>ID · automático para novos membros<input name="id" readonly></label><label>Nome completo<input name="full_name" required maxlength="100"></label><label>Login<input name="name" required minlength="3" maxlength="40" pattern="[a-z0-9._-]{3,40}" autocomplete="off"></label><label>Perfil<select name="role"><option value="commercial">Comercial</option><option value="developer">Desenvolvedor</option><option value="technician">Técnico</option></select></label><label>Situação<select name="status"><option value="ativo">Ativo</option><option value="bloqueado">Bloqueado</option><option value="excluido">Excluído</option></select></label><label>Validade · vazio não expira<input name="expires" type="date"></label><label>Nova senha · 8 a 200 caracteres; vazio mantém a existente<input name="password" type="password" minlength="8" maxlength="200" autocomplete="new-password"></label><label>Confirme a nova senha<input name="confirmation" type="password" maxlength="200" autocomplete="new-password"></label><label>Sua senha de desenvolvedor · autorizar alteração<input name="actor_password" type="password" required maxlength="200" autocomplete="current-password"></label><button>Salvar na planilha e gerar verificador</button></form><p>Para outro login, crie uma nova conta e marque a anterior como excluída. Reative uma conta existente editando sua situação; não reutilize o ID com outro login.</p></section><section id="verifier-panel" hidden><h2>Alteração confirmada na planilha</h2><label>Verificador gerado<textarea id="verifier" readonly rows="4"></textarea></label></section></div>
+</main>
+<script>
+'use strict';
+const roles={developer:'Desenvolvedor',commercial:'Comercial',technician:'Técnico'};
+const state={token:'',user:null,clients:[],members:[],view:'overview',sim:null,simAt:0,lastInput:Date.now(),dead:false,busy:false};
+const $=id=>document.getElementById(id);
+function notice(text){$('notice').textContent=text||'';$('notice').hidden=!text;}
+function rpc(name,...args){return new Promise((resolve,reject)=>{
+ const runner=google.script.run.withSuccessHandler(result=>{if(!result||!result.ok){if(result&&result.code===401)clearSession();reject(Error(result&&result.message||'Não foi possível concluir.'));}else resolve(result);}).withFailureHandler(()=>reject(Error('Falha na consulta Google. Aguarde e tente novamente.')));
+ runner[name](...args);
+});}
+function remember(token){try{if(token)sessionStorage.setItem('dmax-web-token',token);else sessionStorage.removeItem('dmax-web-token');}catch(_){} }
+function clearSession(){state.token='';state.user=null;state.sim=null;state.members=[];state.clients=[];remember('');document.body.classList.add('login');$('sidebar').hidden=true;for(const name of ['overview','simulation','members'])$(name+'-view').hidden=true;$('login-view').hidden=false;$('page-title').textContent='Entrar na central';$('member-rows').replaceChildren();$('clients').replaceChildren();$('sim-cards').replaceChildren();$('verifier').value='';$('verifier-panel').hidden=true;$('member-form').reset();}
+function accepted(result){state.token=result.token||state.token;state.user=result.user;remember(state.token);document.body.classList.remove('login');$('sidebar').hidden=false;$('login-view').hidden=true;$('members-nav').hidden=state.user.role!=='developer';$('actor-name').textContent=state.user.full_name;$('actor-role').textContent=roles[state.user.role];state.lastInput=Date.now();if(!state.sim)initSimulation();}
+async function action(form,fn){if(state.busy)return;state.busy=true;const x=scrollX,y=scrollY;const buttons=[...form.querySelectorAll('button')];buttons.forEach(b=>b.disabled=true);notice('Aguarde a confirmação...');try{await fn();}catch(e){notice(e.message);}finally{buttons.forEach(b=>b.disabled=false);state.busy=false;requestAnimationFrame(()=>scrollTo({left:x,top:y,behavior:'instant'}));}}
+async function view(name){if(!state.user)return;if(name==='members'&&state.user.role!=='developer')return;state.view=name;for(const item of ['overview','simulation','members'])$(item+'-view').hidden=item!==name;$('page-title').textContent={overview:'Visão geral',simulation:'Simulação',members:'Usuários'}[name];notice('');try{if(name==='overview')await loadClients();if(name==='members')await loadMembers();if(name==='simulation')renderSimulation();}catch(e){notice(e.message);}}
+function element(tag,text,className){const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(className)n.className=className;return n;}
+async function loadClients(){const result=await rpc('portalClients',state.token);state.clients=result.clients;renderClients();}
+function renderClients(){const query=$('query').value.toLocaleLowerCase('pt-BR');const cards=[];for(const client of state.clients){if(!(client.site_name+' '+client.controller_id).toLocaleLowerCase('pt-BR').includes(query))continue;let url;try{url=new URL(client.url);}catch(_){continue;}if(url.protocol!=='https:'||!(/^[a-z0-9-]+\.trycloudflare\.com$/).test(url.hostname))continue;const section=element('section',undefined,'client');const online=client.connected&&Date.now()/1000-client.updated_at<=900;section.append(element('span',online?'Conectado · último informe':'Sem conexão recente confirmada','badge'+(online?' online':'')),element('h2',client.site_name),element('small','Último informe: '+new Date(client.updated_at*1000).toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo'})));const link=element('a','Acessar cliente','button');link.href=url.href;link.target='_blank';link.rel='noopener noreferrer';link.referrerPolicy='no-referrer';section.append(link);cards.push(section);}if(!cards.length)cards.push(element('section','Nenhum cliente encontrado.'));$('clients').replaceChildren(...cards);}
+async function loadMembers(){const result=await rpc('portalMembers',state.token);state.members=result.users;const rows=state.members.map(user=>{const tr=element('tr');for(const value of [user.full_name,user.name,roles[user.role],user.deleted?'Excluído':user.active?'Ativo':'Bloqueado'])tr.append(element('td',value));const td=element('td');const button=element('button','Editar','secondary');button.type='button';button.onclick=()=>editMember(user);td.append(button);tr.append(td);return tr;});$('member-rows').replaceChildren(...rows);}
+function editMember(user){const form=$('member-form');form.reset();$('verifier-panel').hidden=true;for(const field of ['id','name','full_name','role'])form.elements[field].value=user?user[field]:field==='role'?'commercial':'';form.elements.name.readOnly=!!user;form.elements.status.value=user?(user.deleted?'excluido':user.active?'ativo':'bloqueado'):'ativo';form.elements.expires.value=user&&user.expires_at?new Date(user.expires_at*1000).toLocaleDateString('en-CA',{timeZone:'America/Sao_Paulo'}):'';form.elements.password.required=!user;$('member-title').textContent=user?'Editar membro':'Novo membro';}
+function initSimulation(){state.sim={other:10,ports:Array.from({length:4},(_,i)=>({id:i,name:'Carregador '+(i+1),soc:20+i*10,connected:i<2,paused:false,kw:0}))};state.simAt=performance.now();renderSimulation();}
+function advanceSimulation(){if(!state.sim)return;const now=performance.now();const elapsed=Math.max(0,now-state.simAt)/1000*60;state.simAt=now;const active=state.sim.ports.filter(p=>p.connected&&!p.paused&&p.soc<100);const power=Math.min(22,Math.max(0,60-state.sim.other)/Math.max(1,active.length));for(const p of state.sim.ports){p.kw=active.includes(p)?power:0;p.soc=Math.min(100,p.soc+p.kw*elapsed/3600/60*100);if(p.soc>=100)p.kw=0;}}
+function renderSimulation(){if(!state.sim)return;$('sim-total').textContent=(state.sim.other+state.sim.ports.reduce((sum,p)=>sum+p.kw,0)).toFixed(1)+' kW';if(!$('sim-cards').children.length){for(const p of state.sim.ports){const card=element('section');card.append(element('h2',p.name));for(const kind of ['status','soc','kw']){const n=element('p');n.id='sim-'+kind+'-'+p.id;if(kind==='soc')n.className='soc';card.append(n);}const connect=element('button');connect.id='sim-connect-'+p.id;connect.type='button';connect.onclick=()=>{advanceSimulation();p.connected=!p.connected;if(p.connected){p.soc=20;p.paused=false;}p.kw=0;renderSimulation();};const pause=element('button');pause.id='sim-pause-'+p.id;pause.type='button';pause.onclick=()=>{advanceSimulation();p.paused=!p.paused;renderSimulation();};card.append(connect,pause);$('sim-cards').append(card);}}for(const p of state.sim.ports){$('sim-status-'+p.id).textContent=!p.connected?'Sem veículo':p.soc>=100?'Carga completa':p.paused?'Pausado':p.kw>0?'Carregando':'Aguardando potência';$('sim-soc-'+p.id).textContent=p.soc.toFixed(1)+'%';$('sim-kw-'+p.id).textContent=p.kw.toFixed(1)+' kW';$('sim-connect-'+p.id).textContent=p.connected?'Desconectar':'Conectar veículo';$('sim-pause-'+p.id).textContent=p.paused?'Retomar':'Pausar';$('sim-pause-'+p.id).hidden=!p.connected;}}
+$('login-form').addEventListener('submit',event=>{event.preventDefault();const form=event.currentTarget;action(form,async()=>{const result=await rpc('portalLogin',form.elements.name.value,form.elements.password.value);form.elements.password.value='';accepted(result);await view('overview');});});
+$('logout').onclick=async()=>{const token=state.token;clearSession();notice('Sessão encerrada e simulação descartada.');try{await rpc('portalLogout',token);}catch(_){} };
+for(const button of document.querySelectorAll('[data-view]'))button.onclick=()=>view(button.dataset.view);
+$('search-form').onsubmit=event=>{event.preventDefault();renderClients();};$('refresh-clients').onclick=()=>action($('search-form'),async()=>{await loadClients();notice('Clientes atualizados.');});
+$('refresh-members').onclick=()=>action($('members-view'),async()=>{await loadMembers();notice('Membros atualizados.');});$('new-member').onclick=()=>editMember(null);
+$('member-form').onsubmit=event=>{event.preventDefault();const form=event.currentTarget;const data=Object.fromEntries(new FormData(form));if(data.password!==data.confirmation){notice('As novas senhas não coincidem.');return;}action(form,async()=>{try{const result=await rpc('portalSaveUser',state.token,data);form.elements.actor_password.value='';form.elements.password.value='';form.elements.confirmation.value='';$('verifier').value=result.verifier;$('verifier-panel').hidden=false;notice('Alteração confirmada na planilha.');await loadMembers();}finally{form.elements.actor_password.value='';}});};
+$('load-form').onsubmit=event=>{event.preventDefault();const value=Number(event.currentTarget.elements.other.value);if(Number.isFinite(value)&&value>=0&&value<=1000){advanceSimulation();state.sim.other=value;renderSimulation();}};
+for(const name of ['pointerdown','keydown'])document.addEventListener(name,()=>{state.lastInput=Date.now();},{passive:true});
+const simTimer=setInterval(()=>{if(state.user){advanceSimulation();if(state.view==='simulation')renderSimulation();}},1000);
+let pinging=false;const pingTimer=setInterval(async()=>{if(!state.token||pinging||state.busy)return;if(state.user.role==='commercial'&&Date.now()-state.lastInput>900000){$('logout').click();return;}pinging=true;try{const result=await rpc('portalState',state.token);state.user=result.user;}catch(e){clearSession();notice(e.message);}finally{pinging=false;}},60000);
+addEventListener('pagehide',()=>{state.dead=true;clearInterval(simTimer);clearInterval(pingTimer);state.sim=null;});
+(async()=>{try{state.token=sessionStorage.getItem('dmax-web-token')||'';}catch(_){}if(state.token){try{const result=await rpc('portalState',state.token);accepted(result);await view('overview');}catch(e){clearSession();notice(e.message);}}})();
+</script>
+</body></html>
+`;
