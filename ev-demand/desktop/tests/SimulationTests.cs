@@ -13,6 +13,9 @@ class SimulationTests {
   System.Globalization.CultureInfo.CurrentCulture=new System.Globalization.CultureInfo("pt-BR");
   var row=new System.Collections.Generic.Dictionary<string,object>{{"at",1770000000.5},{"power",12.25m},{"string","22.5"}};
   Check(Values.Number(row,"at")==1770000000.5,"JSON epoch is culture invariant");Check(Values.Number(row,"power")==12.25,"decimal power is culture invariant");Check(Values.Number(row,"string")==22.5,"string number is invariant");
-  Console.WriteLine("13 native core assertions passed, including Portuguese locale.");
+  var folder=System.IO.Path.Combine(System.IO.Path.GetTempPath(),"dmax-startup-test-"+Guid.NewGuid());
+  StartupDiagnostics.Initialize(folder);StartupDiagnostics.Failure(new InvalidOperationException("fixture-sensitive-value"));
+  var report=System.IO.File.ReadAllText(StartupDiagnostics.LogPath);Check(report.Contains("InvalidOperationException"),"startup failure type logged");Check(!report.Contains("fixture-sensitive-value"),"exception message not copied into diagnostics");System.IO.Directory.Delete(folder,true);
+  Console.WriteLine("15 native core assertions passed, including safe startup diagnostics.");
  }
 }

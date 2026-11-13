@@ -7,9 +7,9 @@
     <LangVersion>7.3</LangVersion>
     <AssemblyName>DMaxAcesso</AssemblyName>
     <RootNamespace>EnergyCube.DMax</RootNamespace>
-    <Version>1.0.0</Version>
-    <AssemblyVersion>1.0.0.0</AssemblyVersion>
-    <FileVersion>1.0.0.0</FileVersion>
+    <Version>1.0.1</Version>
+    <AssemblyVersion>1.0.1.0</AssemblyVersion>
+    <FileVersion>1.0.1.0</FileVersion>
     <Company>EnergyCube</Company>
     <Product>D-Max Acesso Desktop</Product>
     <Description>Central de acesso aos clientes e simulação local</Description>

@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
- <Product Id="*" Name="D-Max Acesso Desktop 1.0" Language="1046" Version="1.0.0" Manufacturer="EnergyCube" UpgradeCode="E67F8748-BFC6-4CDA-A80B-E11D403DBD08">
+ <Product Id="*" Name="D-Max Acesso Desktop 1.0.1" Language="1046" Version="1.0.1" Manufacturer="EnergyCube" UpgradeCode="E67F8748-BFC6-4CDA-A80B-E11D403DBD08">
   <Package InstallerVersion="500" Compressed="yes" InstallScope="perUser" Description="Central nativa de acesso aos clientes e simulação"/>
+  <Property Id="NETFRAMEWORK48"><RegistrySearch Id="FrameworkRelease" Root="HKLM" Key="SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full" Name="Release" Type="raw"/></Property>
+  <Condition Message="O aplicativo requer Microsoft .NET Framework 4.8. Instale o runtime pelo site oficial da Microsoft antes de continuar.">Installed OR (NETFRAMEWORK48 AND NETFRAMEWORK48 &gt;= "#528040")</Condition>
   <MajorUpgrade DowngradeErrorMessage="Uma versão mais recente já está instalada."/>
   <Media Id="1" Cabinet="DMaxDesktop.cab" EmbedCab="yes"/>
   <Directory Id="TARGETDIR" Name="SourceDir">

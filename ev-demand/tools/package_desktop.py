@@ -35,7 +35,7 @@ def build(root, wixl, msiinfo, library_path, output):
     if properties.get('ALLUSERS','') not in ('','0'):raise ValueError('Instalação deve ser por usuário')
     digest=hashlib.sha256(output.read_bytes()).hexdigest()
     output.with_suffix('.msi.sha256').write_text(digest+'  '+output.name+'\n')
-    report={'product':'D-Max Acesso Desktop 1.0','msi_sha256':digest,'exe_sha256':hashlib.sha256((published/'DMaxAcesso.exe').read_bytes()).hexdigest(),'files':[r['FileName'] for r in files],'custom_actions':0,'services':0,'environment_changes':0,'registry':'two HKCU shortcut markers only','shortcuts':2,'installation_scope':'current user','authenticode_signed':False,'windows_execution_tested':False,'defender_tested':False}
+    report={'product':properties.get('ProductName'),'version':properties.get('ProductVersion'),'msi_sha256':digest,'exe_sha256':hashlib.sha256((published/'DMaxAcesso.exe').read_bytes()).hexdigest(),'files':[r['FileName'] for r in files],'custom_actions':0,'services':0,'environment_changes':0,'registry':'two HKCU shortcut markers only','shortcuts':2,'installation_scope':'current user','authenticode_signed':False,'windows_execution_tested':False,'defender_tested':False}
     output.with_suffix('.audit.json').write_text(json.dumps(report,indent=2)+'\n')
     return report
 

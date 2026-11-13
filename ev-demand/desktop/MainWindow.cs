@@ -28,7 +28,7 @@ namespace EnergyCube.DMax {
   private readonly List<Label[]> simLabels=new List<Label[]>();
   private readonly List<Button[]> simButtons=new List<Button[]>();
   public MainWindow() {
-   Text="D-Max Acesso Desktop 1.0";Width=1250;Height=850;MinimumSize=new Size(900,640);StartPosition=FormStartPosition.CenterScreen;Font=new Font("Segoe UI",10);BackColor=background;
+   Text="D-Max Acesso Desktop 1.0.1";Width=1250;Height=850;MinimumSize=new Size(800,560);StartPosition=FormStartPosition.CenterScreen;Font=new Font("Segoe UI",10);BackColor=background;
    sidebar.BackColor=navy;
    var brand=new Label{Dock=DockStyle.Top,Height=110,Text="D-Max\nACESSO DESKTOP",Font=new Font("Segoe UI",22,FontStyle.Bold),ForeColor=Color.White,TextAlign=ContentAlignment.MiddleCenter};
    var menuHost=new Panel{Dock=DockStyle.Fill};menuHost.Controls.Add(menu);
@@ -39,6 +39,7 @@ namespace EnergyCube.DMax {
    timer.Tick+=async(s,e)=>await Tick();timer.Start();
    FormClosed+=(s,e)=>{timer.Stop();token="";actor=null;simulation=null;if(platform!=null)platform.Dispose();};
    KeyPreview=true;KeyDown+=(s,e)=>lastInput=Stopwatch.GetTimestamp();MouseDown+=(s,e)=>lastInput=Stopwatch.GetTimestamp();
+   Load+=(s,e)=>{var area=Screen.FromControl(this).WorkingArea;Size=new Size(Math.Min(Width,area.Width-30),Math.Min(Height,area.Height-30));Location=new Point(area.Left+Math.Max(0,(area.Width-Width)/2),area.Top+Math.Max(0,(area.Height-Height)/2));};
    ShowLogin();
   }
   private Button Button(string text,Action click,bool secondary=false) {
@@ -72,7 +73,7 @@ namespace EnergyCube.DMax {
    menu.Controls.Add(Button("Simulação",ShowSimulation));
    if(IsDeveloper){menu.Controls.Add(Button("Usuários",()=>{var ignored=Run(ShowMembers);}));menu.Controls.Add(Button("Configurações",ShowSettings));}
    menu.Controls.Add(Button("Sair",()=>{var ignored=Run(SignOut);}));
-   identity.Text=Values.Text(actor,"full_name")+"\n"+Role(Values.Text(actor,"role"))+"\nDesktop 1.0";
+   identity.Text=Values.Text(actor,"full_name")+"\n"+Role(Values.Text(actor,"role"))+"\nDesktop 1.0.1";
   }
   private void ShowLogin() {
    sidebar.Visible=false;var page=Page("D-Max Acesso Desktop");var section=Stack();page.Controls.Add(section);

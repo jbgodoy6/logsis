@@ -1,7 +1,7 @@
-D-Max Acesso Desktop 1.0 — aplicativo nativo para Windows 10/11 de 64 bits
+D-Max Acesso Desktop 1.0.1 — aplicativo nativo para Windows 10/11 de 64 bits
 
 Instalação:
-1. Execute D-Max-Acesso-Desktop-1.0.0.msi. O instalador padrão do Windows coloca o aplicativo na pasta de programas do seu usuário e cria atalhos no menu Iniciar e na área de trabalho.
+1. Execute D-Max-Acesso-Desktop-1.0.1.msi. O MSI apenas instala e termina; ele não abre o aplicativo automaticamente. O instalador padrão do Windows coloca o aplicativo na pasta de programas do seu usuário e cria atalhos no menu Iniciar e na área de trabalho.
 2. Abra D-Max Acesso Desktop pelo atalho. Não há Python, BAT, navegador local, servidor, serviço, driver ou inicialização automática.
 3. Antes do primeiro login, atualize o Code.gs COMPLETO da implantação existente da planilha com o Code.gs desta entrega. Selecione Nova versão em Gerenciar implantações, mantendo a URL e as propriedades. O arquivo não vem dentro do MSI.
 4. Na janela do programa, informe a URL /exec e seu login e senha da aba Usuarios.
@@ -26,3 +26,6 @@ Desinstalação: Configurações do Windows > Aplicativos > D-Max Acesso Desktop
 Validação e assinatura:
 O MSI foi construído com ferramentas verificadas e o EXE foi compilado de código C# legível, sem empacotadores ou ofuscação. O runtime pertence ao Windows/Microsoft. Testes locais cobriram o modelo de simulação, a API e o conteúdo do MSI. Não houve execução nativa no Windows nem teste do Defender nesta máquina Linux.
 O instalador e o EXE ainda não possuem certificado Authenticode de publicação da EnergyCube. Portanto não há garantia de aprovação pelo Defender/SmartScreen. Se houver alerta de ameaça, mantenha o bloqueio; não desative a proteção. Uma assinatura reconhecida exige certificado de assinatura de código da empresa.
+
+Revisão 1.0.1 — abertura:
+O instalador confere o .NET Framework 4.8. A janela é ajustada à área útil da tela. Falhas de abertura exibem uma mensagem e gravam relatório em %LOCALAPPDATA%\EnergyCube\DMaxAcessoDesktop\Logs (ou pasta temporária quando necessário). O relatório contém versão, etapas e tipos/pilhas de erro, sem senhas, tokens ou dados dos formulários. A abertura da janela foi exercitada em Mono/WinForms no Linux; isso não substitui a execução no Windows.
