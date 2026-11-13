@@ -281,5 +281,15 @@ assert.equal(JSON.stringify(properties),beforeWebMenu);assert.equal(JSON.stringi
 context.SpreadsheetApp.getUi=previousUi;
 console.log('Web portal contract passed: password login, private sessions, no verifier disclosure, developer management, immediate revocation and protected editor actions.');
 context.HtmlService={createHtmlOutput:html=>({html,setTitle(){return this;},addMetaTag(){return this;}})};
-assert.equal(context.doGet().html,fs.readFileSync(require('node:path').join(require('node:path').dirname(process.argv[2]),'Acesso.html'),'utf8'));
-assert.equal(context.doGet().html.includes(devPassword),false);
+assert.equal(JSON.parse(context.doGet().text).service,'D-Max Acesso Desktop');
+assert.equal(context.doGet().text.includes(devPassword),false);
+
+// Native desktop shares the same individual-account policy without a device token.
+const desktop=data=>JSON.parse(context.doPost({postData:{contents:JSON.stringify(data)}}).text);
+const nativeLogin=desktop({action:'desktop_login',name:'bridge.dev',password:devPassword});assert.equal(nativeLogin.ok,true);
+assert.equal(desktop({action:'desktop_members',token:nativeLogin.token}).ok,true);
+assert.equal(desktop({action:'desktop_clients',token:'invalid'}).code,401);
+assert.equal(desktop({action:'desktop_unknown'}).code,404);
+assert.equal(desktop({action:'desktop_logout',token:nativeLogin.token}).ok,true);
+assert.equal(desktop({action:'desktop_state',token:nativeLogin.token}).code,401);
+console.log('Native desktop API contract passed: individual login, role checks and logout, without device-key impersonation.');

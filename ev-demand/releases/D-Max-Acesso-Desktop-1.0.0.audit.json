@@ -1,0 +1,19 @@
+{
+  "product": "D-Max Acesso Desktop 1.0",
+  "msi_sha256": "a0b6b41c1ff3a0c1fc4a2c56162f91fe9420d4344214564199f1a6d942c6b724",
+  "exe_sha256": "c52baa954c873df6c1d1068b2597f585ce90fe1999ecc1f6c2ff468a34a6f721",
+  "files": [
+    "DMaxAcesso.exe",
+    "DMaxAcesso.exe.config",
+    "LEIA-ME.txt"
+  ],
+  "custom_actions": 0,
+  "services": 0,
+  "environment_changes": 0,
+  "registry": "two HKCU shortcut markers only",
+  "shortcuts": 2,
+  "installation_scope": "current user",
+  "authenticode_signed": false,
+  "windows_execution_tested": false,
+  "defender_tested": false
+}

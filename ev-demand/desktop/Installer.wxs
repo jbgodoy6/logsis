@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+ <Product Id="*" Name="D-Max Acesso Desktop 1.0" Language="1046" Version="1.0.0" Manufacturer="EnergyCube" UpgradeCode="E67F8748-BFC6-4CDA-A80B-E11D403DBD08">
+  <Package InstallerVersion="500" Compressed="yes" InstallScope="perUser" Description="Central nativa de acesso aos clientes e simulação"/>
+  <MajorUpgrade DowngradeErrorMessage="Uma versão mais recente já está instalada."/>
+  <Media Id="1" Cabinet="DMaxDesktop.cab" EmbedCab="yes"/>
+  <Directory Id="TARGETDIR" Name="SourceDir">
+   <Directory Id="LocalAppDataFolder"><Directory Id="ProgramsFolder" Name="Programs"><Directory Id="EnergyCubeFolder" Name="EnergyCube"><Directory Id="INSTALLFOLDER" Name="D-Max Acesso Desktop">
+    <Component Id="Application" Guid="70C7CC08-93C2-4FA9-A91A-9692045BF6E1" Win64="yes">
+     <File Id="DMaxExecutable" Name="DMaxAcesso.exe" Source="$(var.PublishDir)/DMaxAcesso.exe" KeyPath="yes"/>
+     <File Id="DMaxConfiguration" Name="DMaxAcesso.exe.config" Source="$(var.PublishDir)/DMaxAcesso.exe.config"/>
+     <File Id="Readme" Name="LEIA-ME.txt" Source="$(var.SourceDir)/LEIA-ME.txt"/>
+    </Component>
+   </Directory></Directory></Directory></Directory>
+   <Directory Id="ProgramMenuFolder"><Directory Id="ApplicationProgramsFolder" Name="EnergyCube">
+    <Component Id="MenuShortcut" Guid="3B662D39-1FD4-43DF-877F-766FA872EA78" Win64="yes">
+     <Shortcut Id="StartMenuShortcut" Name="D-Max Acesso Desktop" Description="Clientes e simulação" Target="[INSTALLFOLDER]DMaxAcesso.exe" WorkingDirectory="INSTALLFOLDER"/>
+     <RemoveFolder Id="RemoveProgramsFolder" On="uninstall"/>
+     <RegistryValue Root="HKCU" Key="Software\EnergyCube\DMaxAcessoDesktop" Name="MenuInstalled" Type="integer" Value="1" KeyPath="yes"/>
+    </Component>
+   </Directory></Directory>
+   <Directory Id="DesktopFolder">
+    <Component Id="DesktopShortcut" Guid="8249C281-C9B0-430C-B92C-F0F8576BE1A3" Win64="yes">
+     <Shortcut Id="DesktopLink" Name="D-Max Acesso Desktop" Target="[INSTALLFOLDER]DMaxAcesso.exe" WorkingDirectory="INSTALLFOLDER"/>
+     <RegistryValue Root="HKCU" Key="Software\EnergyCube\DMaxAcessoDesktop" Name="DesktopInstalled" Type="integer" Value="1" KeyPath="yes"/>
+    </Component>
+   </Directory>
+  </Directory>
+  <Feature Id="Complete" Title="D-Max Acesso Desktop" Level="1"><ComponentRef Id="Application"/><ComponentRef Id="MenuShortcut"/><ComponentRef Id="DesktopShortcut"/></Feature>
+ </Product>
+</Wix>

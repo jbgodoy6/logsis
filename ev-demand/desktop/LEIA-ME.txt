@@ -1,0 +1,28 @@
+D-Max Acesso Desktop 1.0 — aplicativo nativo para Windows 10/11 de 64 bits
+
+Instalação:
+1. Execute D-Max-Acesso-Desktop-1.0.0.msi. O instalador padrão do Windows coloca o aplicativo na pasta de programas do seu usuário e cria atalhos no menu Iniciar e na área de trabalho.
+2. Abra D-Max Acesso Desktop pelo atalho. Não há Python, BAT, navegador local, servidor, serviço, driver ou inicialização automática.
+3. Antes do primeiro login, atualize o Code.gs COMPLETO da implantação existente da planilha com o Code.gs desta entrega. Selecione Nova versão em Gerenciar implantações, mantendo a URL e as propriedades. O arquivo não vem dentro do MSI.
+4. Na janela do programa, informe a URL /exec e seu login e senha da aba Usuarios.
+
+Requisito: Microsoft .NET Framework 4.8, normalmente já presente no Windows 10/11. Se faltar, instale pelo site oficial da Microsoft. Não é preciso instalar .NET 10; esse SDK foi usado somente na compilação em desenvolvimento.
+
+Apenas a URL pública da plataforma é salva em %LOCALAPPDATA%\EnergyCube\DMaxAcessoDesktop\settings.json. Senhas, verificadores e tokens de sessão não são gravados em disco. Cada pessoa deve usar sua própria conta Windows.
+
+Perfis:
+- Desenvolvedor: clientes, simulação, configurações e gestão de contas de desenvolvedor, comercial e técnico. Pode criar, editar, bloquear, excluir, reativar e definir novas senhas. Alterações exigem a própria senha novamente; o servidor verifica o perfil e a senha.
+- Comercial e técnico: busca de clientes, botão Acessar cliente e simulação fictícia. Não podem administrar membros.
+- Não há root ou administrador local na central. O primeiro desenvolvedor precisa existir na planilha.
+
+Acessar cliente abre somente o endereço remoto validado no navegador padrão. O aplicativo não transmite credenciais ao cliente e não envia comandos aos carregadores. Faça login no D-Max remoto com sua conta. O modo comercial do Raspberry continua em demonstração isolada.
+
+Simulação: quatro carregadores fictícios, 60 kW disponíveis, bateria de 60 kWh e tempo acelerado 60 vezes. A carga para em 100%. Dados ficam em memória, separados por sessão, e são descartados ao sair. Comercial encerra após 15 minutos sem interação. O programa confere a autorização na planilha a cada minuto e em cada operação protegida; exige internet.
+
+Ao recriar uma conta, use novo ID e novo login. Para reativar a mesma identidade, edite a conta existente e preserve o ID/login. O histórico não é apagado.
+
+Desinstalação: Configurações do Windows > Aplicativos > D-Max Acesso Desktop. Preferências pessoais são preservadas. O instalador não modifica o Defender, não cria exclusões e não roda scripts ou comandos extras.
+
+Validação e assinatura:
+O MSI foi construído com ferramentas verificadas e o EXE foi compilado de código C# legível, sem empacotadores ou ofuscação. O runtime pertence ao Windows/Microsoft. Testes locais cobriram o modelo de simulação, a API e o conteúdo do MSI. Não houve execução nativa no Windows nem teste do Defender nesta máquina Linux.
+O instalador e o EXE ainda não possuem certificado Authenticode de publicação da EnergyCube. Portanto não há garantia de aprovação pelo Defender/SmartScreen. Se houver alerta de ameaça, mantenha o bloqueio; não desative a proteção. Uma assinatura reconhecida exige certificado de assinatura de código da empresa.
