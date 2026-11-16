@@ -1,7 +1,7 @@
 /** D-Max global directory. Bound to Google Sheets; no external server required. */
 const DMAX_SHEET_ID = '17HCp2CX3eUZXqQsTkTNDZvrLkGqzZQrJkCfeHo-toPQ';
 const DMAX_TAB = 'Tecnicos';
-const DMAX_SCRIPT_REVISION='sheet-password-1';
+const DMAX_SCRIPT_REVISION='sheet-user-write-1';
 const DMAX_HEADERS = ['id', 'nome', 'login', 'situacao', 'valido_ate'];
 const DMAX_DEFAULT_HASH = 'pbkdf2_sha256$600000$0cc644386557630153579d018267d636$07eb3cfc2778a1ee08fa321b86c897f72237f6749cecda0eee2ea788cb678c53';
 
@@ -171,6 +171,21 @@ function prepararRemoto(){
   SpreadsheetApp.getUi(); // Requires the bound spreadsheet editor, not the public web app.
 remoteSheet_();}
 function sheetText_(value){return /^[=+\-@\t\r]/.test(value)?"'"+value:value;}
+function sheetUserChoice_(sheet,row,column,value,isRole){
+  const canonical=v=>isRole?DMAX_GLOBAL_ROLES[String(v).trim().toLowerCase()]:String(v).trim().toLowerCase().replace('excluído','excluido');
+  const fallback=isRole?{developer:'desenvolvedor',commercial:'comercial',technician:'tecnico'}[value]:value;
+  const cell=sheet.getRange(row,column),rule=typeof cell.getDataValidation==='function'?cell.getDataValidation():null;
+  if(!rule)return fallback;
+  const type=rule.getCriteriaType(),args=rule.getCriteriaValues();let choices;
+  if(type===SpreadsheetApp.DataValidationCriteria.VALUE_IN_LIST)choices=args[0];
+  else if(type===SpreadsheetApp.DataValidationCriteria.VALUE_IN_RANGE)choices=args[0].getDisplayValues().reduce((a,r)=>a.concat(r),[]);
+  if(choices){
+    const found=choices.find(v=>canonical(v)===value);
+    if(found!==undefined)return String(found);
+    if(!rule.getAllowInvalid())error_(422,'A lista de perfil/situação não contém a opção selecionada');
+  }
+  return fallback;
+}
 function remote_(id,data){
   if(!data||Object.keys(data).sort().join(',')!=='connected,heartbeat_at,provider,revision,site_name,url'||
      data.provider!=='cloudflare'||typeof data.connected!=='boolean'||!Number.isSafeInteger(data.revision)||data.revision<1||
@@ -674,14 +689,14 @@ function bridgeManageUser_(props,data,trace){
   date_(r.expires,book.getSpreadsheetTimeZone());
   if(!current&&state.source.rows.length>=2000)error_(422,'Limite de usuários atingido');
   const index=current?current.row:state.source.sheet.getLastRow()+1;
-  const row=[r.id,r.full_name.trim(),r.name,r.role,r.status,r.expires,r.password];
+  const row=[r.id,r.full_name.trim(),r.name,sheetUserChoice_(state.source.sheet,index,4,r.role,true),sheetUserChoice_(state.source.sheet,index,5,r.status,false),r.expires,r.password];
   saveStage_(trace,'write_sheet');
   state.source.sheet.getRange(index,1,1,7).setValues([row.map(v=>sheetText_(v))]);
   saveStage_(trace,'flush_sheet');
   SpreadsheetApp.flush();
   saveStage_(trace,'confirm_write');
   const saved=state.source.sheet.getRange(index,1,1,7).getValues()[0];
-  if(String(saved[0]).trim()!==r.id||String(saved[6]).trim()!==r.password)error_(503,'Não foi possível confirmar a gravação do verificador');
+  if([0,1,2,3,4,6].some(i=>String(saved[i])!==String(row[i])&&String(saved[i])!==sheetText_(String(row[i]))))error_(503,'Não foi possível confirmar a gravação completa do usuário');
   // Explicit developer changes supersede a queued technical password reset.
   props.deleteProperty('pending.'+r.id);
   saveStage_(trace,'sync_identity');

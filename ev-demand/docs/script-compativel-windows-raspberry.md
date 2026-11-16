@@ -1,5 +1,15 @@
 # Um Apps Script para Windows e Raspberry
 
+## Criação de usuários pelo Windows
+
+A revisão `sheet-user-write-1` grava os perfis em português na planilha, mantendo os nomes internos em inglês no protocolo dos aplicativos. Quando D/E têm validação por lista ou intervalo, escolhe o texto equivalente permitido pela própria lista (por exemplo `Comercial`, `Técnico`, `Ativo`, `Excluído`), sem apagar a validação. Uma opção não disponível em uma lista restritiva é recusada antes da escrita.
+
+A confirmação de gravação agora compara ID, nome, login, perfil, situação e verificador; perfil ou situação ausente não podem resultar em sucesso. Os testes cobrem um usuário novo enviado por `desktop_save_user` com ID automático, senha fictícia convertida em verificador, D/E/G preenchidas e verificador validado independentemente. Também cobrem listas com acentos/maiúsculas, listas baseadas em intervalo e falhas de persistência de D ou E.
+
+Esta é uma incompatibilidade confirmada no código anterior: o protocolo enviava `commercial`, e a gravação não o convertia para `comercial`. Não foi possível confirmar se a planilha real possui uma lista que rejeita esse valor; o usuário foi consultado. Não apresentar essa hipótese como causa já comprovada da tentativa real.
+
+Uma linha já incompleta não é apagada ou reconstruída automaticamente. Se estiver sem D/E, o responsável deve selecionar o perfil e a situação corretos para essa conta. A função de definir senha pela planilha pode então preencher G. Não adivinhar o perfil e não recriar o ID/login para recuperar a linha.
+
 ## Administração direta pela planilha
 
 A revisão `sheet-password-1` acrescenta **D-Max → Definir senha da linha selecionada**. Na aba Usuarios, selecione uma célula da linha do usuário, abra esse menu, informe e confirme a senha e clique em **Salvar senha na planilha**. O verificador é preenchido automaticamente em G. Mantenha E como `ativo` para permitir acesso; bloqueados, excluídos e vencidos não são liberados automaticamente.
