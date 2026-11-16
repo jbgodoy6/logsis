@@ -1,3 +1,17 @@
+# D-Max — versões atuais validadas
+
+| Componente | Versão mantida | Arquivo |
+| --- | --- | --- |
+| Central Windows | 1.2.1, runtime incluído | [Instalador MSI](releases/D-Max-Central-Rede-1.2.1-Diagnostico.msi) |
+| Controlador Raspberry | 0.14.2, instalação manual | [Pacote Linux ARM64](releases/D-Max-Raspberry-0.14.2-SEM-ASSINATURA.zip) |
+| Google Planilhas | `sheet-user-write-1` | [Code.gs](google-apps-script/Code.gs) |
+
+[Validação, hashes e limites](docs/versoes-validadas.md) · [Arquivos atuais](releases/README.md) · [Administração pela planilha](docs/script-compativel-windows-raspberry.md).
+
+Os pacotes antigos foram removidos da pasta releases; o histórico Git foi preservado. As notas abaixo são histórico de desenvolvimento, não instruções para escolher uma versão antiga. A cópia do Apps Script dentro do ZIP Raspberry está sincronizada com o arquivo atual do repositório.
+
+## Histórico de desenvolvimento
+
 # D-Max 0.14.1 · Usuários da plataforma em aba única
 
 [Técnicos, desenvolvedores e comerciais na aba Usuarios; migração e atualização](docs/release-v0141.md).
