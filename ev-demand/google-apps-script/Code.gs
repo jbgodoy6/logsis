@@ -354,9 +354,9 @@ function userRows_(sheet,book){
     const role=DMAX_GLOBAL_ROLES[String(c[3]).trim().toLowerCase()],status=String(c[4]).trim().toLowerCase();
     const hash=String(c[6]).trim();
     if(!/^[A-Za-z0-9_-]{1,100}$/.test(id)||!/^[a-z0-9._-]{3,40}$/.test(name)||['root','admin'].includes(name)||!full||full.length>100||!role||ids.has(id)||names.has(name))error_(422,'Identidade/perfil inválido ou duplicado na linha '+(index+2));
-    if(!['ativo','bloqueado','excluido','excluído'].includes(status)||!validHash_(hash))error_(422,'Situação/verificador inválido na linha '+(index+2));
+    if(!['ativo','bloqueado','excluido','excluído'].includes(status)||(hash&&!validHash_(hash)))error_(422,'Situação/verificador inválido na linha '+(index+2));
     ids.add(id);names.add(name);
-    rows.push({id:id,name:name,full_name:full,role:role,active:status==='ativo',deleted:['excluido','excluído'].includes(status),expires_at:date_(c[5],book.getSpreadsheetTimeZone()),password:hash,row:index+2});
+    rows.push({id:id,name:name,full_name:full,role:role,active:status==='ativo'&&Boolean(hash),deleted:['excluido','excluído'].includes(status),expires_at:date_(c[5],book.getSpreadsheetTimeZone()),password:hash,row:index+2,credential_pending:!hash});
   });
   if(rows.length>2000)error_(422,'Limite desta implantação: 2000 usuários');
   return rows;
@@ -394,6 +394,16 @@ function unifiedState_(props){
   });
   rows.forEach(r=>{
     const old=history.byId[r.id],pending=all['pending.'+r.id]?JSON.parse(all['pending.'+r.id]):null;
+    if(r.credential_pending){
+      // Blank cells do not invalidate unrelated accounts or replace a saved hash.
+      // Existing Pi caches still need an explicit inactive record for this ID.
+      seen.add(r.id);
+      if(old){
+        const digest=sha_(JSON.stringify([r.full_name,r.role,false,r.deleted,r.expires_at]));
+        records.push(Object.assign({},old,{full_name:r.full_name,role:r.role,active:false,deleted:r.deleted,expires_at:r.expires_at,credential_pending:true,meta_digest:digest,meta_version:(old.meta_version||0)+(old.meta_digest!==digest?1:0)}));
+      }
+      return;
+    }
     const credentialChanged=old&&old.password!==r.password;
     const mustChange=pending&&pending.name===r.name&&pending.password===r.password?Boolean(pending.must_change):old&&!credentialChanged?Boolean(old.must_change):r.role==='technician'&&r.password===DMAX_DEFAULT_HASH;
     const digest=sha_(JSON.stringify([r.full_name,r.role,r.active,r.deleted,r.expires_at]));
@@ -406,7 +416,7 @@ function unifiedState_(props){
   });
   if(records.length>5000)error_(503,'Histórico de identidades excedeu a capacidade');
   records.forEach(r=>props.setProperty('identity.'+r.id,JSON.stringify(r)));
-  rows.forEach(r=>{if(all['pending.'+r.id])props.deleteProperty('pending.'+r.id);});
+  rows.forEach(r=>{if(!r.credential_pending&&all['pending.'+r.id])props.deleteProperty('pending.'+r.id);});
   return {source:{sheet:sheet,rows:rows},records:records};
 }
 function unifiedSnapshot_(props){
@@ -551,7 +561,7 @@ function diagnosticarUsuarios(){
       if(history.byName[r.name]&&history.byName[r.name]!==r.id)
         error_(409,'Login associado a outro ID: '+r.name);
     });
-    const message='Validação de usuários OK. Cadastro unificado: '+Boolean(sheet)+'. Linhas: '+rows.length+'. Nenhum dado alterado.'+(sheet?'':' A central Windows exige cadastro unificado; este resultado valida apenas o cadastro legado do Raspberry.');
+    const message='Validação de usuários OK. Cadastro unificado: '+Boolean(sheet)+'. Linhas: '+rows.length+'. Contas sem verificador (sem acesso): '+rows.filter(r=>r.credential_pending).length+'. Nenhum dado alterado.'+(sheet?'':' A central Windows exige cadastro unificado; este resultado valida apenas o cadastro legado do Raspberry.');
     console.log(message);ui.alert(message);
   } catch(e){
     const message='Diagnóstico de usuários: código '+(e.code||503)+'; '+e.message;
@@ -1330,7 +1340,7 @@ function portalRoster_(props){
   return records;
 }
 function portalPublic_(r){
-  return {id:r.id,name:r.name,full_name:r.full_name,role:r.role,active:r.active,deleted:r.deleted,expires_at:r.expires_at};
+  return {id:r.id,name:r.name,full_name:r.full_name,role:r.role,active:r.active,deleted:r.deleted,expires_at:r.expires_at,credential_pending:Boolean(r.credential_pending)};
 }
 function portalUsable_(r){
   return Boolean(r&&['developer','commercial','technician'].includes(r.role)&&r.active&&!r.deleted&&!r.must_change&&(r.expires_at===null||r.expires_at>Date.now()/1000));

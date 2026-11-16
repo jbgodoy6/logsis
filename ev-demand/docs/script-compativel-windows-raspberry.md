@@ -4,6 +4,12 @@ Esta revisão mantém os protocolos existentes: `desktop_login`, `desktop_state`
 
 ## Simplificação
 
+Uma célula `verificador` vazia em Usuarios agora significa **conta pendente de senha**, em vez de erro 422 para todo o cadastro. Ela não autentica nem recebe uma senha padrão. As demais contas válidas podem entrar normalmente, inclusive na central Windows anterior. Não é necessário instalar outro programa para obter esse comportamento.
+
+Na sincronização Raspberry, uma identidade já conhecida com verificador vazio é enviada inativa, preservando o verificador histórico e a versão de credencial, sem marcá-la como excluída. Uma conta nova sem credencial não é enviada até ter senha configurada. As células da planilha não são preenchidas ou alteradas automaticamente por essa leitura. Limpar a célula não serve para manter uma conta acessível; serve apenas para deixá-la pendente sem bloquear as demais.
+
+Se a própria conta usada para entrar estiver sem verificador, ela ainda precisa de uma senha configurada. Um desenvolvedor com acesso válido pode defini-la pela gestão de usuários existente. Se nenhuma conta de desenvolvedor tiver credencial válida, é necessário tratar a recuperação de acesso; não existe autenticação válida sem credencial.
+
 Uma única função compara os cabeçalhos de Usuarios, Tecnicos, Contas, Assinaturas e do diretório remoto. Diferenças de maiúsculas/minúsculas, espaços nas extremidades e BOM não provocam mais recusa. A ordem e os nomes das colunas continuam necessários para ler os campos corretamente. A leitura não reescreve as células.
 
 O menu D-Max oferece **Verificar cadastro (sem alterar dados)**. O diagnóstico aparece na tela, além do log. Se o cadastro legado for válido mas o unificado não estiver habilitado, a mensagem explicita que esse resultado não valida o login Windows. Não habilitar propriedades ou migrar contas às cegas.
