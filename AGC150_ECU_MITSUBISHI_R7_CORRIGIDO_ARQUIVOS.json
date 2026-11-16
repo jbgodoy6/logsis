@@ -1,0 +1,17 @@
+{
+  "dashboard": "AGC150_ECU_MITSUBISHI_R7_CORRIGIDO",
+  "compatibleBin": "AGC150_REDE_GERADOR_ECU_ME96SS_R5.bin",
+  "binSha256": "0c24de63410bdea5f08cdcb16b1e25e76180dcf79ddc2dbae581660ecec0110d",
+  "files": [
+    {
+      "file": "AGC150_ECU_MITSUBISHI_R7_CORRIGIDO.json",
+      "bytes": 719487,
+      "sha256": "dd0485afcf66186e9010b74f2a9118092cee80b04ba7903a1c1ac736a4cd96d3"
+    },
+    {
+      "file": "AGC150_ECU_MITSUBISHI_R7_CORRIGIDO.zip",
+      "bytes": 46858,
+      "sha256": "9bc36e7453acabf4e7b5e4a96e2281a3b15faef2e0748a7e7f66b40504bb3c3b"
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "result": "passed",
+  "grafanaVersion": "11.2.0",
+  "desktop": true,
+  "mobile": true,
+  "sharedMeterData": true,
+  "separateSections": true,
+  "powerTriplesPerInstrument": true,
+  "grafanaFileImport": true,
+  "datasourceResponses": 15,
+  "browserErrors": 0,
+  "testDatabase": "synthetic local data; no production access"
+}

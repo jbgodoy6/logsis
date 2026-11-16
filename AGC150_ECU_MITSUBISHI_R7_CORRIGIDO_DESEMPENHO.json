@@ -1,0 +1,30 @@
+{
+  "rows": 40000,
+  "source": "synthetic sparse telemetry, isolated PostgreSQL 16",
+  "productionBenchmark": false,
+  "r7Snapshot": {
+    "timedOut": false,
+    "executionMs": 2164.628,
+    "planningMs": 112.472
+  },
+  "r7ConsumptionHistory": {
+    "timedOut": false,
+    "executionMs": 1556.69,
+    "planningMs": 3.197
+  },
+  "r6ConsumptionHistory": {
+    "timedOut": true,
+    "limitMs": 3000,
+    "wallMs": 3094.7
+  },
+  "r7ConsumptionWithTimeIndex": {
+    "timedOut": false,
+    "executionMs": 1490.691,
+    "planningMs": 4.119
+  },
+  "r6ConsumptionWithTimeIndex": {
+    "timedOut": true,
+    "limitMs": 3000,
+    "wallMs": 3164.4
+  }
+}
