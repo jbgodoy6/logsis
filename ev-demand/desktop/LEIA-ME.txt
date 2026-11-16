@@ -1,11 +1,11 @@
-D-Max Central de Acesso 1.2 — Servidor da rede (Windows 10/11 x64)
+D-Max Central de Acesso 1.3 — Servidor da rede (Windows 10/11 x64)
 
 Instale em UM computador da empresa. Os outros computadores abrem a página no navegador, sem instalar o programa. Inclui os runtimes Microsoft necessários: não é preciso instalar .NET Framework, .NET Runtime, Python ou SDK separadamente.
 
-1. Execute D-Max-Central-Rede-1.2.0-Completo.msi no usuário Windows que usará o servidor. Atualiza as versões Desktop anteriores nesse usuário.
+1. Execute D-Max-Central-Rede-1.3.0-Completo.msi no usuário Windows que usará o servidor. Atualiza as versões Desktop anteriores nesse usuário.
 2. Conclua a instalação e abra o atalho D-Max Central de Acesso no menu Iniciar ou na área de trabalho. O MSI apenas instala.
 3. Na janela do servidor, configure a URL Google Apps Script /exec da plataforma existente. Nome padrão: d-max. Porta padrão: 80. Clique em Salvar e iniciar/reiniciar e em Abrir página. Não informe uma chave de equipamento.
-4. Entre na página com seu login e senha da planilha. Se a implantação já possui as operações desktop_* do Desktop anterior, não precisa atualizar o Apps Script. Caso contrário, a plataforma precisará do Code.gs desta versão e de uma nova versão na implantação existente, preservando URL, planilha e propriedades.
+4. Entre na página com seu login e senha da planilha. Atualize o Apps Script com o Code.gs desta versão (central-sso-devices-2) e publique uma nova versão na implantação existente, preservando URL, planilha e propriedades. Novos usuários e redefinições usam a senha inicial 12345678 e exigem troca no primeiro acesso. A central não permite escolher a senha de outra pessoa.
 5. Nos demais computadores da MESMA REDE, abra http://d-max.local:80 no navegador. Cada pessoa entra com seu próprio login. Não copie a URL localhost para outros computadores.
 
 O servidor anuncia d-max.local por mDNS e o serviço HTTP com a porta configurada. Nome e porta podem ser alterados em Configurações por desenvolvedor, com confirmação da senha; o servidor reinicia e as pessoas entram novamente no novo endereço. Se a nova porta estiver ocupada, o servidor tenta restaurar a configuração anterior. Também é possível configurar pela janela no computador servidor, sob a conta Windows proprietária.
@@ -18,10 +18,12 @@ Fechar a janela do servidor mantém o programa ativo na bandeja perto do relógi
 
 Desenvolvedor: acesso completo à central, clientes, simulação, configurações e criação/edição/bloqueio/exclusão/reativação de membros desenvolvedor, comercial e técnico; gera verificadores. Alterações de membros exigem sua senha novamente. Comercial e técnico: busca, acesso aos clientes e demonstração. A plataforma confere conta, situação e validade online. Cada acesso ao D-Max remoto continua sujeito às permissões do equipamento.
 
-A visão geral mostra clientes, última conexão informada e botão Acessar cliente. O endereço não aparece como texto. O botão abre o cliente em outra aba e não transmite credenciais nem comandos. A central NÃO é controlador de demanda.
+A visão geral mostra clientes, última conexão informada e botão Acessar cliente. O endereço não aparece como texto. O botão abre o cliente em outra aba com um bilhete de acesso de uso único, válido por 60 segundos; requer Raspberry 0.15.0 e Apps Script desta versão. Não transmite a senha nem comandos de controle. A central NÃO é controlador de demanda.
 
 Simulação fictícia de cada navegador: quatro carregadores, SOC, bateria de 60 kWh, limite de 60 kW, tempo 60 vezes acelerado e parada em 100%. Não interfere nos carregamentos reais ou em outras sessões. Sair descarta os dados. Comercial encerra após 15 minutos sem interação. O navegador precisa permanecer ativo para a demonstração avançar.
 
 Configuração pública em %LOCALAPPDATA%\EnergyCube\DMaxAcessoLan\server.json. Chaves de proteção dos cookies em Keys, protegidas pelo usuário Windows (DPAPI). Logs de abertura sem senhas/formulários na pasta de diagnóstico do aplicativo. Desinstalar remove os arquivos do programa e os atalhos; configurações locais são preservadas.
 
 Instalador sem ações customizadas, scripts, serviço, regras de firewall automáticas ou alterações globais do .NET. Binários Microsoft oficiais acompanhados das respectivas licenças. O MSI e o executável não possuem assinatura Authenticode. Esta compilação não foi executada em um Windows real nem submetida ao Defender; não há garantia de aceitação pelo antivírus. O servidor, protocolo mDNS e página foram testados no ambiente de desenvolvimento.
+
+Equipamentos: o desenvolvedor cadastra instalações e altera ativo/pendente. No Apps Script, o menu Organizar equipamentos migra situação para a coluna E com cópia de segurança. A chave de equipamento novo aparece uma única vez; configure-a no Raspberry correspondente.
