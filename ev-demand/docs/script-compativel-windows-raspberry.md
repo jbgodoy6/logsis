@@ -14,6 +14,14 @@ Na edição pelo Windows, preencher **Nova senha**, a confirmação e a senha do
 
 Os testes incluem a operação real `desktop_save_user`, geração de verificador para uma linha já existente sem credencial, gravação em G, login posterior com a senha fictícia, manutenção do mesmo ID e rejeição de uma escrita simulada que não persistiu. Nenhuma senha ou verificador real foi usado.
 
+## Se o Windows ainda retornar erro genérico ao salvar
+
+O banner informado pelo usuário confirmou as seis operações, mas `diagnostics_version: 1` não distingue as revisões anteriores. A revisão de rastreamento anuncia `diagnostics_version: 2` e `script_revision: "save-trace-1"` no GET. Isso permite confirmar se a URL realmente passou a executar este código.
+
+Depois de publicar esta revisão na implantação existente, repita uma tentativa de salvar no Windows. Em **Execuções** no Apps Script, abra a execução **doPost** correspondente ao horário da tentativa e leia as linhas `DMAX_SAVE` / `DMAX_SAVE_FAILURE`. Elas registram somente a etapa fixa, a revisão, o código e o tipo do erro; não incluem senhas, tokens, verificadores, identidades ou mensagens brutas de exceção. Não é necessário executar `doPost` manualmente no editor.
+
+Etapas: validação da sessão, validação dos campos, geração do verificador, preparação do diretório, leitura do cadastro, confirmação da senha do desenvolvedor, validação do registro, escrita, flush, confirmação da escrita e sincronização da identidade. Se o Google interromper a execução por tempo, a última etapa iniciada ainda estará registrada. Esse rastreamento não confirma que a causa real já foi encontrada: ele fornece a evidência que o aplicativo anterior oculta.
+
 Uma única função compara os cabeçalhos de Usuarios, Tecnicos, Contas, Assinaturas e do diretório remoto. Diferenças de maiúsculas/minúsculas, espaços nas extremidades e BOM não provocam mais recusa. A ordem e os nomes das colunas continuam necessários para ler os campos corretamente. A leitura não reescreve as células.
 
 O menu D-Max oferece **Verificar cadastro (sem alterar dados)**. O diagnóstico aparece na tela, além do log. Se o cadastro legado for válido mas o unificado não estiver habilitado, a mensagem explicita que esse resultado não valida o login Windows. Não habilitar propriedades ou migrar contas às cegas.

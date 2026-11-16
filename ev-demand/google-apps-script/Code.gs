@@ -54,7 +54,12 @@ function headersMatch_(actual,expected){
   return Array.isArray(actual)&&actual.length===expected.length&&actual.every((v,i)=>String(v).trim().toLowerCase()===expected[i]);
 }
 
-function doGet() {return json_({ok:true,service:'D-Max Acesso Desktop',version:'1.0',desktop_protocol:1,desktop_actions:['desktop_login','desktop_state','desktop_logout','desktop_clients','desktop_members','desktop_save_user'],diagnostics_version:1,message:'Abra o aplicativo instalado no Windows. Nenhum cadastro é público.'});}
+function doGet() {return json_({ok:true,service:'D-Max Acesso Desktop',version:'1.0',desktop_protocol:1,desktop_actions:['desktop_login','desktop_state','desktop_logout','desktop_clients','desktop_members','desktop_save_user'],diagnostics_version:2,script_revision:'save-trace-1',message:'Abra o aplicativo instalado no Windows. Nenhum cadastro é público.'});}
+function saveStage_(trace,stage){
+  if(!trace)return;
+  trace.stage=stage;
+  console.info('DMAX_SAVE '+JSON.stringify({revision:'save-trace-1',stage:stage}));
+}
 function doPost(event) {
   let lock, acquired=false;
   try {
@@ -578,7 +583,8 @@ function verifyPlatformPassword_(password,encoded){
   const actual=sjcl.codec.hex.fromBits(sjcl.misc.pbkdf2(password,sjcl.codec.hex.toBits(parts[2]),600000,256));
   return equal_(actual,parts[3]);
 }
-function bridgeManageUser_(props,data){
+function bridgeManageUser_(props,data,trace){
+  saveStage_(trace,'prepare_directory');
   if(!unifiedSheet_(props))error_(422,'Prepare primeiro a aba Usuarios');
   if(typeof data.actor_login!=='string'||data.actor_login.length>40||typeof data.actor_password!=='string'||!data.actor_password||data.actor_password.length>200)error_(401,'Autenticação necessária');
   const now=Math.floor(Date.now()/1000),attemptKey='bridge.attempt.'+sha_(data.controller_id);
@@ -586,10 +592,13 @@ function bridgeManageUser_(props,data){
   if(!attempt||now-attempt.at>=300)attempt={at:now,count:0};
   if(attempt.count>=5)error_(429,'Muitas tentativas');
   attempt.count++;props.setProperty(attemptKey,JSON.stringify(attempt));
+  saveStage_(trace,'read_roster');
   const state=unifiedState_(props),actor=state.records.find(r=>r.name===data.actor_login.trim().toLowerCase());
   if(!actor||actor.role!=='developer'||!actor.active||actor.deleted||actor.must_change||(actor.expires_at!==null&&actor.expires_at<=now))error_(403,'Desenvolvedor ativo necessário');
+  saveStage_(trace,'verify_developer_password');
   if(!verifyPlatformPassword_(data.actor_password,actor.password))error_(401,'Credenciais inválidas');
   props.deleteProperty(attemptKey);
+  saveStage_(trace,'validate_record');
   const r=data.record;
   const current=r&&state.source.rows.find(x=>x.id===r.id);
   const keepPending=current&&current.credential_pending&&r.password==='';
@@ -606,12 +615,16 @@ function bridgeManageUser_(props,data){
   if(!current&&state.source.rows.length>=2000)error_(422,'Limite de usuários atingido');
   const index=current?current.row:state.source.sheet.getLastRow()+1;
   const row=[r.id,r.full_name.trim(),r.name,r.role,r.status,r.expires,r.password];
+  saveStage_(trace,'write_sheet');
   state.source.sheet.getRange(index,1,1,7).setValues([row.map(v=>sheetText_(v))]);
+  saveStage_(trace,'flush_sheet');
   SpreadsheetApp.flush();
+  saveStage_(trace,'confirm_write');
   const saved=state.source.sheet.getRange(index,1,1,7).getValues()[0];
   if(String(saved[0]).trim()!==r.id||String(saved[6]).trim()!==r.password)error_(503,'Não foi possível confirmar a gravação do verificador');
   // Explicit developer changes supersede a queued technical password reset.
   props.deleteProperty('pending.'+r.id);
+  saveStage_(trace,'sync_identity');
   unifiedState_(props);
   return {ok:true,acknowledged_id:r.id};
 }
@@ -1311,15 +1324,21 @@ sjcl.misc.pbkdf2 = function (password, salt, count, length, Prff) {
 };
 
 /** D-Max Acesso Web 1.0. No device credentials or verifiers enter the browser. */
-function portalReply_(operation){
+function portalReply_(operation,trace){
   let lock,acquired=false;
   try {
     lock=LockService.getScriptLock();
     acquired=lock.tryLock(5000);
     if(!acquired)error_(503,'Ocupado');
-    return Object.assign({ok:true},operation(PropertiesService.getScriptProperties()));
+    const result=Object.assign({ok:true},operation(PropertiesService.getScriptProperties()));
+    saveStage_(trace,'complete');
+    return result;
   } catch(e) {
     const code=e.code||503;
+    if(trace){
+      const kind=['Error','TypeError','ReferenceError','RangeError','SyntaxError','Exception'].includes(e.name)?e.name:'Error';
+      console.error('DMAX_SAVE_FAILURE '+JSON.stringify({revision:'save-trace-1',stage:trace.stage,code:code,kind:kind}));
+    }
     const messages={401:'Login, senha ou sessão inválidos. Entre novamente.',403:'Seu perfil não permite esta operação.',409:'Conflito de ID/login. Preserve a identidade existente ou crie outra conta com novo login.',422:'Confira os campos e a aba Usuarios.',429:'Muitas tentativas. Aguarde cinco minutos.',503:'Não foi possível consultar a planilha. Tente novamente.'};
     const reply={ok:false,code:code,message:messages[code]||messages[503]};
     // Only fixed identifiers cross the API boundary, never exception details.
@@ -1411,23 +1430,27 @@ function portalMembers(token){
   });
 }
 function portalSaveUser(token,fields){
+  const trace={stage:'lock'};
   return portalReply_(props=>{
+    saveStage_(trace,'validate_session');
     const session=portalSession_(props,token),actor=session.actor;
     if(actor.role!=='developer')error_(403,'Somente desenvolvedor');
     if(!fields||typeof fields!=='object'||typeof fields.actor_password!=='string'||fields.actor_password.length>200)error_(422,'Campos inválidos');
+    saveStage_(trace,'validate_fields');
     let encoded;
     const old=session.rows.find(r=>r.id===fields.id);
     if(fields.password){
       if(typeof fields.password!=='string'||fields.password.length<8||fields.password.length>200||fields.password!==fields.confirmation)error_(422,'Senha inválida');
+      saveStage_(trace,'generate_verifier');
       const salt=Utilities.getUuid().replace(/-/g,'');
       encoded='pbkdf2_sha256$600000$'+salt+'$'+sjcl.codec.hex.fromBits(sjcl.misc.pbkdf2(fields.password,sjcl.codec.hex.toBits(salt),600000,256));
     } else if(old)encoded=old.password;
     else error_(422,'Informe uma senha');
     const record={id:fields.id||'USR-'+Utilities.getUuid().replace(/-/g,'').slice(0,16),name:fields.name,full_name:fields.full_name,role:fields.role,status:fields.status,expires:fields.expires||'',password:encoded};
-    const result=bridgeManageUser_(props,{controller_id:'WEB-'+actor.id,actor_login:actor.name,actor_password:fields.actor_password,record:record});
+    const result=bridgeManageUser_(props,{controller_id:'WEB-'+actor.id,actor_login:actor.name,actor_password:fields.actor_password,record:record},trace);
     // Only a developer who just proved their password receives the new verifier.
     return {acknowledged_id:result.acknowledged_id,verifier:encoded};
-  });
+  },trace);
 }
 
 /** Desktop endpoints authenticate individual accounts; never accept a device key as identity. */
