@@ -1,11 +1,11 @@
 # Distribuições atuais
 
-- [Central Windows 1.2.1 — MSI com runtime](D-Max-Central-Rede-1.2.1-Diagnostico.msi) · [SHA256](D-Max-Central-Rede-1.2.1-Diagnostico.msi.sha256) · [Auditoria](D-Max-Central-Rede-1.2.1-Diagnostico.audit.json).
-- [Raspberry 0.14.2 — ZIP Linux ARM64](D-Max-Raspberry-0.14.2-SEM-ASSINATURA.zip) · [SHA256](D-Max-Raspberry-0.14.2-SEM-ASSINATURA.zip.sha256).
-- [Apps Script atual — Code.gs](../google-apps-script/Code.gs), revisão `sheet-user-write-1`.
+- [Windows 1.3.0 — MSI com runtime](D-Max-Central-Rede-1.3.0-Completo.msi) · [SHA256](D-Max-Central-Rede-1.3.0-Completo.msi.sha256) · [Auditoria](D-Max-Central-Rede-1.3.0-Completo.audit.json).
+- [Raspberry 0.15.0 — ZIP Linux ARM64](D-Max-Raspberry-0.15.0-SEM-ASSINATURA.zip) · [SHA256](D-Max-Raspberry-0.15.0-SEM-ASSINATURA.zip.sha256).
+- [Apps Script — Code.gs](../google-apps-script/Code.gs), revisão `central-sso-devices-2`.
 
-[Relatório de validação](../docs/versoes-validadas.md) · [Manifesto das versões e hashes](versions.json).
+[Instalação e novidades](../docs/release-v0150.md) · [Validação](../docs/versoes-validadas.md) · [Manifesto](versions.json).
 
-O ZIP Raspberry foi atualizado apenas para incluir o Apps Script atual e seu manifesto de integridade. O controlador continua na versão 0.14.2; seus arquivos de aplicação não mudaram. O pacote continua sem assinatura para atualização automática: use o procedimento de instalação manual documentado. O nome “Diagnostico” do MSI foi preservado para manter o mesmo arquivo 1.2.1 já distribuído.
+Atualize os três componentes para usar acesso ao cliente sem repetir senha, equipamentos com situação na coluna E e troca obrigatória da senha inicial. O pacote Raspberry é para instalação manual, sem assinatura de atualização automática. O MSI inclui runtime; não exige .NET separado. Não houve instalação física ou validação pelo Defender pelo agente.
 
-A limpeza removeu 32 arquivos de versões anteriores desta pasta. Não houve reescrita do histórico, exclusão de branches/tags, alteração de instalações, banco de dados, planilhas ou implantação Google. Notas de versões anteriores permanecem porque fazem parte da documentação e dos scripts de construção.
+Somente as distribuições atuais são mantidas nesta pasta. As anteriores continuam no histórico e na branch estável anterior. Planilhas, propriedades e instalações existentes não foram alteradas.

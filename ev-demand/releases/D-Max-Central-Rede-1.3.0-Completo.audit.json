@@ -1,6 +1,6 @@
 {
-  "product": "D-Max Central de Acesso 1.2 \u2014 Servidor da rede",
-  "version": "1.2.1",
+  "product": "D-Max Central de Acesso 1.3 \u2014 Servidor da rede",
+  "version": "1.3.0",
   "self_contained": true,
   "included_frameworks": {
     "Microsoft.NETCore.App": "10.0.15",
@@ -8,10 +8,10 @@
     "Microsoft.AspNetCore.App": "10.0.15"
   },
   "framework_installation_required": false,
-  "msi_sha256": "41e2de6a025359efbb66bc493714b2e09f7ef71da58c05aa9f74b54891086ae2",
-  "exe_sha256": "5461423dac952fe26bed5563728fdcd8468c3521a6e754ac819b1fb144101816",
+  "msi_sha256": "9057e717d0a366db1f58e1758dce6e8b3a657ffdfcb85ebdcbd630b907df2ceb",
+  "exe_sha256": "9a8f8b463999dadebd4dd269b13fe9b5faed2c5b9e1ac351dc236b2f5e06ee7a",
   "file_count": 372,
-  "payload_bytes": 143074389,
+  "payload_bytes": 143082003,
   "custom_actions": 0,
   "services": 0,
   "environment_changes": 0,
