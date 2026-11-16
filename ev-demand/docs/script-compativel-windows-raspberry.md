@@ -1,5 +1,15 @@
 # Um Apps Script para Windows e Raspberry
 
+## Administração direta pela planilha
+
+A revisão `sheet-password-1` acrescenta **D-Max → Definir senha da linha selecionada**. Na aba Usuarios, selecione uma célula da linha do usuário, abra esse menu, informe e confirme a senha e clique em **Salvar senha na planilha**. O verificador é preenchido automaticamente em G. Mantenha E como `ativo` para permitir acesso; bloqueados, excluídos e vencidos não são liberados automaticamente.
+
+Esta ação usa a permissão de edição que a pessoa já tem na planilha. Não pede login Windows, sessão desktop nem senha de outro desenvolvedor. Não exige um gerador externo ou instalação. O diálogo exige de 8 a 200 caracteres, calcula PBKDF2-SHA256/600000 no navegador e envia somente o verificador pelo canal do Apps Script. A senha não é escrita em célula, enviada à função de gravação ou registrada em logs. Para manter a mesma senha, informe a senha atual da conta.
+
+O servidor confirma o contexto do editor, a planilha configurada, o ID/login e se a linha mudou durante a edição. Grava somente G e relê a célula para confirmar. Não altera situação, perfil, identidades históricas ou outras contas. A sincronização normal do Raspberry continua responsável por atualizar seu cache. Uma mudança de senha invalida sessões dessa conta conforme o comportamento existente.
+
+Para usar o menu, substitua Code.gs no projeto vinculado à planilha, salve e recarregue a planilha. Para disponibilizar também a revisão aos aplicativos, publique nova versão na implantação existente, conservando a URL. A implantação e a planilha reais não foram alteradas pelo agente. O diálogo foi testado no Chromium com o canal Google simulado; a escrita foi testada com serviços de planilha fictícios. A execução real no Google ainda não foi validada.
+
 Esta revisão mantém os protocolos existentes: `desktop_login`, `desktop_state`, `desktop_logout`, `desktop_clients`, `desktop_members`, `desktop_save_user` para a central Windows 1.2.0/1.2.1, e `snapshot`, `update`, `manage_user`, `remote_directory` com identificação/chave do Raspberry. Nenhuma troca de chaves ou recriação de usuários é necessária por causa desta revisão.
 
 ## Simplificação

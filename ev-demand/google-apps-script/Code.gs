@@ -1,11 +1,13 @@
 /** D-Max global directory. Bound to Google Sheets; no external server required. */
 const DMAX_SHEET_ID = '17HCp2CX3eUZXqQsTkTNDZvrLkGqzZQrJkCfeHo-toPQ';
 const DMAX_TAB = 'Tecnicos';
+const DMAX_SCRIPT_REVISION='sheet-password-1';
 const DMAX_HEADERS = ['id', 'nome', 'login', 'situacao', 'valido_ate'];
 const DMAX_DEFAULT_HASH = 'pbkdf2_sha256$600000$0cc644386557630153579d018267d636$07eb3cfc2778a1ee08fa321b86c897f72237f6749cecda0eee2ea788cb678c53';
 
 function onOpen() {
   SpreadsheetApp.getUi().createMenu('D-Max')
+    .addItem('Definir senha da linha selecionada', 'definirSenhaDaLinha')
     .addItem('Verificar cadastro (sem alterar dados)', 'diagnosticarUsuarios')
     .addItem('Preparar/migrar usuários (aba única)', 'migrarUsuarios')
     .addItem('Unificar assinaturas e acesso remoto', 'unificarEquipamentos')
@@ -54,11 +56,69 @@ function headersMatch_(actual,expected){
   return Array.isArray(actual)&&actual.length===expected.length&&actual.every((v,i)=>String(v).trim().toLowerCase()===expected[i]);
 }
 
-function doGet() {return json_({ok:true,service:'D-Max Acesso Desktop',version:'1.0',desktop_protocol:1,desktop_actions:['desktop_login','desktop_state','desktop_logout','desktop_clients','desktop_members','desktop_save_user'],diagnostics_version:2,script_revision:'save-trace-1',message:'Abra o aplicativo instalado no Windows. Nenhum cadastro é público.'});}
+function doGet() {return json_({ok:true,service:'D-Max Acesso Desktop',version:'1.0',desktop_protocol:1,desktop_actions:['desktop_login','desktop_state','desktop_logout','desktop_clients','desktop_members','desktop_save_user'],diagnostics_version:2,script_revision:DMAX_SCRIPT_REVISION,message:'Abra o aplicativo instalado no Windows. Nenhum cadastro é público.'});}
+/** Spreadsheet editors already control account cells; no desktop session required. */
+function passwordEditorBook_(){
+  SpreadsheetApp.getUi(); // Fails outside the bound spreadsheet editor.
+  const book=SpreadsheetApp.getActiveSpreadsheet();
+  if(!book||book.getId()!==DMAX_SHEET_ID)error_(403,'Abra a planilha configurada');
+  return book;
+}
+function definirSenhaDaLinha(){
+  const book=passwordEditorBook_(),sheet=book.getActiveSheet(),range=sheet.getActiveRange();
+  if(sheet.getName()!==DMAX_USERS_TAB||!range||range.getRow()<2||range.getNumRows()!==1){SpreadsheetApp.getUi().alert('Selecione uma única linha de usuário na aba Usuarios.');return;}
+  const row=range.getRow(),props=PropertiesService.getScriptProperties();
+  const actor=portalRoster_(props).find(r=>r.row===row);
+  if(!actor){SpreadsheetApp.getUi().alert('A linha selecionada não contém um usuário.');return;}
+  const target={row:row,id:actor.id,name:actor.name,fingerprint:sha_(JSON.stringify(sheet.getRange(row,1,1,7).getValues()[0]))};
+  SpreadsheetApp.getUi().showModalDialog(HtmlService.createHtmlOutput(passwordEditorHtml_(target)).setWidth(480).setHeight(460),'Definir senha de '+actor.name);
+}
+function passwordEditorHtml_(target){
+  // Identity fields were validated by portalRoster_; escape '<' as defense in depth.
+  const payload=JSON.stringify(target).replace(/</g,'\\u003c');
+  return `<!doctype html><html lang="pt-BR"><meta charset="utf-8"><style>body{font:15px Arial;padding:18px;color:#16304c}label{display:block;margin-top:14px}input,button{box-sizing:border-box;width:100%;padding:10px;margin-top:6px}button{background:#123d67;color:white;border:0;cursor:pointer}#status{white-space:pre-wrap}</style>
+<p>Informe a senha da conta. O verificador será gravado automaticamente na coluna G da linha selecionada.</p>
+<form id="form"><label for="password">Nova senha (8 a 200 caracteres)</label><input id="password" type="password" minlength="8" maxlength="200" required autocomplete="new-password"><label for="confirmation">Confirme a senha</label><input id="confirmation" type="password" minlength="8" maxlength="200" required autocomplete="new-password"><button id="save">Salvar senha na planilha</button></form><p id="status" role="status" aria-live="polite"></p>
+<script>
+const target=${payload};
+const form=document.getElementById('form'),password=document.getElementById('password'),confirmation=document.getElementById('confirmation'),button=document.getElementById('save'),status=document.getElementById('status');
+const hex=b=>Array.from(new Uint8Array(b),v=>v.toString(16).padStart(2,'0')).join('');
+function finish(message){button.disabled=false;password.disabled=false;confirmation.disabled=false;status.textContent=message;}
+form.onsubmit=async event=>{
+ event.preventDefault();
+ if(password.value.length<8||password.value.length>200||password.value!==confirmation.value){status.textContent='As senhas devem ser iguais e ter de 8 a 200 caracteres.';return;}
+ button.disabled=true;password.disabled=true;confirmation.disabled=true;status.textContent='Salvando…';
+ try{
+  const salt=crypto.getRandomValues(new Uint8Array(16)),key=await crypto.subtle.importKey('raw',new TextEncoder().encode(password.value),'PBKDF2',false,['deriveBits']);
+  const bits=await crypto.subtle.deriveBits({name:'PBKDF2',salt,iterations:600000,hash:'SHA-256'},key,256);
+  const verifier='pbkdf2_sha256$600000$'+hex(salt)+'$'+hex(bits);
+  password.value='';confirmation.value='';
+  google.script.run.withSuccessHandler(reply=>{finish(reply.message);if(reply.ok){button.disabled=true;button.textContent='Senha salva';}}).withFailureHandler(()=>finish('Não foi possível salvar. A célula não foi confirmada; mantenha esta janela e tente novamente.')).salvarSenhaDaPlanilha(target,verifier);
+ }catch{finish('O navegador não conseguiu preparar a senha. Abra a planilha no Chrome ou Edge atualizado.');}
+};
+</script></html>`;
+}
+function salvarSenhaDaPlanilha(target,verifier){
+  let lock,acquired=false;
+  try{
+    const book=passwordEditorBook_();
+    if(!target||!Number.isInteger(target.row)||target.row<2||!validHash_(verifier))error_(422,'Dados inválidos');
+    lock=LockService.getScriptLock();acquired=lock.tryLock(5000);if(!acquired)error_(503,'Ocupado');
+    const props=PropertiesService.getScriptProperties(),sheet=unifiedSheet_(props);
+    if(!sheet)error_(422,'Cadastro unificado não preparado');
+    const current=portalRoster_(props).find(r=>r.row===target.row);
+    if(!current||current.id!==target.id||current.name!==target.name||sha_(JSON.stringify(sheet.getRange(target.row,1,1,7).getValues()[0]))!==target.fingerprint)error_(409,'A linha mudou');
+    const cell=sheet.getRange(target.row,7);cell.setValue(verifier);SpreadsheetApp.flush();
+    if(String(cell.getValue()).trim()!==verifier)error_(503,'Gravação não confirmada');
+    return {ok:true,message:'Senha salva na coluna G. Use a senha informada para entrar no D-Max.'+(current.deleted||current.expires_at!==null&&current.expires_at<=Date.now()/1000?' A conta continua excluída ou vencida.':String(sheet.getRange(target.row,5).getValue()).trim().toLowerCase()!=='ativo'?' Para permitir o acesso, ajuste a situação da conta para ativo.':'')};
+  }catch(e){
+    return {ok:false,message:e.code===409?'A linha mudou durante a edição. Feche esta janela, selecione o usuário novamente e repita.':e.code===422?'Não foi possível validar a linha ou o cadastro. Execute Verificar cadastro no menu D-Max.':'O Google não confirmou a gravação. Confira se sua conta pode editar a célula G desta planilha.'};
+  }finally{if(acquired)lock.releaseLock();}
+}
 function saveStage_(trace,stage){
   if(!trace)return;
   trace.stage=stage;
-  console.info('DMAX_SAVE '+JSON.stringify({revision:'save-trace-1',stage:stage}));
+  console.info('DMAX_SAVE '+JSON.stringify({revision:DMAX_SCRIPT_REVISION,stage:stage}));
 }
 function doPost(event) {
   let lock, acquired=false;
@@ -1337,7 +1397,7 @@ function portalReply_(operation,trace){
     const code=e.code||503;
     if(trace){
       const kind=['Error','TypeError','ReferenceError','RangeError','SyntaxError','Exception'].includes(e.name)?e.name:'Error';
-      console.error('DMAX_SAVE_FAILURE '+JSON.stringify({revision:'save-trace-1',stage:trace.stage,code:code,kind:kind}));
+      console.error('DMAX_SAVE_FAILURE '+JSON.stringify({revision:DMAX_SCRIPT_REVISION,stage:trace.stage,code:code,kind:kind}));
     }
     const messages={401:'Login, senha ou sessão inválidos. Entre novamente.',403:'Seu perfil não permite esta operação.',409:'Conflito de ID/login. Preserve a identidade existente ou crie outra conta com novo login.',422:'Confira os campos e a aba Usuarios.',429:'Muitas tentativas. Aguarde cinco minutos.',503:'Não foi possível consultar a planilha. Tente novamente.'};
     const reply={ok:false,code:code,message:messages[code]||messages[503]};

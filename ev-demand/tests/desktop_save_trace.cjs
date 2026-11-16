@@ -8,7 +8,7 @@ const ctx=vm.createContext({
  ContentService:{MimeType:{JSON:'json'},createTextOutput:text=>({text,setMimeType(){return this;}})}
 });
 vm.runInContext(fs.readFileSync('google-apps-script/Code.gs','utf8'),ctx);
-assert.equal(JSON.parse(ctx.doGet().text).script_revision,'save-trace-1');
+assert.equal(JSON.parse(ctx.doGet().text).script_revision,'sheet-password-1');
 ctx.portalSession_=()=>({actor:{role:'developer'},rows:[]});
 ctx.sjcl.misc.pbkdf2=()=>{throw new TypeError('fixture-password-and-verifier-must-stay-private');};
 const result=ctx.portalSaveUser('fixture-token',{actor_password:'fixture-actor-password',password:'fixture-password',confirmation:'fixture-password'});
