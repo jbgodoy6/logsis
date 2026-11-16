@@ -1,12 +1,13 @@
 /** D-Max global directory. Bound to Google Sheets; no external server required. */
 const DMAX_SHEET_ID = '17HCp2CX3eUZXqQsTkTNDZvrLkGqzZQrJkCfeHo-toPQ';
 const DMAX_TAB = 'Tecnicos';
-const DMAX_SCRIPT_REVISION='sheet-user-write-1';
+const DMAX_SCRIPT_REVISION='central-sso-devices-1';
 const DMAX_HEADERS = ['id', 'nome', 'login', 'situacao', 'valido_ate'];
 const DMAX_DEFAULT_HASH = 'pbkdf2_sha256$600000$0cc644386557630153579d018267d636$07eb3cfc2778a1ee08fa321b86c897f72237f6749cecda0eee2ea788cb678c53';
 
 function onOpen() {
   SpreadsheetApp.getUi().createMenu('D-Max')
+    .addItem('Organizar equipamentos (situação na coluna E)', 'organizarEquipamentos')
     .addItem('Definir senha da linha selecionada', 'definirSenhaDaLinha')
     .addItem('Verificar cadastro (sem alterar dados)', 'diagnosticarUsuarios')
     .addItem('Preparar/migrar usuários (aba única)', 'migrarUsuarios')
@@ -56,7 +57,7 @@ function headersMatch_(actual,expected){
   return Array.isArray(actual)&&actual.length===expected.length&&actual.every((v,i)=>String(v).trim().toLowerCase()===expected[i]);
 }
 
-function doGet() {return json_({ok:true,service:'D-Max Acesso Desktop',version:'1.0',desktop_protocol:1,desktop_actions:['desktop_login','desktop_state','desktop_logout','desktop_clients','desktop_members','desktop_save_user'],diagnostics_version:2,script_revision:DMAX_SCRIPT_REVISION,message:'Abra o aplicativo instalado no Windows. Nenhum cadastro é público.'});}
+function doGet() {return json_({ok:true,service:'D-Max Acesso Desktop',version:'1.0',desktop_protocol:1,desktop_actions:['desktop_login','desktop_state','desktop_logout','desktop_clients','desktop_members','desktop_save_user','desktop_devices','desktop_save_device','desktop_open_client'],diagnostics_version:2,script_revision:DMAX_SCRIPT_REVISION,message:'Abra o aplicativo instalado no Windows. Nenhum cadastro é público.'});}
 /** Spreadsheet editors already control account cells; no desktop session required. */
 function passwordEditorBook_(){
   SpreadsheetApp.getUi(); // Fails outside the bound spreadsheet editor.
@@ -131,6 +132,7 @@ function doPost(event) {
     lock=LockService.getScriptLock();
     acquired=lock.tryLock(5000);
     if(!acquired)error_(503,'Consulta ocupada; tente novamente');
+    if(data.action==='redeem_login')return json_(redeemLogin_(props,data));
     if(data.action==='manage_user')return json_(bridgeManageUser_(props,data));
     if(data.action==='remote_directory'){
       return json_(remoteDirectory_());
@@ -164,7 +166,7 @@ function remoteSheet_(){
     sheet.getRange(1,1,1,DMAX_REMOTE_HEADERS.length).setValues([DMAX_REMOTE_HEADERS]);
     sheet.setFrozenRows(1);sheet.autoResizeColumns(1,DMAX_REMOTE_HEADERS.length);
   }
-  if(!headersMatch_(sheet.getRange(1,1,1,DMAX_REMOTE_HEADERS.length).getValues()[0],DMAX_REMOTE_HEADERS))error_(422,'Cabeçalhos remotos incompatíveis','remote_headers');
+  if(!deviceLayout_(sheet)&&!headersMatch_(sheet.getRange(1,1,1,DMAX_REMOTE_HEADERS.length).getValues()[0],DMAX_REMOTE_HEADERS))error_(422,'Cabeçalhos remotos incompatíveis','remote_headers');
   return sheet;
 }
 function prepararRemoto(){
@@ -193,24 +195,26 @@ function remote_(id,data){
      typeof data.url!=='string'||!/^https:\/\/[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.trycloudflare\.com$/.test(data.url)||
      typeof data.heartbeat_at!=='number'||!Number.isFinite(data.heartbeat_at)||data.heartbeat_at<1||data.heartbeat_at>Date.now()/1000+300)error_(422,'Registro remoto inválido');
   const sheet=remoteSheet_();
-  const matches=sheet.getLastRow()>1?sheet.getRange(2,1,sheet.getLastRow()-1,7).getValues().map((row,i)=>({row,index:i+2})).filter(item=>String(item.row[0])===id):[];
+  const matches=remoteRows_(sheet).map((row,i)=>({row,index:i+2})).filter(item=>String(item.row[0])===id);
   if(matches.length>1)error_(409,'Identificador remoto duplicado');
   const old=matches[0];
   const revision=old?Number(old.row[6]):0;
   if(!Number.isSafeInteger(revision)||revision<0)error_(422,'Revisão remota inválida');
   if(data.revision<revision)return {revision:revision,accepted:false};
   if(data.revision===revision&&old&&(old.row[2]!==data.url||old.row[3]!== (data.connected?'CONECTADO':'DESCONECTADO')))return {revision:revision,accepted:false};
-  sheet.getRange(old?old.index:sheet.getLastRow()+1,1,1,7).setValues([[id,sheetText_(data.site_name),data.url,data.connected?'CONECTADO':'DESCONECTADO',new Date().toISOString(),new Date(data.heartbeat_at*1000).toISOString(),data.revision]]);
+  const values=[id,sheetText_(deviceLayout_(sheet)&&old&&old.row[1]?String(old.row[1]):data.site_name),data.url,data.connected?'CONECTADO':'DESCONECTADO',new Date().toISOString(),new Date(data.heartbeat_at*1000).toISOString(),data.revision];
+  if(deviceLayout_(sheet))sheet.getRange(old?old.index:sheet.getLastRow()+1,1,1,11).setValues([[...values.slice(0,4),old?old.row[7]:'ativo',...values.slice(4),...(old?old.row.slice(8,11):['','',''])]]);
+  else sheet.getRange(old?old.index:sheet.getLastRow()+1,1,1,7).setValues([values]);
   return {revision:data.revision,accepted:true};
 }
 
 function remoteDirectory_(){
   const sheet=remoteSheet_(),clients=[],seen={};
   if(sheet.getLastRow()>1001)error_(422,'Limite de 1000 clientes');
-  const rows=sheet.getLastRow()>1?sheet.getRange(2,1,sheet.getLastRow()-1,7).getValues():[];
+  const rows=remoteRows_(sheet);
   rows.forEach(row=>{
     if(row.every(v=>String(v).trim()==='') || !String(row[2]).trim())return;
-    const id=String(row[0]).trim(),name=String(row[1]).trim(),url=String(row[2]).trim(),stamp=row[4] instanceof Date?row[4].getTime():Date.parse(String(row[4]));
+    const id=String(row[0]).trim(),name=String(row[1]).trim(),url=String(row[2]).trim(),stamp=row[4] instanceof Date?row[4].getTime():String(row[4]).trim()===''&&row[3]==='DESCONECTADO'?0:Date.parse(String(row[4]));
     if(!/^[A-Za-z0-9_-]{1,100}$/.test(id)||seen[id]||!name||name.length>100||
        !/^https:\/\/[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.trycloudflare\.com$/.test(url)||
        ['https://api.trycloudflare.com','https://www.trycloudflare.com'].includes(url)||
@@ -346,7 +350,7 @@ function prepararAssinaturas() {
 function subscription_(props,id) {
   const book=SpreadsheetApp.openById(DMAX_SHEET_ID);
   const unified=book.getSheetByName(DMAX_REMOTE_TAB);
-  if(unified && headersMatch_(unified.getRange(1,8,1,4).getValues()[0],['situacao','aviso_em','prazo_final','mensagem']))return unifiedSubscription_(props,id,unified);
+  if(unified && (deviceLayout_(unified)||headersMatch_(unified.getRange(1,8,1,4).getValues()[0],['situacao','aviso_em','prazo_final','mensagem'])))return unifiedSubscription_(props,id,unified);
   const sheet=book.getSheetByName('Assinaturas');
   if(!sheet||sheet.getLastRow()<2)return null;
   if(!headersMatch_(sheet.getRange(1,1,1,6).getValues()[0],DMAX_SUB_HEADERS))error_(422,'Cabeçalhos de assinaturas inválidos');
@@ -592,6 +596,7 @@ function unificarEquipamentos(){
   const lock=LockService.getScriptLock();if(!lock.tryLock(10000))throw new Error('Migração em andamento');
   try {
     const book=SpreadsheetApp.openById(DMAX_SHEET_ID),remote=remoteSheet_(),old=book.getSheetByName('Assinaturas');
+    if(deviceLayout_(remote))return;
     const extra=['situacao','aviso_em','prazo_final','mensagem'];
     if(headersMatch_(remote.getRange(1,8,1,4).getValues()[0],extra))return;
     const data=remote.getRange(1,1,remote.getLastRow(),11).getValues();
@@ -617,13 +622,14 @@ function unificarEquipamentos(){
   } finally {lock.releaseLock();}
 }
 function unifiedSubscription_(props,id,sheet){
-  const rows=sheet.getLastRow()>1?sheet.getRange(2,1,sheet.getLastRow()-1,11).getValues():[];
+  const rows=remoteRows_(sheet);
   const matches=rows.map((r,i)=>({r,index:i+2})).filter(x=>String(x.r[0]).trim()===id);
   if(matches.length>1)error_(422,'Assinatura duplicada');
   if(!matches.length||!String(matches[0].r[7]).trim())return null;
   const match=matches[0];
   // Delegate signing and deadline semantics to the legacy implementation.
-  return subscriptionFromRow_(props,id,[match.r[0],match.r[1],...match.r.slice(7,11)],dates=>sheet.getRange(match.index,9,1,2).setValues([dates]));
+  const status=String(match.r[7]).trim().toLowerCase()==='ativo'?'regular':match.r[7];
+  return subscriptionFromRow_(props,id,[match.r[0],match.r[1],status,...match.r.slice(8,11)],dates=>sheet.getRange(match.index,9,1,2).setValues([dates]));
 }
 
 /** Editor-only read-only diagnosis. Never logs credentials or full records. */
@@ -1529,6 +1535,88 @@ function portalSaveUser(token,fields){
 }
 
 /** Desktop endpoints authenticate individual accounts; never accept a device key as identity. */
+const DMAX_DEVICE_HEADERS=['controller_id','instalacao','url','ultimo_estado_informado','situacao','ultima_comunicacao','ultimo_sinal_tunel','revisao','aviso_em','prazo_final','mensagem'];
+function deviceLayout_(sheet){return headersMatch_(sheet.getRange(1,1,1,11).getValues()[0],DMAX_DEVICE_HEADERS);}
+function remoteRows_(sheet){
+  const rows=sheet.getLastRow()>1?sheet.getRange(2,1,sheet.getLastRow()-1,11).getValues():[];
+  return deviceLayout_(sheet)?rows.map(r=>[...r.slice(0,4),...r.slice(5,8),r[4],...r.slice(8,11)]):rows;
+}
+function deviceRows_(){
+  const sheet=remoteSheet_(),original=remoteRows_(sheet).filter(r=>r.some(v=>String(v).trim()!==''));
+  const props=PropertiesService.getScriptProperties();
+  const rows=original.map(r=>{const old=JSON.parse(props.getProperty('subscription.'+String(r[0]).trim())||'null');return [...r.slice(0,4),r[7]||(old&&old.state==='pending'?'pendente':'ativo'),...r.slice(4,7),...r.slice(8,11)];});
+  const book=SpreadsheetApp.openById(DMAX_SHEET_ID),legacy=book.getSheetByName('Assinaturas');
+  const unified=deviceLayout_(sheet)||headersMatch_(sheet.getRange(1,8,1,4).getValues()[0],['situacao','aviso_em','prazo_final','mensagem']);
+  if(!unified&&(sheet.getRange(1,8,1,4).getValues()[0].some(v=>String(v).trim()!=='')||original.some(r=>r.slice(7).some(v=>String(v).trim()!==''))))error_(422,'Colunas adicionais ocupadas; preserve os dados antes de organizar');
+  if(!unified&&legacy&&legacy.getLastRow()>1){
+    if(!headersMatch_(legacy.getRange(1,1,1,6).getValues()[0],DMAX_SUB_HEADERS))error_(422,'Assinaturas incompatíveis');
+    const seen=new Set();legacy.getRange(2,1,legacy.getLastRow()-1,6).getValues().forEach(r=>{
+      const id=String(r[0]).trim();if(!id)return;if(seen.has(id))error_(409,'D-Max duplicado');seen.add(id);
+      let row=rows.find(v=>String(v[0]).trim()===id);if(!row){row=[id,r[1],'','DESCONECTADO','ativo','','',0,'','',''];rows.push(row);}
+      row[4]=r[2];row.splice(8,3,...r.slice(3,6));
+    });
+  }
+  const seen=new Set();
+  rows.forEach(r=>{
+    if(r.every(v=>String(v).trim()===''))return;
+    const id=String(r[0]).trim();if(!/^[A-Za-z0-9_-]{1,100}$/.test(id)||seen.has(id))error_(409,'D-Max inválido ou duplicado');seen.add(id);
+    r[4]=String(r[4]).trim().toLowerCase();if(r[4]==='regular')r[4]='ativo';
+    if(!['ativo','pendente'].includes(r[4]))error_(422,'Situação inválida');
+    if(!Number.isSafeInteger(Number(r[7]))||Number(r[7])<0)error_(422,'Revisão inválida');
+  });
+  return {sheet,rows};
+}
+function migrateDevices_(){
+  const state=deviceRows_();if(deviceLayout_(state.sheet))return state;
+  const book=SpreadsheetApp.openById(DMAX_SHEET_ID);
+  state.sheet.copyTo(book).setName('Backup_equipamentos_'+Date.now()+'_'+Utilities.getUuid().slice(0,8)).hideSheet();
+  const range=state.sheet.getRange(1,1,state.rows.length+1,11);
+  if(typeof range.clearDataValidations==='function')range.clearDataValidations();
+  range.setValues([DMAX_DEVICE_HEADERS,...state.rows]);SpreadsheetApp.flush();
+  if(!deviceLayout_(state.sheet))error_(503,'Migração não confirmada');
+  return state;
+}
+function organizarEquipamentos(){
+  const ui=SpreadsheetApp.getUi(),lock=LockService.getScriptLock();if(!lock.tryLock(10000))throw Error('Ocupado');
+  try{migrateDevices_();ui.alert('Equipamentos organizados. Coluna E: ativo ou pendente. Backup preservado; horários e prazos mantidos.');}finally{lock.releaseLock();}
+}
+function developerSession_(props,token){const s=portalSession_(props,token);if(s.actor.role!=='developer')error_(403,'Somente desenvolvedor');return s;}
+function portalDevices(token){return portalReply_(props=>{
+  developerSession_(props,token);
+  return {devices:deviceRows_().rows.filter(r=>String(r[0]).trim()).map(r=>({controller_id:r[0],site_name:r[1],url:r[2],connected:r[3]==='CONECTADO',status:r[4],last_seen:r[5],heartbeat:r[6],revision:r[7],notice:r[8],deadline:r[9],message:r[10],authorized:Boolean(props.getProperty('device.'+r[0]))}))};
+});}
+function portalSaveDevice(token,f){return portalReply_(props=>{
+  developerSession_(props,token);
+  if(!f||typeof f.controller_id!=='string'||!/^[A-Za-z0-9_-]{1,100}$/.test(f.controller_id)||typeof f.site_name!=='string'||!f.site_name.trim()||f.site_name.length>100||!['ativo','pendente'].includes(f.status)||typeof f.url!=='string'||f.url&&!/^https:\/\/[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.trycloudflare\.com$/.test(f.url)||['https://api.trycloudflare.com','https://www.trycloudflare.com'].includes(f.url)||typeof f.message!=='string'||f.message.length>300)error_(422,'Equipamento inválido');
+  const state=migrateDevices_();let index=state.rows.findIndex(r=>String(r[0])===f.controller_id),row=index<0?[f.controller_id,f.site_name,f.url,'DESCONECTADO',f.status,'','',0,'','',f.message]:[...state.rows[index]];
+  if(index<0&&state.rows.length>=1000)error_(422,'Limite de equipamentos');
+  row[1]=f.site_name.trim();row[2]=f.url;row[4]=f.status;row[10]=f.message;
+  const destination=index<0?state.sheet.getLastRow()+1:index+2;
+  state.sheet.getRange(destination,1,1,11).setValues([row.map(v=>typeof v==='string'?sheetText_(v):v)]);SpreadsheetApp.flush();
+  const saved=state.sheet.getRange(destination,1,1,11).getValues()[0];
+  if([0,1,2,4,10].some(i=>String(saved[i])!==String(row[i])&&String(saved[i])!==sheetText_(String(row[i]))))error_(503,'Cadastro de equipamento não confirmado');
+  let key='';if(!props.getProperty('device.'+f.controller_id)){key=(Utilities.getUuid()+Utilities.getUuid()+Utilities.getUuid()).replace(/-/g,'');props.setProperty('device.'+f.controller_id,sha_(key));}
+  return {controller_id:f.controller_id,key,message:key?'Equipamento cadastrado. Configure esta chave no D-Max instalado.':'Equipamento atualizado. A chave existente foi preservada.'};
+});}
+function portalOpenClient(token,id){return portalReply_(props=>{
+  const session=portalSession_(props,token),client=remoteDirectory_().clients.find(c=>c.controller_id===id);if(!client)error_(404,'Cliente indisponível');
+  const now=Date.now()/1000,all=props.getProperties();let count=0;
+  Object.keys(all).filter(k=>k.startsWith('portal.handoff.')).forEach(k=>{const v=JSON.parse(all[k]);if(v.until<=now)props.deleteProperty(k);else count++;});
+  if(count>=128)error_(429,'Muitos acessos');
+  const ticket=(Utilities.getUuid()+Utilities.getUuid()).replace(/-/g,'');
+  props.setProperty('portal.handoff.'+sha_(ticket),JSON.stringify({id:session.actor.id,controller_id:id,fingerprint:portalFingerprint_(session.actor),session_key:sha_(token),until:now+60}));
+  return {url:client.url+'/remote/sso#ticket='+ticket};
+});}
+function redeemLogin_(props,data){
+  if(typeof data.ticket!=='string'||!/^[0-9a-f]{64}$/.test(data.ticket))error_(401,'Passe inválido');
+  const key='portal.handoff.'+sha_(data.ticket),record=JSON.parse(props.getProperty(key)||'null'),now=Date.now()/1000;
+  if(!record||record.until<=now||record.controller_id!==data.controller_id)error_(401,'Passe expirado ou de outro equipamento');
+  props.deleteProperty(key);
+  const session=JSON.parse(props.getProperty('portal.session.'+record.session_key)||'null');
+  const actor=portalRoster_(props).find(r=>r.id===record.id);
+  if(!session||session.until<=now||session.id!==record.id||!portalUsable_(actor)||portalFingerprint_(actor)!==record.fingerprint)error_(401,'Acesso alterado');
+  return {ok:true,user:portalPublic_(actor),snapshot:unifiedSnapshot_(props)};
+}
 function desktopRequest_(data){
   switch(data.action){
     case 'desktop_login':return portalLogin(data.name,data.password);
@@ -1537,6 +1625,9 @@ function desktopRequest_(data){
     case 'desktop_clients':return portalClients(data.token);
     case 'desktop_members':return portalMembers(data.token);
     case 'desktop_save_user':return portalSaveUser(data.token,data.fields);
+    case 'desktop_devices':return portalDevices(data.token);
+    case 'desktop_save_device':return portalSaveDevice(data.token,data.fields);
+    case 'desktop_open_client':return portalOpenClient(data.token,data.controller_id);
     default:return {ok:false,code:404,message:'Operação desktop desconhecida'};
   }
 }

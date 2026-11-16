@@ -16,6 +16,9 @@ internal sealed class Fixture : HttpMessageHandler {
    else {role=Values.Text(data,"name")=="dev"?"developer":"commercial";var token=Convert.ToHexString(System.Security.Cryptography.RandomNumberGenerator.GetBytes(32)).ToLowerInvariant();Tokens[token]=role;reply=new{ok=true,token,user=Actor(role)};}
   }else if(Revoke||!Tokens.TryGetValue(Values.Text(data,"token"),out role))reply=new{ok=false,code=401};
   else switch(action){
+   case "desktop_open_client":reply=new{ok=true,url="https://caratinga-fixture.trycloudflare.com/remote/sso#ticket="+new string('a',64)};break;
+   case "desktop_devices":reply=role!="developer"?(object)new{ok=false,code=403}:new{ok=true,devices=new[]{new{controller_id="D-MAX-001",site_name="Caratinga",url="https://caratinga-fixture.trycloudflare.com",status="ativo",connected=true,message=""}}};break;
+   case "desktop_save_device":reply=role!="developer"?(object)new{ok=false,code=403}:new{ok=true,key="fixture-device-key",message="Equipamento cadastrado"};break;
    case "desktop_state":reply=new{ok=true,user=Actor(role)};break;
    case "desktop_logout":Tokens.Remove(Values.Text(data,"token"));reply=new{ok=true};break;
    case "desktop_clients":reply=new{ok=true,clients=new[]{new{site_name="Caratinga",controller_id="D-MAX-001",url="https://caratinga-fixture.trycloudflare.com/",connected=true,updated_at=DateTimeOffset.UtcNow.ToUnixTimeSeconds()},new{site_name="Cliente Belo Horizonte",controller_id="D-MAX-002",url="https://bh-fixture.trycloudflare.com/",connected=false,updated_at=DateTimeOffset.UtcNow.ToUnixTimeSeconds()-3000}}};break;
@@ -53,10 +56,14 @@ internal static class Program {
   var login=await Rpc("portalLogin","dev","Teste1234");Check(Values.Flag(login,"ok")&&!login.ContainsKey("token"),"Token central não sai para navegador");Check(cookies.GetCookies(http.BaseAddress)["DMaxLanSession"].HttpOnly,"Cookie HttpOnly");
   Check(Values.Text(Values.Object(await Get("/api/bootstrap"),"user"),"role")=="developer","Sessão recarrega");
   Check(Values.Rows(await Rpc("portalClients","ignored"),"clients").Count==2,"Clientes Google");Check(Values.Rows(await Rpc("portalMembers","ignored"),"users").Count==1,"Membros desenvolvedor");
+  Check(Values.Rows(await Rpc("portalDevices"),"devices").Count==1,"Equipamentos desenvolvedor");
+  Check(Values.Text(await Rpc("portalOpenClient","D-MAX-001"),"url").Contains("/remote/sso#ticket="),"Passe específico para o cliente");
   var settings=await Get("/api/settings");Check(Values.Text(settings,"name")=="d-max"&&Values.Text(settings,"platform_url")==google,"Config desenvolvedor");
   Check((int)Values.Number(await Post("/api/settings",new{name="outro",port=8080,platform_url=google,password="incorreta"}),"code")==401,"Config exige senha atual");Check(server.Settings.Name=="d-max","Config não muda sem prova");
   await Rpc("portalLogout","ignored");Check((int)Values.Number(await Rpc("portalClients","ignored"),"code")==401,"Logout revoga sessão local");
   await Rpc("portalLogin","comercial","Teste1234");Check((int)Values.Number(await Get("/api/settings"),"code")==403,"Comercial sem configuração");Check((int)Values.Number(await Rpc("portalMembers","ignored"),"code")==403,"Comercial sem membros");
+  Check((int)Values.Number(await Rpc("portalDevices"),"code")==403,"Comercial sem gestão de equipamentos");
+  Check((int)Values.Number(await Rpc("portalSaveDevice",new{controller_id="X"}),"code")==403,"Comercial sem cadastro de equipamentos");
   fixture.Revoke=true;Check((int)Values.Number(await Rpc("portalClients","ignored"),"code")==401,"Revogação online aplicada");fixture.Revoke=false;
   await Rpc("portalLogin","dev","Teste1234");
   listener=new System.Net.Sockets.TcpListener(IPAddress.Loopback,0);listener.Start();int changedPort=((IPEndPoint)listener.LocalEndpoint).Port;listener.Stop();

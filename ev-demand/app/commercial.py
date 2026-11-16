@@ -78,6 +78,8 @@ class DemoRouter:
     def __init__(self,app,manager):self.app,self.manager=app,manager
     async def __call__(self,scope,receive,send):
         if scope['type'] not in ('http','websocket'):return await self.app(scope,receive,send)
+        if scope['type']=='http' and ((scope['method'] in ('GET','HEAD') and scope['path'] in ('/remote/sso','/static/remote-sso.js')) or (scope['method']=='POST' and scope['path']=='/api/remote/sso')):
+            return await self.app(scope,receive,send)
         headers=dict(scope.get('headers',[]));cookies=SimpleCookie()
         try:cookies.load(headers.get(b'cookie',b'').decode('latin1'))
         except Exception:pass

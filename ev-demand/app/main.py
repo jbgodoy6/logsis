@@ -394,16 +394,39 @@ def create_app(database=None, background=True, recovery_public_key=None, root_pa
         if not access.usable(latest) or any(latest[k] != row[k] for k in ('epoch','password')):
             raise HTTPException(401, 'Acesso alterado durante a autenticação. Faça login novamente.')
         row = latest
+        return await finish_login(row,response,request)
+
+    async def finish_login(row,response,request):
         if row['role']=='commercial':
             try:token=await app.state.demonstrations.create(row)
             except ValueError as exc:raise HTTPException(429,str(exc)) from None
             response.delete_cookie('ev_session')
             response.set_cookie('dmax_demo',token,httponly=True,secure=request.url.scheme=='https',samesite='strict',max_age=900)
             return access.public(row)
+        response.delete_cookie('dmax_demo')
         if row['role']=='developer':
             with store.db:
                 store.db.execute("INSERT OR REPLACE INTO account_leases VALUES ('remote-root-locked',?)",(time.time(),))
         return open_session(row, response, request, lifetime=SESSION_IDLE[row['role']], renewable=True)
+
+    @app.get('/remote/sso')
+    async def remote_sso_page():
+        from fastapi.responses import HTMLResponse
+        response=HTMLResponse('<!doctype html><html lang="pt-BR"><meta charset="utf-8"><title>D-Max — Entrando</title><p id="sso-status">Validando sua entrada pela central…</p><a href="/">Voltar ao login</a><script src="/static/remote-sso.js" defer></script></html>')
+        response.headers['X-DMax-Live']='1'
+        response.headers['Cache-Control']='no-store'
+        return response
+
+    @app.post('/api/remote/sso')
+    async def remote_sso_login(request:Request,response:Response):
+        if not attempts.allow(request.client.host if request.client else 'unknown'):raise HTTPException(429,'Muitas tentativas')
+        if len(await request.body())>512:raise HTTPException(413,'Passe inválido')
+        from .remote_sso import redeem
+        try:
+            payload=await request.json()
+            row=await redeem(access,payload.get('ticket'),getattr(app.state,'sso_client',None))
+        except (ValueError,TypeError,AttributeError):raise HTTPException(401,'Entrada não validada. Abra novamente pela central.') from None
+        return await finish_login(row,response,request)
 
     def open_session(row, response, request, lifetime=28800, renewable=False):
         token = secrets.token_urlsafe(32)

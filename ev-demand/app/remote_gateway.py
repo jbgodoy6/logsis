@@ -44,7 +44,7 @@ def permitted(path, method):
         return False
     if path == '/api/setup' and method not in ('GET','HEAD'):
         return False
-    return path == '/' or path == '/ui-colors.css' or bool(re.fullmatch(r'/ui/[a-z]+',path)) or path.startswith(('/api/','/ui-data/','/static/'))
+    return path == '/' or path == '/remote/sso' or path == '/ui-colors.css' or bool(re.fullmatch(r'/ui/[a-z]+',path)) or path.startswith(('/api/','/ui-data/','/static/'))
 
 
 def create_gateway(target, trust=True, transport=None, host_pattern=PUBLIC_HOST):

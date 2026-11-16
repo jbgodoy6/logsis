@@ -268,7 +268,7 @@ assert.equal(webSave.acknowledged_id,'WEB-PENDING');
 assert.equal(unified.data.filter(r=>r[0]==='WEB-PENDING').length,1);
 assert.equal(unified.data.find(r=>r[0]==='WEB-PENDING')[6],webSave.verifier,'generated verifier was saved in column G of the same row');
 const webCommercial=context.portalLogin('web.sales','fixture-web-sales-pass');assert.equal(webCommercial.ok,true);
-assert.equal(context.portalMembers(webCommercial.token).code,403);
+assert.equal(context.portalMembers(webCommercial.token).code,403);assert.equal(context.portalDevices(webCommercial.token).code,403);
 assert.equal(context.portalSaveUser(webCommercial.token,{}).code,403);
 assert.equal(context.portalClients(webCommercial.token).ok,true);
 assert.equal(JSON.stringify(properties).includes('fixture-web-sales-pass'),false);
@@ -321,7 +321,29 @@ assert.equal(nativeCreated.ok,true);assert.match(nativeCreated.acknowledged_id,/
 const nativeRow=unified.data.find(r=>r[0]===nativeCreated.acknowledged_id);
 assert.equal(nativeRow[2],'windows.new');assert.equal(nativeRow[3],'comercial');assert.equal(nativeRow[4],'ativo');assert.equal(nativeRow[6],nativeCreated.verifier);
 const nativeParts=nativeCreated.verifier.split('$');assert.equal(nativeParts[3],crypto.pbkdf2Sync('fixture-windows-new-pass',Buffer.from(nativeParts[2],'hex'),600000,32,'sha256').toString('hex'));
+const subscriptionBefore=JSON.stringify(Object.fromEntries(Object.entries(properties).filter(([k])=>k.startsWith('subscription.'))));
+const deviceFields={controller_id:'NEW-DEVICE',site_name:'Nova instalação',url:'',status:'ativo',message:''};
+const registered=desktop({action:'desktop_save_device',token:nativeLogin.token,fields:deviceFields});assert.equal(registered.ok,true);assert.match(registered.key,/^[0-9a-f]{96}$/);
+assert.equal(JSON.stringify(Object.fromEntries(Object.entries(properties).filter(([k])=>k.startsWith('subscription.')))),subscriptionBefore,'migration preserves signed subscription history');
+assert.equal(remote.data[0][4],'situacao');const newRow=remote.data.find(r=>r[0]==='NEW-DEVICE');assert.equal(newRow.length,11);assert.equal(newRow[4],'ativo');assert.equal(newRow[3],'DESCONECTADO');
+const newDevice=(action,extra={})=>JSON.parse(context.doPost({postData:{contents:JSON.stringify({action,controller_id:'NEW-DEVICE',key:registered.key,...extra})}}).text);
+assert.equal(newDevice('snapshot',{remote:{provider:'cloudflare',site_name:'Nova instalação',url:'https://new-device.trycloudflare.com',connected:true,heartbeat_at:Date.now()/1000,revision:1}}).ok,true);
+assert.equal(newRow[4],'ativo'); // Existing array reference is not used to infer connection freshness.
+const updated=desktop({action:'desktop_save_device',token:nativeLogin.token,fields:{...deviceFields,url:'https://new-device.trycloudflare.com',status:'pendente'}});assert.equal(updated.ok,true);assert.equal(updated.key,'');
+const signedPending=JSON.parse(newDevice('snapshot').subscription.payload);assert.equal(signedPending.state,'pending');const firstDeadline=signedPending.deadline;
+assert.equal(JSON.parse(newDevice('snapshot').subscription.payload).deadline,firstDeadline);
+assert.equal(desktop({action:'desktop_devices',token:nativeLogin.token}).ok,true);
+function issue(){const r=desktop({action:'desktop_open_client',token:nativeLogin.token,controller_id:'NEW-DEVICE'});assert.equal(r.ok,true);return r.url.split('#ticket=')[1];}
+const pass=issue();assert.match(pass,/^[0-9a-f]{64}$/);
+assert.equal(JSON.parse(context.doPost({postData:{contents:JSON.stringify({action:'redeem_login',controller_id:'controller',key:'fixture-device-key',ticket:pass})}}).text).ok,false); // Wrong payload/device cannot consume it.
+const redeemed=newDevice('redeem_login',{ticket:pass});assert.equal(redeemed.ok,true);assert.equal(redeemed.user.name,'bridge.dev');assert.equal(redeemed.snapshot.complete,true);
+assert.equal(newDevice('redeem_login',{ticket:pass}).code,401);
+const expiredPass=issue();const expiredKey='portal.handoff.'+crypto.createHash('sha256').update(expiredPass).digest('hex');const expiredRecord=JSON.parse(properties[expiredKey]);expiredRecord.until=0;properties[expiredKey]=JSON.stringify(expiredRecord);assert.equal(newDevice('redeem_login',{ticket:expiredPass}).code,401);
+const revokedPass=issue();const devRow=unified.data.find(r=>r[2]==='bridge.dev');devRow[4]='bloqueado';assert.equal(newDevice('redeem_login',{ticket:revokedPass}).code,401);devRow[4]='ativo';
+const logoutPass=issue();
 assert.equal(desktop({action:'desktop_logout',token:nativeLogin.token}).ok,true);
+assert.equal(newDevice('redeem_login',{ticket:logoutPass}).code,401);
+console.log('SSO/devices contract passed: device-bound one-use passes, expiry/logout, developer-only registration, column E migration, heartbeat preservation and fixed pending deadlines.');
 assert.equal(desktop({action:'desktop_state',token:nativeLogin.token}).code,401);
 unified.data.splice(unified.data.findIndex(r=>r[0]==='PENDING-NEW'),1);incomplete.splice(0,incomplete.length,...savedIncomplete);
 const restoredSnapshot=call('snapshot');assert.equal(restoredSnapshot.ok,true);
