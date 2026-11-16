@@ -7,6 +7,7 @@ import uuid
 
 from .control import Demand, admission_ready, allocate, blocked_at
 from .licensing import Subscription
+from .learning import context as learning_context, key as learning_key, effective_minimum, evaluate as evaluate_learning
 
 
 class Engine:
@@ -96,6 +97,7 @@ class Engine:
             p.update(charge_complete=True, power_kw=0.0, status='Carga completa · 100%')
 
     def finish(self, p, reason):
+        if p.get('test'):self.finish_learning(p,time.time(),reason)
         if p.get('session_id'):
             sessions = {s['id']: s for s in self.store.entities('session')}
             session = sessions.get(p['session_id'])
@@ -124,12 +126,21 @@ class Engine:
         self.store.put('session', session)
         self.store.record('session_start', session)
 
-    def telemetry(self, p, power_kw=None, energy_kwh=None, soc=None, sampled_at=None):
+    def telemetry(self, p, power_kw=None, energy_kwh=None, soc=None, sampled_at=None, voltage_v=None):
         now = time.time()
+        if voltage_v is not None and math.isfinite(voltage_v) and voltage_v>0:
+            p.update(voltage_v=voltage_v,voltage_at=sampled_at or now)
+            c=self.config(p['charger'])
+            if c.get('charge_type')=='DC' and c.get('rate_unit')=='A' and p.get('accepted_profile_current_a') is not None:
+                p['limit_kw']=p['accepted_profile_current_a']*voltage_v/1000
         if power_kw is not None and math.isfinite(power_kw) and power_kw >= 0:
             p.update(power_kw=power_kw, sample_at=sampled_at or now)
             if p.get('test') and p['sample_at'] > p['test']['started_at']:
-                p['test']['observations'].append({'at': p['sample_at'], 'kw': power_kw})
+                c=self.config(p['charger'])
+                valid=p['running'] and p['connected'] and abs(p.get('accepted_setpoint_kw',p['limit_kw'])-p['test']['cap_kw'])<.001 and (c['transport']=='simulator' or p.get('ocpp_status')=='Charging' and p.get('error_code','NoError')=='NoError')
+                if not p['test']['observations'] or p['sample_at']>p['test']['observations'][-1]['at']:
+                    p['test']['observations'].append({'at':p['sample_at'],'kw':power_kw,'valid':valid,'amps':p.get('accepted_profile_current_a')})
+                    p['test']['observations']=p['test']['observations'][-600:]
         if soc is not None and math.isfinite(soc) and 0 <= soc <= 100:
             p['soc'] = soc
         delta = 0.0
@@ -171,7 +182,7 @@ class Engine:
     async def set_limit(self, p, value):
         if self.subscription.status()['native']:
             return False
-        value = round(max(0.0, value), 3)
+        value = math.floor(max(0.0, value)*1000+1e-8)/1000
         if abs(p['limit_kw'] - value) < 0.01 and p.get('profile_initialized', False):
             return True
         c = self.config(p['charger'])
@@ -185,9 +196,15 @@ class Engine:
             try:
                 if not await cp.limit(p['connector'], value):
                     p['command_status'] = 'Rejeitado'
+                    minimum,learned=effective_minimum(self.store,c,p)
+                    if learned is not None and abs(value-minimum)<.001:
+                        prior=self.store.get('minimum',learning_key(p));prior.update(needs_revalidation=True,invalidated_at=time.time())
+                        self.store.put('minimum',prior)
+                        self.store.record('minimum_revalidation_required',{'port':p['key'],'reason':'Perfil no mínimo aprendido foi rejeitado'})
                     raise RuntimeError('Perfil rejeitado pelo carregador')
                 p['command_status'] = 'Aceito · cumprimento físico depende da medição'
             except Exception as exc:
+                if p.get('test'):p['test']['interrupted']=True
                 if p['command_status'] != 'Rejeitado':
                     p['command_status'] = 'Sem confirmação de aceite'
                 self.store.record('command_failed', {'port': p['key'], 'command': 'SetChargingProfile', 'error': str(exc)[:200]})
@@ -195,11 +212,43 @@ class Engine:
         else:
             p.update(requested_limit_kw=value, command_status='Simulado', command_at=time.time())
         p['limit_kw'] = value
+        p['accepted_setpoint_kw']=value
+        if p.get('test'):
+            test=p['test']
+            if abs(value-test['cap_kw'])<.001 and not test.get('accepted_at'):
+                test['accepted_at']=time.time()
+                test['until']=test['accepted_at']+test.get('seconds',30)
+            elif test.get('accepted_at') and abs(value-test['cap_kw'])>=.001:
+                test['interrupted']=True
         p['profile_initialized'] = True
         if value < previous:
             p['reduction_at'] = time.time()
         self.store.record('limit_changed', {'port': p['key'], 'from_kw': previous, 'to_kw': value})
         return True
+
+    def finish_learning(self,p,now,reason=None):
+        c=self.config(p['charger']);settings=self.store.settings()
+        if reason:p['test']['interrupted']=True
+        test = p.pop('test')
+        values = [x['kw'] for x in test['observations']]
+        result = {'id': uuid.uuid4().hex, 'port': p['key'], 'cap_kw': test['cap_kw'],
+                  'started_at': test['started_at'], 'samples': len(values),
+                  'observed_min_kw': min(values) if values else None,
+                  'observed_max_kw': max(values) if values else None,
+                  'result': 'observado; validação manual necessária' if values else 'inconclusivo: sem medições',
+                  'vehicle_id': p['vehicle_id']}
+        validated,reason=evaluate_learning(test,c,p,now,settings['freshness_s'])
+        result.update(validated=validated,result=reason)
+        if validated:
+            prior=self.store.get('minimum',learning_key(p))
+            same=prior and not prior.get('needs_revalidation') and prior.get('context')==learning_context(c,p)
+            minimum=min(test['cap_kw'],prior['minimum_kw']) if same else test['cap_kw']
+            record=prior if same and prior['minimum_kw']<=test['cap_kw'] else {'id':learning_key(p),'port':p['key'],'minimum_kw':minimum,'context':learning_context(c,p),'vehicle_id':p['vehicle_id'],'validated_at':now,'evidence':result['id']}
+            if record is not prior and c.get('charge_type')=='DC' and c['rate_unit']=='A':record['minimum_a']=p.get('accepted_profile_current_a')
+            self.store.put('minimum',record)
+            result['memorized_minimum_kw']=minimum
+        self.store.put('learning', result)
+        self.store.record('test_finished', result)
 
     async def tick(self):
         self.ports = {key: port for key, port in self.ports.items() if not self.config(port['charger']).get('archived')}
@@ -215,21 +264,14 @@ class Engine:
                 p.update(profile_initialized=False, limit_kw=0.0, target_kw=0.0, native_mode=False, native_released=False, native_attempt=0)
         self.was_native = native
         if native:
+            for p in ports:
+                if p.get('test'):self.finish_learning(p,now,'Funcionamento nativo')
             await self.native_tick(ports, simulation, now, elapsed)
             return
         for p in ports:
             c = self.config(p['charger'])
-            if p.get('test') and now >= p['test']['until']:
-                test = p.pop('test')
-                values = [x['kw'] for x in test['observations']]
-                result = {'id': uuid.uuid4().hex, 'port': p['key'], 'cap_kw': test['cap_kw'],
-                          'started_at': test['started_at'], 'samples': len(values),
-                          'observed_min_kw': min(values) if values else None,
-                          'observed_max_kw': max(values) if values else None,
-                          'result': 'observado; validação manual necessária' if values else 'inconclusivo: sem medições',
-                          'vehicle_id': p['vehicle_id']}
-                self.store.put('learning', result)
-                self.store.record('test_finished', result)
+            if p.get('test') and ((c['transport']=='simulator')!=simulation):p['test']['interrupted']=True
+            if p.get('test') and (p['test'].get('interrupted') or now >= p['test']['until']):self.finish_learning(p,now)
             if c['transport'] == 'simulator' and simulation:
                 power = min(p['limit_kw'], p.get('acceptance_kw', c['max_kw'])) if p['running'] and p['connected'] else 0.0
                 self.simulate_energy(p, power, elapsed)
@@ -259,12 +301,13 @@ class Engine:
                 continue
             emergency = p['emergency_until'] > now
             maximum = min(c['max_kw'], c['connector_max_kw'])
-            minimum = c['min_kw']
+            minimum,learned=effective_minimum(self.store,c,p)
+            p.update(effective_min_kw=minimum,learned_min_kw=learned)
             if blocked and not emergency:
                 if not p['running'] or settings['blocked_policy'] != 'minimum':
                     maximum = 0
                 else:
-                    maximum = c['min_kw']
+                    maximum = minimum
             if p.get('test'):
                 maximum = min(maximum, p['test']['cap_kw'])
                 minimum = min(minimum, maximum)
@@ -305,7 +348,8 @@ class Engine:
                 factor = c.get('input_factor', 1.0)
                 peers = [q for q in ports if q['charger'] == p['charger'] and q['key'] != p['key']]
                 circuit_peers = [q for q in ports if chargers[q['charger']]['circuit'] == c['circuit'] and q['key'] != p['key']]
-                minimum = min(c['min_kw'], p.get('test', {}).get('cap_kw', c['min_kw']))
+                operational_minimum,_=effective_minimum(self.store,c,p)
+                minimum = min(operational_minimum,p.get('test',{}).get('cap_kw',operational_minimum))
                 ramp = max(settings['ramp_kw_s'] * elapsed, minimum if not p['running'] else 0)
                 delta = min(target - p['limit_kw'], headroom / factor, ramp,
                             max(0.0, c['max_kw'] - sum(q['limit_kw'] for q in peers) - p['limit_kw']),

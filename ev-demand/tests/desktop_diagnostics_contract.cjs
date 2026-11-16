@@ -15,7 +15,7 @@ assert.equal(ctx.headersMatch_(['\uFEFF ID ',' Nome ','LOGIN'],['id','nome','log
 assert.equal(ctx.headersMatch_(['id','login','nome'],['id','nome','login']),false);
 assert.equal(ctx.headersMatch_(['id','nome','nome'],['id','nome','login']),false);
 assert.equal(ctx.headersMatch_(['id','nome'],['id','nome','login']),false);
-assert.equal(banner.desktop_protocol,1);assert.equal(banner.desktop_actions.length,9);
+assert.equal(banner.desktop_protocol,1);assert.equal(banner.desktop_actions.length,10);
 assert.equal(writes,0);
 const missing=ctx.portalReply_(p=>ctx.portalRoster_(p));
 assert.equal(missing.code,422);assert.equal(missing.diagnostic,'directory_not_prepared');assert.equal(writes,0);

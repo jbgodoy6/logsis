@@ -8,10 +8,10 @@ const ctx=vm.createContext({
  ContentService:{MimeType:{JSON:'json'},createTextOutput:text=>({text,setMimeType(){return this;}})}
 });
 vm.runInContext(fs.readFileSync('google-apps-script/Code.gs','utf8'),ctx);
-assert.equal(JSON.parse(ctx.doGet().text).script_revision,'central-sso-devices-1');
+assert.equal(JSON.parse(ctx.doGet().text).script_revision,'central-sso-devices-2');
 ctx.portalSession_=()=>({actor:{role:'developer'},rows:[]});
 ctx.sjcl.misc.pbkdf2=()=>{throw new TypeError('fixture-password-and-verifier-must-stay-private');};
-const result=ctx.portalSaveUser('fixture-token',{actor_password:'fixture-actor-password',password:'fixture-password',confirmation:'fixture-password'});
+const result=ctx.portalChangePassword('fixture-token',{actor_password:'fixture-actor-password',password:'fixture-password',confirmation:'fixture-password'});
 assert.equal(result.code,503);
 const failure=JSON.parse(logs.find(s=>s.startsWith('DMAX_SAVE_FAILURE ')).slice('DMAX_SAVE_FAILURE '.length));
 assert.equal(failure.stage,'generate_verifier');assert.equal(failure.kind,'TypeError');

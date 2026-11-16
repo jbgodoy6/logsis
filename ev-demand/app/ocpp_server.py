@@ -2,6 +2,7 @@
 import asyncio
 from datetime import datetime, timezone
 import logging
+import math
 import time
 
 from ocpp.routing import on
@@ -40,6 +41,8 @@ class Station(ChargePoint):
     async def boot(self, charge_point_vendor, charge_point_model, **kwargs):
         for p in self.engine.ports.values():
             if p['charger'] == self.id:
+                p.update(firmware=kwargs.get('firmware_version') or '',serial=kwargs.get('charge_point_serial_number') or '')
+                if p.get('test'):p['test']['interrupted']=True
                 p.update(profile_initialized=False, sample_at=0, start_pending_at=0, native_released=False, native_attempt=0)
         self.engine.store.record('ocpp_boot', {'charger': self.id, 'vendor': charge_point_vendor,
                                              'model': charge_point_model, 'firmware': kwargs.get('firmware_version')})
@@ -146,7 +149,7 @@ class Station(ChargePoint):
                 if age > self.engine.store.settings()['freshness_s'] or age < -5 or sampled_at <= p['last_telemetry_at']:
                     continue
                 p['last_telemetry_at'] = sampled_at
-                power = energy = soc = None
+                power = energy = soc = voltage = None
                 phases = {}
                 for value in item.get('sampled_value', []):
                     try:
@@ -166,9 +169,11 @@ class Station(ChargePoint):
                         energy = number if unit == 'kWh' else number / 1000
                     elif measurand == 'SoC':
                         soc = number
+                    elif measurand == 'Voltage' and location=='Outlet' and not value.get('phase'):
+                        voltage=number/1000 if unit=='mV' else number*1000 if unit=='kV' else number if unit=='V' else None
                 if power is None and set(phases) == {'L1', 'L2', 'L3'}:
                     power = sum(phases.values())
-                self.engine.telemetry(p, power, energy, soc, sampled_at=sampled_at)
+                self.engine.telemetry(p, power, energy, soc, sampled_at=sampled_at,voltage_v=voltage)
                 if transaction_id is not None and not p['running'] and p['connected']:
                     p['manual_pause'] = not self.engine.subscription.status()['native']
                     self.engine.start_session(p, transaction_id)
@@ -186,12 +191,22 @@ class Station(ChargePoint):
 
     def profile(self, connector, kw, purpose='TxDefaultProfile'):
         c = self.engine.config(self.id)
+        if kw>0 and c.get('charge_type')=='AC' and kw<6*c['voltage']*c['phases']/1000-1e-6:raise ValueError('Limite AC abaixo de 6 A')
         if c['rate_unit'] == 'A':
-            limit = kw * 1000 / (c['voltage'] * c['phases'])
+            if c.get('charge_type')=='DC':
+                p=self.port(connector)
+                if kw>0 and (not p or not p.get('voltage_v') or not 0<=time.time()-p.get('voltage_at',0)<=self.engine.store.settings()['freshness_s']):
+                    raise ValueError('Perfil DC em A exige tensão atual de saída; use W se o equipamento não informa essa tensão')
+                limit=kw*1000/p['voltage_v'] if kw>0 else 0
+            else:limit = kw * 1000 / (c['voltage'] * c['phases'])
+            if kw>0 and c.get('charge_type')=='AC' and limit<6-1e-6:raise ValueError('Limite AC abaixo de 6 A')
         else:
             limit = kw * 1000
+        limit=math.floor((limit+1e-8)*10)/10
+        if kw>0 and limit<=0:raise ValueError('Limite inferior à resolução do perfil')
         schedule = {'startSchedule': utc(), 'chargingRateUnit': c['rate_unit'], 'chargingSchedulePeriod': [
-            {'startPeriod': 0, 'limit': round(limit, 1)}]}
+            {'startPeriod': 0, 'limit': limit}]}
+        if c.get('charge_type')=='AC':schedule['chargingSchedulePeriod'][0]['numberPhases']=c['phases']
         return {'chargingProfileId': connector, 'stackLevel': 1,
                 'chargingProfilePurpose': purpose, 'chargingProfileKind': 'Absolute',
                 'chargingSchedule': schedule}
@@ -204,6 +219,10 @@ class Station(ChargePoint):
             profile['transactionId'] = p['transaction_id']
         response = await self.call(call.SetChargingProfile(connector_id=connector,
                                    cs_charging_profiles=profile))
+        if p and response.status=='Accepted' and self.engine.config(self.id).get('charge_type')=='DC' and self.engine.config(self.id)['rate_unit']=='A':
+            amps=profile['chargingSchedule']['chargingSchedulePeriod'][0]['limit']
+            if p.get('accepted_profile_current_a')!=amps:p['accepted_profile_at']=time.time()
+            p['accepted_profile_current_a']=amps
         return response.status == 'Accepted'
 
     async def release_native(self, connector):

@@ -1,3 +1,7 @@
+# Revisão atual
+
+A revisão atual é `central-sso-devices-2`. Consulte [as instruções 1.3.0/0.15.0](release-v0150.md). No Windows, a criação e a redefinição usam a senha inicial 12345678, com troca obrigatória pelo próprio usuário. As orientações antigas abaixo sobre escolher uma senha de terceiros pelo Windows foram substituídas por essa política; o editor da planilha conserva sua administração direta.
+
 # Um Apps Script para Windows e Raspberry
 
 ## Criação de usuários pelo Windows

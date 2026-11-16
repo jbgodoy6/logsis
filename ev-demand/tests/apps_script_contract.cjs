@@ -262,17 +262,26 @@ let webMembers=context.portalMembers(webLogin.token);assert.equal(webMembers.ok,
 assert.equal(JSON.stringify(webMembers).includes('pbkdf2_sha256'),false);
 // Edit an existing blank-verifier row through the exact Windows endpoint.
 unified.data.push(['WEB-PENDING','Comercial web','web.sales','comercial','ativo','','']);
-const webSave=JSON.parse(context.doPost({postData:{contents:JSON.stringify({action:'desktop_save_user',token:webLogin.token,fields:{id:'WEB-PENDING',name:'web.sales',full_name:'Comercial web',role:'commercial',status:'ativo',expires:'',password:'fixture-web-sales-pass',confirmation:'fixture-web-sales-pass',actor_password:devPassword}})}}).text);
-assert.equal(webSave.ok,true);assert.match(webSave.verifier,/^pbkdf2_sha256\$600000\$/);
+const webSave=JSON.parse(context.doPost({postData:{contents:JSON.stringify({action:'desktop_save_user',token:webLogin.token,fields:{id:'WEB-PENDING',name:'web.sales',full_name:'Comercial web',role:'commercial',status:'ativo',expires:'',reset_password:true,actor_password:devPassword}})}}).text);
+assert.equal(webSave.ok,true);assert.equal(webSave.password_reset,true);
 assert.equal(webSave.acknowledged_id,'WEB-PENDING');
-assert.equal(unified.data.filter(r=>r[0]==='WEB-PENDING').length,1);
-assert.equal(unified.data.find(r=>r[0]==='WEB-PENDING')[6],webSave.verifier,'generated verifier was saved in column G of the same row');
-const webCommercial=context.portalLogin('web.sales','fixture-web-sales-pass');assert.equal(webCommercial.ok,true);
+const initialHash=vm.runInContext('DMAX_DEFAULT_HASH',context);
+assert.equal(unified.data.find(r=>r[0]==='WEB-PENDING')[6],initialHash);
+const firstLogin=context.portalLogin('web.sales','12345678');assert.equal(firstLogin.ok,true);assert.equal(firstLogin.user.must_change,true);
+assert.equal(context.portalState(firstLogin.token).ok,true);
+assert.equal(context.portalClients(firstLogin.token).code,403);assert.equal(context.portalDevices(firstLogin.token).code,403);assert.equal(context.portalMembers(firstLogin.token).code,403);
+assert.equal(context.portalChangePassword(firstLogin.token,{password:'12345678',confirmation:'12345678'}).code,422);
+assert.equal(context.portalChangePassword(firstLogin.token,{password:'short',confirmation:'short'}).code,422);
+const webCommercial=context.portalChangePassword(firstLogin.token,{password:'fixture-web-sales-pass',confirmation:'fixture-web-sales-pass'});assert.equal(webCommercial.ok,true);assert.equal(webCommercial.user.must_change,false);
+assert.notEqual(webCommercial.token,firstLogin.token);assert.equal(context.portalState(firstLogin.token).code,401);
+const changedHash=unified.data.find(r=>r[0]==='WEB-PENDING')[6].split('$');assert.equal(changedHash[3],crypto.pbkdf2Sync('fixture-web-sales-pass',Buffer.from(changedHash[2],'hex'),600000,32,'sha256').toString('hex'));
 assert.equal(context.portalMembers(webCommercial.token).code,403);assert.equal(context.portalDevices(webCommercial.token).code,403);
 assert.equal(context.portalSaveUser(webCommercial.token,{}).code,403);
 assert.equal(context.portalClients(webCommercial.token).ok,true);
 assert.equal(JSON.stringify(properties).includes('fixture-web-sales-pass'),false);
 assert.equal(JSON.stringify(properties).includes(webCommercial.token),false);
+const resetExisting=context.portalSaveUser(webLogin.token,{id:'WEB-PENDING',name:'web.sales',full_name:'Comercial web',role:'commercial',status:'ativo',expires:'',reset_password:true,actor_password:devPassword});assert.equal(resetExisting.ok,true);assert.equal(resetExisting.password_reset,true);assert.equal(context.portalState(webCommercial.token).code,401);
+const resetLogin=context.portalLogin('web.sales','12345678');assert.equal(resetLogin.ok,true);assert.equal(resetLogin.user.must_change,true);assert.equal(context.portalClients(resetLogin.token).code,403);
 // Revocation is checked against the current sheet on each operation, without sync delay.
 unified.data.find(r=>r[2]==='web.sales')[4]='bloqueado';
 assert.equal(context.portalClients(webCommercial.token).code,401);
@@ -316,18 +325,22 @@ const nativeLogin=desktop({action:'desktop_login',name:'bridge.dev',password:dev
 assert.equal(desktop({action:'desktop_members',token:nativeLogin.token}).ok,true);
 assert.equal(desktop({action:'desktop_clients',token:'invalid'}).code,401);
 assert.equal(desktop({action:'desktop_unknown'}).code,404);
-const nativeCreated=desktop({action:'desktop_save_user',token:nativeLogin.token,fields:{id:'',name:'windows.new',full_name:'Novo Windows',role:'commercial',status:'ativo',expires:'',password:'fixture-windows-new-pass',confirmation:'fixture-windows-new-pass',actor_password:devPassword}});
+const nativeCreated=desktop({action:'desktop_save_user',token:nativeLogin.token,fields:{id:'',name:'windows.new',full_name:'Novo Windows',role:'commercial',status:'ativo',expires:'',reset_password:true,actor_password:devPassword}});
+assert.equal(desktop({action:'desktop_save_user',token:nativeLogin.token,fields:{id:'',name:'forbidden.custom',full_name:'Teste',role:'commercial',status:'ativo',expires:'',password:'fixture-custom-pass',confirmation:'fixture-custom-pass',actor_password:devPassword}}).code,422);
 assert.equal(nativeCreated.ok,true);assert.match(nativeCreated.acknowledged_id,/^USR-/);
 const nativeRow=unified.data.find(r=>r[0]===nativeCreated.acknowledged_id);
-assert.equal(nativeRow[2],'windows.new');assert.equal(nativeRow[3],'comercial');assert.equal(nativeRow[4],'ativo');assert.equal(nativeRow[6],nativeCreated.verifier);
-const nativeParts=nativeCreated.verifier.split('$');assert.equal(nativeParts[3],crypto.pbkdf2Sync('fixture-windows-new-pass',Buffer.from(nativeParts[2],'hex'),600000,32,'sha256').toString('hex'));
+assert.equal(nativeRow[2],'windows.new');assert.equal(nativeRow[3],'comercial');assert.equal(nativeRow[4],'ativo');assert.equal(nativeRow[6],initialHash);
+assert.equal(nativeCreated.password_reset,true);
 const subscriptionBefore=JSON.stringify(Object.fromEntries(Object.entries(properties).filter(([k])=>k.startsWith('subscription.'))));
 const deviceFields={controller_id:'NEW-DEVICE',site_name:'Nova instalação',url:'',status:'ativo',message:''};
 const registered=desktop({action:'desktop_save_device',token:nativeLogin.token,fields:deviceFields});assert.equal(registered.ok,true);assert.match(registered.key,/^[0-9a-f]{96}$/);
 assert.equal(JSON.stringify(Object.fromEntries(Object.entries(properties).filter(([k])=>k.startsWith('subscription.')))),subscriptionBefore,'migration preserves signed subscription history');
 assert.equal(remote.data[0][4],'situacao');const newRow=remote.data.find(r=>r[0]==='NEW-DEVICE');assert.equal(newRow.length,11);assert.equal(newRow[4],'ativo');assert.equal(newRow[3],'DESCONECTADO');
 const newDevice=(action,extra={})=>JSON.parse(context.doPost({postData:{contents:JSON.stringify({action,controller_id:'NEW-DEVICE',key:registered.key,...extra})}}).text);
+const reportWrites=[],originalRemoteRange=remote.getRange;
+remote.getRange=(...args)=>{const range=originalRemoteRange(...args),write=range.setValues;range.setValues=values=>{reportWrites.push({column:args[1],width:args[3]});return write(values);};return range;};
 assert.equal(newDevice('snapshot',{remote:{provider:'cloudflare',site_name:'Nova instalação',url:'https://new-device.trycloudflare.com',connected:true,heartbeat_at:Date.now()/1000,revision:1}}).ok,true);
+remote.getRange=originalRemoteRange;assert.ok(reportWrites.every(r=>!(r.column<=5&&r.column+r.width>5)),'heartbeat never writes column E');
 assert.equal(newRow[4],'ativo'); // Existing array reference is not used to infer connection freshness.
 const updated=desktop({action:'desktop_save_device',token:nativeLogin.token,fields:{...deviceFields,url:'https://new-device.trycloudflare.com',status:'pendente'}});assert.equal(updated.ok,true);assert.equal(updated.key,'');
 const signedPending=JSON.parse(newDevice('snapshot').subscription.payload);assert.equal(signedPending.state,'pending');const firstDeadline=signedPending.deadline;

@@ -396,13 +396,14 @@ def install(app):
                         + field('Potência aceita · kW', 'acceptance_kw', charger['connector_max_kw'], 'number', min=0.1, step='any', required=''))
                     content += self.form('port', fields, 'Desconectar' if port['connected'] else 'Conectar veículo',
                                          page='chargers', key=port['key'], command='disconnect' if port['connected'] else 'connect')
+                if port.get('learned_min_kw') is not None:content += '<p>Mínimo aprendido: '+f"{port['learned_min_kw']:.3f}"+' kW</p>'
                 if self.technical:
                     content += link('chargers', 'Configurar carregador', edit=charger['id'])
                     if port['running'] and not self.state.get('subscription', {}).get('native'):
                         content += '<details><summary>Aprendizado assistido</summary>' + self.form('learn',
-                            field('Limite de teste · kW', 'cap_kw', port['limit_kw'] / 2, 'number', min=0, step='any', required='')
-                            + field('Duração · segundos', 'seconds', 30, 'number', min=10, max=300, required=''),
-                            'Testar redução', page='chargers', key=port['key']) + '</details>'
+                            field('Limite de teste · kW', 'cap_kw', min(port['limit_kw'],6*charger['voltage']*charger['phases']/1000) if charger.get('charge_type')=='AC' else max(.001,min(port['limit_kw']/2,(port.get('learned_min_kw') or charger['min_kw'] or port['limit_kw'])/2)), 'number', min=0, step='any', required='')
+                            + field('Duração · segundos', 'seconds', 90, 'number', min=10, max=300, required=''),
+                            'Testar e memorizar mínimo validado', page='chargers', key=port['key']) + '<p>O menor limite sustentado será memorizado para este conector e veículo identificado. AC respeita a referência de 6 A por fase; DC não usa esse piso. Zero, medições antigas ou teste rejeitado não definem mínimo.</p></details>'
             if controls and self.technical:
                 content += self.delete_charger(charger)
             return '<article class="charger-card" data-live-key="' + esc(port['key']) + '">' + content + '</article>'
@@ -419,14 +420,15 @@ def install(app):
                 content += panel('Carregadores de outro modo', table(['Carregador','Transporte','Ação'],
                     [[esc(c['name']), esc(c['transport']), self.delete_charger(c)] for c in inactive]))
             old = next((c for c in self.state['chargers'] if c['id'] == self.request.query_params.get('edit')), None)
-            c = old or dict(id='', name='', model='', ip='', max_kw=320, connector_max_kw=320, min_kw=6, connectors=1,
+            c = old or dict(id='', name='', model='', ip='', max_kw=320, connector_max_kw=320, min_kw=6, connectors=1, charge_type='unknown',
                             transport='ocpp' if self.state['settings']['mode'] == 'physical' else 'simulator', circuit=self.state['settings']['circuits'][0]['id'], enabled=True,
                             commissioned=False, zero_supported=False, rate_unit='W', voltage=230, phases=3, input_factor=1)
             fields = field('Identificador OCPP', 'id', c['id'], required='', maxlength=40, readonly='' if old else None)
             fields += field('Nome', 'name', c['name'], required='', maxlength=100) + field('Modelo', 'model', c['model'], maxlength=100) + field('IP de referência', 'ip', c['ip'], maxlength=253)
             fields += select('Transporte', 'transport', [('simulator', 'Simulador'), ('ocpp', 'OCPP 1.6J')], c['transport'])
-            for name, title in [('max_kw', 'Potência total · kW'), ('connector_max_kw', 'Potência por conector · kW'), ('min_kw', 'Mínimo validado · kW'),
-                                ('connectors', 'Conectores'), ('input_factor', 'Fator de entrada / perdas'), ('voltage', 'Tensão fase-neutro · V'), ('phases', 'Fases')]:
+            fields += select('Tipo elétrico', 'charge_type', [('unknown','Não informado · aprendizado observacional'),('AC','AC'),('DC','DC')],c.get('charge_type','unknown'))
+            for name, title in [('max_kw', 'Potência total · kW'), ('connector_max_kw', 'Potência por conector · kW'), ('min_kw', 'Mínimo manual até o aprendizado · kW'),
+                                ('connectors', 'Conectores'), ('input_factor', 'Fator de entrada / perdas'), ('voltage', 'Tensão AC fase-neutro · V; DC usa tensão medida'), ('phases', 'Fases')]:
                 fields += field(title, name, c[name], 'number', step='any', required='')
             fields += select('Circuito', 'circuit', [(x['id'], x['name']) for x in self.state['settings']['circuits']], c['circuit'])
             fields += select('Unidade OCPP', 'rate_unit', [('W', 'Watts'), ('A', 'Ampères')], c['rate_unit'])
@@ -711,7 +713,8 @@ def install(app):
                             data.update(reason=value('reason'), minutes=int(value('minutes')))
                         await api('POST', '/api/ports/' + key + '/action', data)
                 elif action == 'charger':
-                    data = {k: value(k) for k in ('id', 'name', 'model', 'ip', 'transport', 'circuit', 'rate_unit')}
+                    data = {k: value(k) for k in ('id', 'name', 'model', 'ip', 'transport', 'circuit', 'rate_unit', 'charge_type')}
+                    data['charge_type']=value('charge_type') or 'unknown'
                     data.update({k: float(value(k)) for k in ('max_kw', 'connector_max_kw', 'min_kw', 'input_factor', 'voltage')})
                     data.update({k: int(value(k)) for k in ('connectors', 'phases')})
                     data.update({k: k in form for k in ('enabled', 'zero_supported', 'commissioned')})

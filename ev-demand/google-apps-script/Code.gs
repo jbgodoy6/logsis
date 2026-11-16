@@ -1,7 +1,7 @@
 /** D-Max global directory. Bound to Google Sheets; no external server required. */
 const DMAX_SHEET_ID = '17HCp2CX3eUZXqQsTkTNDZvrLkGqzZQrJkCfeHo-toPQ';
 const DMAX_TAB = 'Tecnicos';
-const DMAX_SCRIPT_REVISION='central-sso-devices-1';
+const DMAX_SCRIPT_REVISION='central-sso-devices-2';
 const DMAX_HEADERS = ['id', 'nome', 'login', 'situacao', 'valido_ate'];
 const DMAX_DEFAULT_HASH = 'pbkdf2_sha256$600000$0cc644386557630153579d018267d636$07eb3cfc2778a1ee08fa321b86c897f72237f6749cecda0eee2ea788cb678c53';
 
@@ -57,7 +57,7 @@ function headersMatch_(actual,expected){
   return Array.isArray(actual)&&actual.length===expected.length&&actual.every((v,i)=>String(v).trim().toLowerCase()===expected[i]);
 }
 
-function doGet() {return json_({ok:true,service:'D-Max Acesso Desktop',version:'1.0',desktop_protocol:1,desktop_actions:['desktop_login','desktop_state','desktop_logout','desktop_clients','desktop_members','desktop_save_user','desktop_devices','desktop_save_device','desktop_open_client'],diagnostics_version:2,script_revision:DMAX_SCRIPT_REVISION,message:'Abra o aplicativo instalado no Windows. Nenhum cadastro é público.'});}
+function doGet() {return json_({ok:true,service:'D-Max Acesso Desktop',version:'1.0',desktop_protocol:1,desktop_actions:['desktop_login','desktop_state','desktop_logout','desktop_clients','desktop_members','desktop_save_user','desktop_devices','desktop_save_device','desktop_open_client','desktop_change_password'],diagnostics_version:2,script_revision:DMAX_SCRIPT_REVISION,message:'Abra o aplicativo instalado no Windows. Nenhum cadastro é público.'});}
 /** Spreadsheet editors already control account cells; no desktop session required. */
 function passwordEditorBook_(){
   SpreadsheetApp.getUi(); // Fails outside the bound spreadsheet editor.
@@ -203,7 +203,16 @@ function remote_(id,data){
   if(data.revision<revision)return {revision:revision,accepted:false};
   if(data.revision===revision&&old&&(old.row[2]!==data.url||old.row[3]!== (data.connected?'CONECTADO':'DESCONECTADO')))return {revision:revision,accepted:false};
   const values=[id,sheetText_(deviceLayout_(sheet)&&old&&old.row[1]?String(old.row[1]):data.site_name),data.url,data.connected?'CONECTADO':'DESCONECTADO',new Date().toISOString(),new Date(data.heartbeat_at*1000).toISOString(),data.revision];
-  if(deviceLayout_(sheet))sheet.getRange(old?old.index:sheet.getLastRow()+1,1,1,11).setValues([[...values.slice(0,4),old?old.row[7]:'ativo',...values.slice(4),...(old?old.row.slice(8,11):['','',''])]]);
+  if(deviceLayout_(sheet)&&old){
+    // Never write the administrative columns during a heartbeat, even if a
+    // spreadsheet editor changes E between reading and writing this report.
+    sheet.getRange(old.index,3,1,2).setValues([[values[2],values[3]]]);
+    sheet.getRange(old.index,6,1,3).setValues([values.slice(4)]);
+  }
+  else if(deviceLayout_(sheet)){
+    const history=JSON.parse(PropertiesService.getScriptProperties().getProperty('subscription.'+id)||'null');
+    sheet.getRange(sheet.getLastRow()+1,1,1,11).setValues([[...values.slice(0,4),history&&history.state==='pending'?'pendente':'ativo',...values.slice(4),'','',history?history.message:'']]);
+  }
   else sheet.getRange(old?old.index:sheet.getLastRow()+1,1,1,7).setValues([values]);
   return {revision:data.revision,accepted:true};
 }
@@ -489,7 +498,7 @@ function unifiedState_(props){
       return;
     }
     const credentialChanged=old&&old.password!==r.password;
-    const mustChange=pending&&pending.name===r.name&&pending.password===r.password?Boolean(pending.must_change):old&&!credentialChanged?Boolean(old.must_change):r.role==='technician'&&r.password===DMAX_DEFAULT_HASH;
+    const mustChange=r.password===DMAX_DEFAULT_HASH||(pending&&pending.name===r.name&&pending.password===r.password?Boolean(pending.must_change):old&&!credentialChanged?Boolean(old.must_change):false);
     const digest=sha_(JSON.stringify([r.full_name,r.role,r.active,r.deleted,r.expires_at]));
     const record=Object.assign({},r,{activation_hash:null,must_change:mustChange,credential_version:old?old.credential_version+(credentialChanged?1:0):pending?pending.credential_version:1,meta_version:old?(old.meta_version||0)+(old.meta_digest!==digest?1:0):1,meta_digest:digest});
     delete record.row;records.push(record);seen.add(r.id);
@@ -1438,26 +1447,27 @@ function portalRoster_(props){
     if(old&&old.name!==r.name)error_(409,'Identidade permanente');
     if(history.byName[r.name]&&history.byName[r.name]!==r.id)error_(409,'Login histórico');
     seen.add(r.id);
-    return Object.assign({},r,{must_change:old&&old.password===r.password?Boolean(old.must_change):r.role==='technician'&&r.password===DMAX_DEFAULT_HASH});
+    return Object.assign({},r,{must_change:r.password===DMAX_DEFAULT_HASH||Boolean(old&&old.password===r.password&&old.must_change)});
   });
   Object.values(history.byId).forEach(r=>{if(!seen.has(r.id))records.push(Object.assign({},r,{active:false,deleted:true}));});
   return records;
 }
 function portalPublic_(r){
-  return {id:r.id,name:r.name,full_name:r.full_name,role:r.role,active:r.active,deleted:r.deleted,expires_at:r.expires_at,credential_pending:Boolean(r.credential_pending)};
+  return {id:r.id,name:r.name,full_name:r.full_name,role:r.role,active:r.active,deleted:r.deleted,expires_at:r.expires_at,credential_pending:Boolean(r.credential_pending),must_change:Boolean(r.must_change)};
 }
-function portalUsable_(r){
-  return Boolean(r&&['developer','commercial','technician'].includes(r.role)&&r.active&&!r.deleted&&!r.must_change&&(r.expires_at===null||r.expires_at>Date.now()/1000));
+function portalUsable_(r,allowChange=false){
+  return Boolean(r&&['developer','commercial','technician'].includes(r.role)&&r.active&&!r.deleted&&(!r.must_change||allowChange)&&(r.expires_at===null||r.expires_at>Date.now()/1000));
 }
 function portalFingerprint_(r){
   return sha_(JSON.stringify([r.id,r.name,r.role,r.password,r.active,r.deleted,r.expires_at,Boolean(r.must_change)]));
 }
-function portalSession_(props,token){
+function portalSession_(props,token,allowChange=false){
   if(typeof token!=='string'||!/^[0-9a-f]{64}$/.test(token))error_(401,'Sessão inválida');
   const key='portal.session.'+sha_(token),session=JSON.parse(props.getProperty(key)||'null');
   if(!session||session.until<=Date.now()/1000){props.deleteProperty(key);error_(401,'Sessão encerrada');}
   const rows=portalRoster_(props),actor=rows.find(r=>r.id===session.id);
-  if(!portalUsable_(actor)||portalFingerprint_(actor)!==session.fingerprint){props.deleteProperty(key);error_(401,'Acesso alterado');}
+  if(!portalUsable_(actor,true)||portalFingerprint_(actor)!==session.fingerprint){props.deleteProperty(key);error_(401,'Acesso alterado');}
+  if(actor.must_change&&!allowChange)error_(403,'Troca de senha obrigatória');
   session.until=Date.now()/1000+(actor.role==='commercial'?900:3600);
   props.setProperty(key,JSON.stringify(session));
   return {actor:actor,rows:rows};
@@ -1477,7 +1487,7 @@ function portalLogin(name,password){
     attempt.count++;global.count++;props.setProperty(attemptKey,JSON.stringify(attempt));props.setProperty(globalKey,JSON.stringify(global));
     const actor=portalRoster_(props).find(r=>r.name===name);
     const valid=verifyPlatformPassword_(password,actor?actor.password:DMAX_DEFAULT_HASH);
-    if(!valid||!portalUsable_(actor))error_(401,'Credenciais inválidas');
+    if(!valid||!portalUsable_(actor,true))error_(401,'Credenciais inválidas');
     const active=Object.keys(props.getProperties()).filter(k=>k.startsWith('portal.session.'));
     if(active.length>=64)error_(503,'Limite de sessões');
     const token=(Utilities.getUuid()+Utilities.getUuid()).replace(/-/g,'');
@@ -1487,7 +1497,7 @@ function portalLogin(name,password){
   });
 }
 function portalState(token){
-  return portalReply_(props=>({user:portalPublic_(portalSession_(props,token).actor)}));
+  return portalReply_(props=>({user:portalPublic_(portalSession_(props,token,true).actor)}));
 }
 function portalLogout(token){
   return portalReply_(props=>{
@@ -1518,23 +1528,41 @@ function portalSaveUser(token,fields){
     if(actor.role!=='developer')error_(403,'Somente desenvolvedor');
     if(!fields||typeof fields!=='object'||typeof fields.actor_password!=='string'||fields.actor_password.length>200)error_(422,'Campos inválidos');
     saveStage_(trace,'validate_fields');
-    let encoded;
     const old=session.rows.find(r=>r.id===fields.id);
-    if(fields.password){
-      if(typeof fields.password!=='string'||fields.password.length<8||fields.password.length>200||fields.password!==fields.confirmation)error_(422,'Senha inválida');
-      saveStage_(trace,'generate_verifier');
-      const salt=Utilities.getUuid().replace(/-/g,'');
-      encoded='pbkdf2_sha256$600000$'+salt+'$'+sjcl.codec.hex.fromBits(sjcl.misc.pbkdf2(fields.password,sjcl.codec.hex.toBits(salt),600000,256));
-    } else if(old)encoded=old.password;
-    else error_(422,'Informe uma senha');
+    if(fields.password||fields.confirmation)error_(422,'O Windows só cria ou redefine a senha inicial');
+    if(fields.reset_password!==undefined&&typeof fields.reset_password!=='boolean')error_(422,'Redefinição inválida');
+    const reset=!old||fields.reset_password===true;
+    const encoded=reset?DMAX_DEFAULT_HASH:old.password;
     const record={id:fields.id||'USR-'+Utilities.getUuid().replace(/-/g,'').slice(0,16),name:fields.name,full_name:fields.full_name,role:fields.role,status:fields.status,expires:fields.expires||'',password:encoded};
     const result=bridgeManageUser_(props,{controller_id:'WEB-'+actor.id,actor_login:actor.name,actor_password:fields.actor_password,record:record},trace);
-    // Only a developer who just proved their password receives the new verifier.
-    return {acknowledged_id:result.acknowledged_id,verifier:encoded};
+    // A developer can reset the initial credential, never choose another user's password.
+    return {acknowledged_id:result.acknowledged_id,password_reset:reset,message:reset?'Senha redefinida para 12345678. A troca é obrigatória no primeiro acesso.':'Usuário atualizado; senha preservada.'};
   },trace);
 }
 
 /** Desktop endpoints authenticate individual accounts; never accept a device key as identity. */
+function portalChangePassword(token,fields){
+  const trace={stage:'lock'};
+  return portalReply_(props=>{
+    saveStage_(trace,'validate_session');
+    const session=portalSession_(props,token,true),actor=session.actor;
+    if(!fields||typeof fields.password!=='string'||fields.password.length<8||fields.password.length>200||fields.password==='12345678'||fields.password!==fields.confirmation)error_(422,'Escolha outra senha com 8 a 200 caracteres');
+    saveStage_(trace,'generate_verifier');
+    const salt=Utilities.getUuid().replace(/-/g,'');
+    const encoded='pbkdf2_sha256$600000$'+salt+'$'+sjcl.codec.hex.fromBits(sjcl.misc.pbkdf2(fields.password,sjcl.codec.hex.toBits(salt),600000,256));
+    const sheet=unifiedSheet_(props),row=session.rows.find(r=>r.id===actor.id);
+    if(!sheet||!row||!row.row)error_(409,'Conta não encontrada');
+    saveStage_(trace,'write_sheet');sheet.getRange(row.row,7,1,1).setValues([[encoded]]);SpreadsheetApp.flush();
+    if(String(sheet.getRange(row.row,7,1,1).getValues()[0][0])!==encoded)error_(503,'Senha não confirmada');
+    props.deleteProperty('pending.'+actor.id);
+    const updated=unifiedState_(props).records.find(r=>r.id===actor.id);
+    if(updated.must_change)error_(503,'Troca não confirmada');
+    props.deleteProperty('portal.session.'+sha_(token));
+    const next=(Utilities.getUuid()+Utilities.getUuid()).replace(/-/g,'');
+    props.setProperty('portal.session.'+sha_(next),JSON.stringify({id:actor.id,fingerprint:portalFingerprint_(updated),until:Date.now()/1000+(actor.role==='commercial'?900:3600)}));
+    return {token:next,user:portalPublic_(updated)};
+  },trace);
+}
 const DMAX_DEVICE_HEADERS=['controller_id','instalacao','url','ultimo_estado_informado','situacao','ultima_comunicacao','ultimo_sinal_tunel','revisao','aviso_em','prazo_final','mensagem'];
 function deviceLayout_(sheet){return headersMatch_(sheet.getRange(1,1,1,11).getValues()[0],DMAX_DEVICE_HEADERS);}
 function remoteRows_(sheet){
@@ -1624,6 +1652,7 @@ function desktopRequest_(data){
     case 'desktop_logout':return portalLogout(data.token);
     case 'desktop_clients':return portalClients(data.token);
     case 'desktop_members':return portalMembers(data.token);
+    case 'desktop_change_password':return portalChangePassword(data.token,data.fields);
     case 'desktop_save_user':return portalSaveUser(data.token,data.fields);
     case 'desktop_devices':return portalDevices(data.token);
     case 'desktop_save_device':return portalSaveDevice(data.token,data.fields);

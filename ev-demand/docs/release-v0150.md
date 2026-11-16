@@ -1,12 +1,28 @@
 # D-Max Raspberry 0.15.0 e Central Windows 1.3.0
 
+## Senha inicial e troca obrigatória
+
+No Windows, novos usuários recebem a senha inicial **12345678**. O desenvolvedor pode redefinir essa senha inicial, mas não escolher uma senha pessoal para outro usuário. No primeiro login, a conta fica restrita à troca de senha; clientes, simulação, usuários, equipamentos e configurações não ficam disponíveis até a conclusão. A nova senha pessoal exige de 8 a 200 caracteres e não pode repetir a inicial. Após a troca, o token é substituído sem expô-lo ao navegador. Redefinir a senha invalida as sessões anteriores na plataforma.
+
+O Raspberry também mantém contas globais com senha inicial fora da demonstração e das funções normais até a troca. Desenvolvedor/comercial fazem a troca pela plataforma online, e as credenciais antigas do cache ficam sem autorização até a sincronização. A senha root local não foi alterada. O gerenciador de senha direto na planilha permanece disponível ao proprietário/editor.
+
+## Mínimo de recarga aprendido em AC/DC
+
+O aprendizado anterior gerava somente um relatório. Agora, um teste bem-sucedido memoriza o menor **limite comandado e sustentado**, por conector e veículo identificado, no banco local. O controle usa esse valor ao repartir a demanda. Se nem esse mínimo couber no orçamento, a alocação é zero, conforme a política de suspensão existente; não é escolhido um valor positivo abaixo do piso.
+
+Configure o tipo elétrico AC/DC antes de aprender. Cadastros antigos continuam como “Não informado”, com o mínimo manual e testes apenas observacionais. Em AC, considera-se a referência de 6 A nas fases configuradas: 1,38 kW em 230 V monofásico ou 4,14 kW em 230 V por fase/trifásico. Não há troca automática de fases; a configuração deve corresponder ao equipamento. DC não recebe um piso universal de 6 A. Perfis DC em A usam a tensão atual de saída, sem multiplicação pelas fases AC; sem essa medição, não é emitido um perfil positivo em A. Use W quando suportado e comissionado pelo fabricante.
+
+O teste é assistido: o técnico escolhe um limite menor durante uma recarga em andamento. São exigidos aceite do comando, recarga sem falhas, ao menos três medições atuais após acomodação, intervalo de observação e potência sustentada próxima do limite. Em DC/A, a corrente confirmada também deve estar estável; a autorização em kW acompanha a tensão medida. Zero, rejeição, SOC final, falta de dados e redução de consumo pelo veículo não são usados como “mínimo zero”. Um teste inconclusivo não substitui um mínimo válido. Se o perfil no próprio mínimo conhecido for rejeitado, o registro é preservado para auditoria, mas exige revalidação e o controle retorna ao mínimo manual.
+
+A memória sobrevive ao reinício, distingue conectores/veículos identificados e deixa de ser aplicada quando muda a configuração elétrica, modelo, firmware ou serial informado. Dados de simuladores não viram um mínimo físico. Para veículo não identificado, o resultado vale para o contexto do conector; não é garantia universal para todos os veículos ou condições. Testes devem ser repetidos quando necessário, com homologação no equipamento real. Nenhum ensaio físico foi executado pelo agente.
+
 ## Entrar no cliente sem repetir a senha
 
 Na central Windows, entre com sua conta individual e clique em **Acessar cliente**. A plataforma emite um passe de 60 segundos, utilizável uma vez e somente pelo D-Max escolhido. O Raspberry resgata o passe usando sua própria chave já configurada, confere o cadastro atual e cria a sessão local. Senha e token da central não vão para o navegador do cliente. O passe viaja no fragmento da URL, é removido antes do POST e não aparece em parâmetros de consulta ou no Referer.
 
 Desenvolvedor/técnico recebem suas permissões normais. Comercial continua na demonstração descartável e isolada; a entrada não altera configurações ou carregamentos reais. Passe expirado, repetido, destinado a outro equipamento ou emitido antes de revogação/logout é recusado. Encerrar a central invalida passes ainda não resgatados; sessões já abertas no cliente continuam sujeitas às regras normais de sessão e sincronização do Raspberry.
 
-O recurso exige **Central 1.3.0 + Raspberry 0.15.0 + Apps Script `central-sso-devices-1`**. Um Raspberry anterior ainda pode usar a autenticação normal, mas não oferece a nova página de entrada automática.
+O recurso exige **Central 1.3.0 + Raspberry 0.15.0 + Apps Script `central-sso-devices-2`**. Um Raspberry anterior ainda pode usar a autenticação normal, mas não oferece a nova página de entrada automática.
 
 ## Equipamentos e situação na coluna E
 
@@ -42,7 +58,7 @@ A chave de equipamento autoriza a sincronização; é diferente da senha individ
 
 ## Aplicar a atualização
 
-Antes de alterar a implantação, guarde uma cópia do código publicado. Substitua Code.gs e publique nova versão na **implantação existente**, conservando URL, propriedades e identidades. O GET anuncia `script_revision: central-sso-devices-1`.
+Antes de alterar a implantação, guarde uma cópia do código publicado. Substitua Code.gs e publique nova versão na **implantação existente**, conservando URL, propriedades e identidades. O GET anuncia `script_revision: central-sso-devices-2`.
 
 Atualize o Raspberry pelo procedimento manual já documentado, sem desinstalar nem apagar seu banco/configuração; o ZIP continua sem assinatura para o atualizador automático. Instale o MSI 1.3.0 no computador central, preservando http://d-max.local:80 e a URL da plataforma. Os runtimes Microsoft continuam incluídos. Depois use o menu de organização da planilha ou salve um equipamento pela central para mover a situação para E.
 

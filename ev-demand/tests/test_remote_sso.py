@@ -1,6 +1,7 @@
 import asyncio
 import copy
 import hashlib
+import time
 import unittest
 import httpx
 from fastapi.testclient import TestClient
@@ -79,3 +80,15 @@ class RemoteSSOTests(unittest.TestCase):
         self.assertEqual(self.client.post('/api/remote/sso',json={'ticket':'c'*64}).status_code,200)
         self.assertFalse(self.client.cookies.get('dmax_demo'))
         self.assertEqual(self.client.get('/api/me').json()['name'],'sso.dev2')
+
+    def test_technician_keeps_technician_role(self):
+        self.actor.update(id='SSO-TECH',name='sso.tech',role='technician')
+        self.assertEqual(self.client.post('/api/remote/sso',json={'ticket':'a'*64}).status_code,200)
+        self.assertEqual(self.client.get('/api/me').json()['role'],'technician')
+
+    def test_disabled_and_expired_accounts_do_not_get_session(self):
+        self.actor['active']=False
+        self.assertEqual(self.client.post('/api/remote/sso',json={'ticket':'a'*64}).status_code,401)
+        self.actor.update(active=True,expires_at=time.time()-60)
+        self.assertEqual(self.client.post('/api/remote/sso',json={'ticket':'b'*64}).status_code,401)
+        self.assertFalse(self.client.cookies.get('ev_session'))

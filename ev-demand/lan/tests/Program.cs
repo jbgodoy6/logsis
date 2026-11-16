@@ -8,22 +8,25 @@ using EnergyCube.DMax.Lan;
 internal sealed class Fixture : HttpMessageHandler {
  internal readonly Dictionary<string,string> Tokens=new();
  internal bool Revoke;
- internal static object Actor(string role)=>new{id=role=="developer"?"DV001":"CM001",name=role=="developer"?"dev":"comercial",full_name=role=="developer"?"Desenvolvedor Teste":"Comercial Teste",role};
+ internal readonly HashSet<string> Pending=new();
+ internal static object Actor(string role,bool pending=false)=>new{id=role=="developer"?"DV001":"CM001",name=role=="developer"?"dev":"comercial",full_name=role=="developer"?"Desenvolvedor Teste":"Comercial Teste",role,must_change=pending};
  protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request,CancellationToken ct){
   var data=Json.Object(await request.Content.ReadAsStringAsync(ct));var action=Values.Text(data,"action");string role="";object reply;
   if(action=="desktop_login"){
-   if(Values.Text(data,"password")!="Teste1234")reply=new{ok=false,code=401};
-   else {role=Values.Text(data,"name")=="dev"?"developer":"commercial";var token=Convert.ToHexString(System.Security.Cryptography.RandomNumberGenerator.GetBytes(32)).ToLowerInvariant();Tokens[token]=role;reply=new{ok=true,token,user=Actor(role)};}
+   if(Values.Text(data,"password")!=(Values.Text(data,"name")=="primeiro"?"12345678":"Teste1234"))reply=new{ok=false,code=401};
+   else {role=Values.Text(data,"name")=="dev"||Values.Text(data,"name")=="primeiro"?"developer":"commercial";var token=Convert.ToHexString(System.Security.Cryptography.RandomNumberGenerator.GetBytes(32)).ToLowerInvariant();Tokens[token]=role;if(Values.Text(data,"name")=="primeiro")Pending.Add(token);reply=new{ok=true,token,user=Actor(role,Pending.Contains(token))};}
   }else if(Revoke||!Tokens.TryGetValue(Values.Text(data,"token"),out role))reply=new{ok=false,code=401};
+  else if(Pending.Contains(Values.Text(data,"token"))&&!new[]{"desktop_state","desktop_logout","desktop_change_password"}.Contains(action))reply=new{ok=false,code=403};
   else switch(action){
    case "desktop_open_client":reply=new{ok=true,url="https://caratinga-fixture.trycloudflare.com/remote/sso#ticket="+new string('a',64)};break;
    case "desktop_devices":reply=role!="developer"?(object)new{ok=false,code=403}:new{ok=true,devices=new[]{new{controller_id="D-MAX-001",site_name="Caratinga",url="https://caratinga-fixture.trycloudflare.com",status="ativo",connected=true,message=""}}};break;
    case "desktop_save_device":reply=role!="developer"?(object)new{ok=false,code=403}:new{ok=true,key="fixture-device-key",message="Equipamento cadastrado"};break;
-   case "desktop_state":reply=new{ok=true,user=Actor(role)};break;
+   case "desktop_state":reply=new{ok=true,user=Actor(role,Pending.Contains(Values.Text(data,"token")))};break;
    case "desktop_logout":Tokens.Remove(Values.Text(data,"token"));reply=new{ok=true};break;
    case "desktop_clients":reply=new{ok=true,clients=new[]{new{site_name="Caratinga",controller_id="D-MAX-001",url="https://caratinga-fixture.trycloudflare.com/",connected=true,updated_at=DateTimeOffset.UtcNow.ToUnixTimeSeconds()},new{site_name="Cliente Belo Horizonte",controller_id="D-MAX-002",url="https://bh-fixture.trycloudflare.com/",connected=false,updated_at=DateTimeOffset.UtcNow.ToUnixTimeSeconds()-3000}}};break;
+   case "desktop_change_password":var f=Values.Object(data,"fields");if(Values.Text(f,"password").Length<8||Values.Text(f,"password")=="12345678"||Values.Text(f,"password")!=Values.Text(f,"confirmation"))reply=new{ok=false,code=422};else{Tokens.Remove(Values.Text(data,"token"));Pending.Remove(Values.Text(data,"token"));var next=Convert.ToHexString(System.Security.Cryptography.RandomNumberGenerator.GetBytes(32)).ToLowerInvariant();Tokens[next]=role;reply=new{ok=true,token=next,user=Actor(role)};}break;
    case "desktop_members":reply=role!="developer"?(object)new{ok=false,code=403}:new{ok=true,users=new[]{new{id="CM001",name="comercial",full_name="Comercial Teste",role="commercial",active=true,deleted=false,expires_at=0}}};break;
-   case "desktop_save_user":var fields=Values.Object(data,"fields");reply=role!="developer"?(object)new{ok=false,code=403}:Values.Text(fields,"actor_password")!="Teste1234"?new{ok=false,code=401}:new{ok=true,verifier="pbkdf2_sha256$fixture-verifier"};break;
+   case "desktop_save_user":var fields=Values.Object(data,"fields");reply=role!="developer"?(object)new{ok=false,code=403}:Values.Text(fields,"actor_password")!="Teste1234"?new{ok=false,code=401}:new{ok=true,acknowledged_id="CM-NEW",password_reset=true,message="Senha inicial 12345678. Troca obrigatória no primeiro acesso."};break;
    default:throw new Exception("Ação inesperada: "+action);
   }
   return new HttpResponseMessage(HttpStatusCode.OK){Content=new StringContent(Json.Serialize(reply),Encoding.UTF8,"application/json")};
@@ -53,6 +56,9 @@ internal static class Program {
   Check((int)Values.Number(await Rpc("portalClients","bogus"),"code")==401,"Dados exigem login");
   Check((int)Values.Number(await Post("/api/portal",new{name="portalLogin",args=new[]{"dev","Teste1234"}},false),"code")==403,"CSRF obrigatório");
   using(var bad=new HttpRequestMessage(HttpMethod.Get,"/")){bad.Headers.Host="evil.example";Check((await http.SendAsync(bad)).StatusCode==HttpStatusCode.Forbidden,"Host externo recusado");}
+  var first=await Rpc("portalLogin","primeiro","12345678");Check(Values.Flag(Values.Object(first,"user"),"must_change"),"Primeiro acesso restrito");
+  Check((int)Values.Number(await Get("/api/settings"),"code")==403,"Config exige troca inicial");
+  var changedPassword=await Rpc("portalChangePassword",new{password="NovaSenha123",confirmation="NovaSenha123"});Check(Values.Flag(changedPassword,"ok")&&!changedPassword.ContainsKey("token")&&!Values.Flag(Values.Object(changedPassword,"user"),"must_change"),"Troca própria sem expor token central");await Rpc("portalLogout","ignored");
   var login=await Rpc("portalLogin","dev","Teste1234");Check(Values.Flag(login,"ok")&&!login.ContainsKey("token"),"Token central não sai para navegador");Check(cookies.GetCookies(http.BaseAddress)["DMaxLanSession"].HttpOnly,"Cookie HttpOnly");
   Check(Values.Text(Values.Object(await Get("/api/bootstrap"),"user"),"role")=="developer","Sessão recarrega");
   Check(Values.Rows(await Rpc("portalClients","ignored"),"clients").Count==2,"Clientes Google");Check(Values.Rows(await Rpc("portalMembers","ignored"),"users").Count==1,"Membros desenvolvedor");

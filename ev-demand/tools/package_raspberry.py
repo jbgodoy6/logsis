@@ -7,9 +7,9 @@ import re
 import zipfile
 
 VERSION = '0.15.0'
-PYTHON = ('__init__.py', 'commercial.py', 'access.py', 'control.py', 'directory.py', 'engine.py', 'main.py',
+PYTHON = ('__init__.py', 'commercial.py', 'access.py', 'control.py', 'learning.py', 'directory.py', 'engine.py', 'main.py',
           'meter.py', 'network.py', 'ocpp_server.py', 'recovery.py', 'root_auth.py',
-          'security.py', 'server_ui.py', 'services.py', 'store.py', 'live_dom.py', 'licensing.py', 'reports.py', 'maintenance.py', 'remote_gateway.py', 'remote_tunnel.py', 'remote_registry.py', 'remote_sso.py', 'remote_clients.py', 'curve.py', 'supervision.py', 'plant_view.py', 'telemetry.py')
+          'security.py', 'server_ui.py', 'services.py', 'store.py', 'live_dom.py', 'licensing.py', 'reports.py', 'maintenance.py', 'remote_gateway.py', 'remote_tunnel.py', 'remote_registry.py', 'remote_sso.py', 'platform_password.py', 'remote_clients.py', 'curve.py', 'supervision.py', 'plant_view.py', 'telemetry.py')
 STATIC = ('style.css', 'energycube.css', 'server.css', 'plant.css', 'live.css', 'live.js', 'position.js', 'maintenance.js', 'remote.js', 'remote-sso.js', 'd-max-logo.png', 'energycube-logo.png', 'd-max-report.jpg', 'energycube-report.jpg')
 
 

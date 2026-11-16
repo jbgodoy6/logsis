@@ -2,13 +2,15 @@
 
 | Componente | Versão mantida | Arquivo |
 | --- | --- | --- |
-| Central Windows | 1.2.1, runtime incluído | [Instalador MSI](releases/D-Max-Central-Rede-1.2.1-Diagnostico.msi) |
-| Controlador Raspberry | 0.14.2, instalação manual | [Pacote Linux ARM64](releases/D-Max-Raspberry-0.14.2-SEM-ASSINATURA.zip) |
-| Google Planilhas | `sheet-user-write-1` | [Code.gs](google-apps-script/Code.gs) |
+| Central Windows | 1.3.0, runtime incluído | [Instalador MSI](releases/D-Max-Central-Rede-1.3.0-Completo.msi) |
+| Controlador Raspberry | 0.15.0, instalação manual | [Pacote Linux ARM64](releases/D-Max-Raspberry-0.15.0-SEM-ASSINATURA.zip) |
+| Google Planilhas | `central-sso-devices-2` | [Code.gs](google-apps-script/Code.gs) |
 
 [Validação, hashes e limites](docs/versoes-validadas.md) · [Arquivos atuais](releases/README.md) · [Administração pela planilha](docs/script-compativel-windows-raspberry.md).
 
 Os pacotes antigos foram removidos da pasta releases; o histórico Git foi preservado. As notas abaixo são histórico de desenvolvimento, não instruções para escolher uma versão antiga. A cópia do Apps Script dentro do ZIP Raspberry está sincronizada com o arquivo atual do repositório.
+
+[Acesso único, equipamentos, senha inicial e aprendizado AC/DC](docs/release-v0150.md).
 
 ## Histórico de desenvolvimento
 

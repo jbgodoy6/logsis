@@ -2,6 +2,7 @@ import asyncio
 import base64
 from contextlib import asynccontextmanager, suppress
 import hashlib
+import math
 import os
 import re
 import secrets
@@ -80,12 +81,16 @@ class Charger(Model):
     commissioned: bool = False
     zero_supported: bool = False
     rate_unit: str = 'W'
+    charge_type: str = 'unknown'
     voltage: float = Field(default=230, gt=0)
     phases: int = Field(default=3, ge=1, le=3)
     password: str | None = Field(default=None, min_length=8, max_length=200)
 
     @model_validator(mode='after')
     def validate_charger(self):
+        if self.charge_type not in ('AC','DC','unknown'):raise ValueError('Informe AC ou DC')
+        if self.charge_type=='AC' and min(self.max_kw,self.connector_max_kw)<6*self.voltage*self.phases/1000:
+            raise ValueError('Potência do conector inferior à referência AC de 6 A; confira tensão e fases')
         if self.transport not in ('simulator', 'ocpp') or self.rate_unit not in ('W', 'A'):
             raise ValueError('Transporte ou unidade inválidos')
         if self.min_kw > min(self.max_kw, self.connector_max_kw):
@@ -180,7 +185,7 @@ class Simulation(Model):
 
 class Learning(Model):
     cap_kw: float = Field(ge=0)
-    seconds: int = Field(default=30, ge=10, le=300)
+    seconds: int = Field(default=90, ge=10, le=300)
 
 
 class NewUser(Model):
@@ -397,6 +402,9 @@ def create_app(database=None, background=True, recovery_public_key=None, root_pa
         return await finish_login(row,response,request)
 
     async def finish_login(row,response,request):
+        if row['must_change']:
+            response.delete_cookie('dmax_demo')
+            return open_session(row,response,request,lifetime=900)
         if row['role']=='commercial':
             try:token=await app.state.demonstrations.create(row)
             except ValueError as exc:raise HTTPException(429,str(exc)) from None
@@ -511,7 +519,11 @@ def create_app(database=None, background=True, recovery_public_key=None, root_pa
         if not password_attempts.allow(u['id']):
             raise HTTPException(429, 'Muitas tentativas. Aguarde cinco minutos.')
         try:
-            access.change_password(u, data.current_password, data.new_password)
+            if u['source']=='directory' and u['role'] in ('developer','commercial'):
+                from .platform_password import change
+                await change(access,u,data.current_password,data.new_password,getattr(app.state,'password_client',None))
+                await synchronize(access)
+            else:access.change_password(u, data.current_password, data.new_password)
         except (ValueError, PermissionError) as exc:
             raise access_error(exc)
         response.delete_cookie('ev_session')
@@ -887,8 +899,17 @@ def create_app(database=None, background=True, recovery_public_key=None, root_pa
             raise HTTPException(409, 'É necessário estar em recarga; o teste só pode reduzir o limite atual')
         if p.get('test'):
             raise HTTPException(409, 'Já existe um teste em andamento neste conector')
-        p['test'] = {'cap_kw': data.cap_kw, 'started_at': time.time(),
-                     'until': time.time() + data.seconds, 'observations': []}
+        c=engine.config(p['charger'])
+        from .learning import electrical_floor,context as learning_context
+        if 0<data.cap_kw<.001:raise HTTPException(409,'A resolução mínima de teste é 0,001 kW')
+        if (c['transport']=='simulator')!=(store.settings()['mode']=='simulation'):raise HTTPException(409,'Modo do carregador não corresponde ao modo do sistema')
+        if 0<data.cap_kw<electrical_floor(c)-.000001:raise HTTPException(409,'Em AC, o teste positivo deve respeitar a referência de 6 A por fase')
+        if c['transport']=='ocpp' and data.cap_kw==0 and not c['zero_supported']:raise HTTPException(409,'Teste de zero exige homologação de zero e retomada')
+        cap=math.floor(data.cap_kw*1000+1e-8)/1000
+        p['test'] = {'cap_kw': cap, 'started_at': time.time(),
+                     'until': time.time() + data.seconds, 'seconds':data.seconds,'observations': [],'context':learning_context(c,p),'session_id':p['session_id'],'vehicle_id':p['vehicle_id']}
+        if abs(p['limit_kw']-cap)<.001 and p.get('profile_initialized'):
+            p['test']['accepted_at']=time.time()
         store.record('test_started', {'actor': u['name'], 'port': key, 'cap_kw': data.cap_kw, 'seconds': data.seconds})
         return {'ok': True}
 
