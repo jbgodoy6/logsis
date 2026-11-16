@@ -46,10 +46,10 @@ function equal_(a,b) {
   let mismatch=0;for(let i=0;i<a.length;i++)mismatch|=a.charCodeAt(i)^b.charCodeAt(i);return mismatch===0;
 }
 function validHash_(hash) {return typeof hash==='string'&&/^pbkdf2_sha256\$600000\$[0-9a-f]{32}\$[0-9a-f]{64}$/.test(hash);}
-function error_(code,message) {const e=new Error(message);e.code=code;throw e;}
+function error_(code,message,diagnostic) {const e=new Error(message);e.code=code;if(diagnostic)e.diagnostic=diagnostic;throw e;}
 function json_(value) {return ContentService.createTextOutput(JSON.stringify(value)).setMimeType(ContentService.MimeType.JSON);}
 
-function doGet() {return json_({ok:true,service:'D-Max Acesso Desktop',version:'1.0',message:'Abra o aplicativo instalado no Windows. Nenhum cadastro é público.'});}
+function doGet() {return json_({ok:true,service:'D-Max Acesso Desktop',version:'1.0',desktop_protocol:1,desktop_actions:['desktop_login','desktop_state','desktop_logout','desktop_clients','desktop_members','desktop_save_user'],diagnostics_version:1,message:'Abra o aplicativo instalado no Windows. Nenhum cadastro é público.'});}
 function doPost(event) {
   let lock, acquired=false;
   try {
@@ -94,7 +94,7 @@ function remoteSheet_(){
     sheet.getRange(1,1,1,DMAX_REMOTE_HEADERS.length).setValues([DMAX_REMOTE_HEADERS]);
     sheet.setFrozenRows(1);sheet.autoResizeColumns(1,DMAX_REMOTE_HEADERS.length);
   }
-  if(JSON.stringify(sheet.getRange(1,1,1,DMAX_REMOTE_HEADERS.length).getValues()[0])!==JSON.stringify(DMAX_REMOTE_HEADERS))error_(422,'Cabeçalhos remotos incompatíveis');
+  if(JSON.stringify(sheet.getRange(1,1,1,DMAX_REMOTE_HEADERS.length).getValues()[0])!==JSON.stringify(DMAX_REMOTE_HEADERS))error_(422,'Cabeçalhos remotos incompatíveis','remote_headers');
   return sheet;
 }
 function prepararRemoto(){
@@ -338,9 +338,9 @@ function unifiedSheet_(props){
   return sheet;
 }
 function userRows_(sheet,book){
-  if(!sheet.getLastRow())error_(422,'Cabeçalhos Usuarios ausentes');
+  if(!sheet.getLastRow())error_(422,'Cabeçalhos Usuarios ausentes','users_headers');
   const values=sheet.getRange(1,1,sheet.getLastRow(),7).getValues();
-  if(JSON.stringify(values[0])!==JSON.stringify(DMAX_USERS_HEADERS))error_(422,'Cabeçalhos Usuarios incompatíveis');
+  if(JSON.stringify(values[0])!==JSON.stringify(DMAX_USERS_HEADERS))error_(422,'Cabeçalhos Usuarios incompatíveis','users_headers');
   const ids=new Set(),names=new Set();
   const rows=[];
   values.slice(1).forEach((c,index)=>{
@@ -1300,13 +1300,18 @@ function portalReply_(operation){
   } catch(e) {
     const code=e.code||503;
     const messages={401:'Login, senha ou sessão inválidos. Entre novamente.',403:'Seu perfil não permite esta operação.',409:'Conflito de ID/login. Preserve a identidade existente ou crie outra conta com novo login.',422:'Confira os campos e a aba Usuarios.',429:'Muitas tentativas. Aguarde cinco minutos.',503:'Não foi possível consultar a planilha. Tente novamente.'};
-    return {ok:false,code:code,message:messages[code]||messages[503]};
+    const reply={ok:false,code:code,message:messages[code]||messages[503]};
+    // Only fixed identifiers cross the API boundary, never exception details.
+    if(code===422)reply.diagnostic=['directory_not_prepared','users_headers','users_record','remote_headers','remote_record'].includes(e.diagnostic)?e.diagnostic:'validation';
+    return reply;
   } finally {if(acquired)lock.releaseLock();}
 }
 function portalRoster_(props){
   const book=SpreadsheetApp.openById(DMAX_SHEET_ID),sheet=unifiedSheet_(props);
-  if(!sheet)error_(422,'Prepare a aba Usuarios');
-  const rows=userRows_(sheet,book),history=historicalUsers_(props.getProperties()),seen=new Set();
+  if(!sheet)error_(422,'Prepare a aba Usuarios','directory_not_prepared');
+  let rows;
+  try{rows=userRows_(sheet,book);}catch(e){if(e.code===422&&!e.diagnostic)e.diagnostic='users_record';throw e;}
+  const history=historicalUsers_(props.getProperties()),seen=new Set();
   const records=rows.map(r=>{
     const old=history.byId[r.id];
     if(old&&old.name!==r.name)error_(409,'Identidade permanente');
@@ -1372,7 +1377,8 @@ function portalLogout(token){
 function portalClients(token){
   return portalReply_(props=>{
     portalSession_(props,token);
-    const data=remoteDirectory_();
+    let data;
+    try{data=remoteDirectory_();}catch(e){if(e.code===422&&!e.diagnostic)e.diagnostic='remote_record';throw e;}
     return {clients:data.clients,fetched_at:Date.now()/1000};
   });
 }

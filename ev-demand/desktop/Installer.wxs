@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
- <Product Id="*" Name="D-Max Central de Acesso 1.2 — Servidor da rede" Language="1046" Version="1.2.0" Manufacturer="EnergyCube" UpgradeCode="E67F8748-BFC6-4CDA-A80B-E11D403DBD08">
+ <Product Id="*" Name="D-Max Central de Acesso 1.2 — Servidor da rede" Language="1046" Version="1.2.1" Manufacturer="EnergyCube" UpgradeCode="E67F8748-BFC6-4CDA-A80B-E11D403DBD08">
   <Package InstallerVersion="500" Compressed="yes" InstallScope="perUser" Description="Aplicativo Windows com runtime Microsoft incluído"/>
   <MajorUpgrade DowngradeErrorMessage="Uma versão mais recente já está instalada."/>
   <Media Id="1" Cabinet="DMaxDesktop.cab" EmbedCab="yes"/>

@@ -43,7 +43,8 @@ namespace EnergyCube.DMax {
          if(data==null)throw new ServiceError("A implantação não retornou dados válidos.");
          if(!Values.Flag(data,"ok")) {
           int code=(int)Values.Number(data,"code");
-          var message=code==401?"Login, senha ou sessão inválidos. Entre novamente.":code==403?"Seu perfil não permite esta operação.":code==409?"Conflito de ID/login. Preserve a identidade existente ou crie uma nova conta com outro login.":code==422?"Confira os dados e a aba Usuarios da planilha.":code==429?"Muitas tentativas. Aguarde cinco minutos.":"Não foi possível concluir. Confira a implantação do Apps Script.";
+          var message=code==401?"Login, senha ou sessão inválidos. Entre novamente.":code==403?"Seu perfil não permite esta operação.":code==409?"Conflito de ID/login. Preserve a identidade existente ou crie uma nova conta com outro login.":code==422?ValidationMessage(Values.Text(data,"diagnostic")):code==404?"A implantação não reconhece esta operação da central. Confira a versão publicada do Apps Script.":code==429?"Muitas tentativas. Aguarde cinco minutos.":"Não foi possível concluir. Confira a implantação do Apps Script.";
+          if(new[]{"desktop_login","desktop_state","desktop_logout","desktop_clients","desktop_members","desktop_save_user"}.Contains(action))message+=" ["+action+"; código "+code+"]";
           throw new ServiceError(message,code);
          }
          return data;
@@ -52,6 +53,16 @@ namespace EnergyCube.DMax {
       }
      }
     } catch(ServiceError){throw;}catch(TaskCanceledException){throw new ServiceError("A consulta demorou demais. Confira a conexão e tente novamente.");}catch(Exception e)when(e is HttpRequestException||e is IOException||e is ArgumentException||e is InvalidOperationException||e is JsonException){throw new ServiceError("Falha na conexão ou resposta Google inválida. Confira a implantação.");}
+   }
+  }
+  private static string ValidationMessage(string diagnostic) {
+   switch(diagnostic) {
+    case "directory_not_prepared":return "A implantação não tem o cadastro unificado habilitado (directory.unified). A aba Usuarios preenchida, sozinha, não habilita essa configuração. Preserve os cadastros e confira a preparação da implantação.";
+    case "users_headers":return "A implantação encontrou cabeçalhos ausentes ou incompatíveis na aba Usuarios.";
+    case "users_record":return "A implantação rejeitou a validação completa do cadastro Usuarios, antes de concluir a operação. Confira o diagnóstico do cadastro; isso não indica senha incorreta.";
+    case "remote_headers":return "Os cabeçalhos do diretório de clientes são incompatíveis com a implantação. Isso não é uma falha de senha.";
+    case "remote_record":return "A implantação rejeitou um registro do diretório de clientes. Isso não é uma falha de senha.";
+    default:return "A implantação recusou a operação com código 422 sem diagnóstico específico. Confira a versão publicada e a operação indicada; esta resposta não identifica erro na planilha ou na senha.";
    }
   }
   public static bool IsClientAddress(string address) {
