@@ -1,0 +1,23 @@
+{
+  "rows": 40000,
+  "source": "synthetic local PostgreSQL 16; no production access",
+  "r1Snapshot": {
+    "timedOut": false,
+    "executionMs": 4953.842,
+    "planningMs": 31.054
+  },
+  "r1Same21MainsSeries": {
+    "timedOut": false,
+    "executionMs": 4090.078,
+    "planningMs": 3.598
+  },
+  "oldSame21MainsSeries": {
+    "timedOut": true,
+    "limitMs": 3000
+  },
+  "r1MainsPeriod": {
+    "timedOut": false,
+    "executionMs": 2840.393,
+    "planningMs": 7.833
+  }
+}

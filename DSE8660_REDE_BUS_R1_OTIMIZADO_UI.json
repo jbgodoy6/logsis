@@ -1,0 +1,13 @@
+{
+  "result": "passed",
+  "grafanaVersion": "11.2.0",
+  "desktop": true,
+  "mobile": true,
+  "histories": true,
+  "separateSections": true,
+  "powerTriplesPerSource": true,
+  "grafanaFileImport": true,
+  "datasourceResponses": 19,
+  "browserErrors": 0,
+  "testData": "isolated synthetic PostgreSQL; no production access"
+}

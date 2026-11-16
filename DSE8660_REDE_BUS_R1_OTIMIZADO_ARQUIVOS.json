@@ -1,0 +1,18 @@
+{
+  "model": "DSE8660 rede/BUS",
+  "table": "id_194057949800264",
+  "channels": 58,
+  "binOrStudioProfilesChanged": false,
+  "artifacts": [
+    {
+      "file": "DSE8660_REDE_BUS_R1_OTIMIZADO.json",
+      "bytes": 800393,
+      "sha256": "1482871d2817d14512d4c6c3168608b83830d7a85b3ad4348bb45a73110ee828"
+    },
+    {
+      "file": "DSE8660_REDE_BUS_R1_OTIMIZADO.zip",
+      "bytes": 37029,
+      "sha256": "12eb9288c87291bea2599ef8093ad4a2b259765e7842c930f5dc1a06117fbc82"
+    }
+  ]
+}

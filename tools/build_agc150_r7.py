@@ -22,7 +22,7 @@ PROFILE = load_profile('AGC150_GEN_ECU')
 ROLES = {c.role: c for c in PROFILE.channels}
 
 
-def latest_sql():
+def latest_sql(channel_count=72):
     """One bounded table scan, constant aggregate state, no per-field sorts.
 
     Prefix each raw value by a fixed-width UTC timestamp. max() with the C
@@ -30,7 +30,8 @@ def latest_sql():
     NULL and empty fields mean no transmission. Prefixes are stripped before
     the existing typed decoders run. All application dates use AD years 1-9999.
     """
-    fields = [ui.sq('mdb'+str(i)) for i in range(1, 73)]
+    assert 1 <= channel_count <= 100
+    fields = [ui.sq('mdb'+str(i)) for i in range(1, channel_count+1)]
     fields += [ui.sq('gsm_rssi'), ui.var('Campo_WiFi_RSSI')]
     utc = '''CASE WHEN pg_typeof(t."time")='timestamp without time zone'::regtype
         THEN t."time"::timestamp
