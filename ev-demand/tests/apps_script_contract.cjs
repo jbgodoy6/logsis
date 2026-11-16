@@ -286,10 +286,18 @@ assert.equal(context.doGet().text.includes(devPassword),false);
 
 // Native desktop shares the same individual-account policy without a device token.
 const desktop=data=>JSON.parse(context.doPost({postData:{contents:JSON.stringify(data)}}).text);
+// The same formatted sheet must work for Pi synchronization and Windows login.
+const canonicalHeader=[...unified.data[0]];
+unified.data[0]=canonicalHeader.map(h=>' '+h.toUpperCase()+' ');
+unified.data[0][0]='\uFEFF'+unified.data[0][0];
+const piCompatible=call('snapshot');assert.equal(piCompatible.ok,true);assert.equal(piCompatible.complete,true);
+assert.ok(piCompatible.accounts.some(r=>r.name==='bridge.dev'));
 const nativeLogin=desktop({action:'desktop_login',name:'bridge.dev',password:devPassword});assert.equal(nativeLogin.ok,true);
 assert.equal(desktop({action:'desktop_members',token:nativeLogin.token}).ok,true);
 assert.equal(desktop({action:'desktop_clients',token:'invalid'}).code,401);
 assert.equal(desktop({action:'desktop_unknown'}).code,404);
 assert.equal(desktop({action:'desktop_logout',token:nativeLogin.token}).ok,true);
 assert.equal(desktop({action:'desktop_state',token:nativeLogin.token}).code,401);
+assert.deepEqual(unified.data[0],canonicalHeader.map((h,i)=>(i===0?'\uFEFF':'')+' '+h.toUpperCase()+' '),'reads do not rewrite sheet headers');
+unified.data[0]=canonicalHeader;
 console.log('Native desktop API contract passed: individual login, role checks and logout, without device-key impersonation.');

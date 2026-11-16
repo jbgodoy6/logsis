@@ -11,6 +11,10 @@ const ctx=vm.createContext({
 });
 vm.runInContext(source,ctx);
 const banner=JSON.parse(ctx.doGet().text);
+assert.equal(ctx.headersMatch_(['\uFEFF ID ',' Nome ','LOGIN'],['id','nome','login']),true);
+assert.equal(ctx.headersMatch_(['id','login','nome'],['id','nome','login']),false);
+assert.equal(ctx.headersMatch_(['id','nome','nome'],['id','nome','login']),false);
+assert.equal(ctx.headersMatch_(['id','nome'],['id','nome','login']),false);
 assert.equal(banner.desktop_protocol,1);assert.equal(banner.desktop_actions.length,6);
 assert.equal(writes,0);
 const missing=ctx.portalReply_(p=>ctx.portalRoster_(p));
@@ -32,4 +36,10 @@ assert.equal(unknown.diagnostic,'validation');assert.ok(!JSON.stringify(unknown)
 assert.equal(ctx.portalReply_(()=>ctx.error_(409,'fixture-secret')).code,409);
 assert.equal(ctx.portalReply_(()=>ctx.error_(401,'fixture-secret')).diagnostic,undefined);
 assert.equal(ctx.desktopRequest_({action:'desktop_unknown'}).code,404);
+const alerts=[];
+ctx.SpreadsheetApp.getUi=()=>({alert:message=>alerts.push(message)});
+vm.runInContext(`unifiedSheet_=()=>null; rows_=()=>({rows:[]}); historicalUsers_=()=>({byId:{},byName:{}});`,ctx);
+ctx.diagnosticarUsuarios();
+assert.equal(alerts.length,1);assert.ok(alerts[0].includes('este resultado valida apenas o cadastro legado do Raspberry'));
+assert.equal(writes,0);
 console.log('Desktop diagnostics contract passed: capabilities, preparation, validation, legacy safety, no writes or secret disclosure.');

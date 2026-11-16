@@ -6,6 +6,7 @@ const DMAX_DEFAULT_HASH = 'pbkdf2_sha256$600000$0cc644386557630153579d018267d636
 
 function onOpen() {
   SpreadsheetApp.getUi().createMenu('D-Max')
+    .addItem('Verificar cadastro (sem alterar dados)', 'diagnosticarUsuarios')
     .addItem('Preparar/migrar usuários (aba única)', 'migrarUsuarios')
     .addItem('Unificar assinaturas e acesso remoto', 'unificarEquipamentos')
     .addItem('Preparar diretório de acesso remoto', 'prepararRemoto')
@@ -48,6 +49,10 @@ function equal_(a,b) {
 function validHash_(hash) {return typeof hash==='string'&&/^pbkdf2_sha256\$600000\$[0-9a-f]{32}\$[0-9a-f]{64}$/.test(hash);}
 function error_(code,message,diagnostic) {const e=new Error(message);e.code=code;if(diagnostic)e.diagnostic=diagnostic;throw e;}
 function json_(value) {return ContentService.createTextOutput(JSON.stringify(value)).setMimeType(ContentService.MimeType.JSON);}
+// Formatting is not part of the protocol. Column names and order still are.
+function headersMatch_(actual,expected){
+  return Array.isArray(actual)&&actual.length===expected.length&&actual.every((v,i)=>String(v).trim().toLowerCase()===expected[i]);
+}
 
 function doGet() {return json_({ok:true,service:'D-Max Acesso Desktop',version:'1.0',desktop_protocol:1,desktop_actions:['desktop_login','desktop_state','desktop_logout','desktop_clients','desktop_members','desktop_save_user'],diagnostics_version:1,message:'Abra o aplicativo instalado no Windows. Nenhum cadastro é público.'});}
 function doPost(event) {
@@ -94,7 +99,7 @@ function remoteSheet_(){
     sheet.getRange(1,1,1,DMAX_REMOTE_HEADERS.length).setValues([DMAX_REMOTE_HEADERS]);
     sheet.setFrozenRows(1);sheet.autoResizeColumns(1,DMAX_REMOTE_HEADERS.length);
   }
-  if(JSON.stringify(sheet.getRange(1,1,1,DMAX_REMOTE_HEADERS.length).getValues()[0])!==JSON.stringify(DMAX_REMOTE_HEADERS))error_(422,'Cabeçalhos remotos incompatíveis','remote_headers');
+  if(!headersMatch_(sheet.getRange(1,1,1,DMAX_REMOTE_HEADERS.length).getValues()[0],DMAX_REMOTE_HEADERS))error_(422,'Cabeçalhos remotos incompatíveis','remote_headers');
   return sheet;
 }
 function prepararRemoto(){
@@ -153,7 +158,7 @@ function rows_() {
   const book=SpreadsheetApp.openById(DMAX_SHEET_ID),sheet=book.getSheetByName(DMAX_TAB);
   if(!sheet||sheet.getLastRow()<1)error_(503,'Prepare a aba Tecnicos');
   const values=sheet.getRange(1,1,sheet.getLastRow(),5).getValues();
-  if(JSON.stringify(values[0].map(v=>String(v).trim().toLowerCase()))!==JSON.stringify(DMAX_HEADERS))error_(422,'Cabeçalhos inválidos');
+  if(!headersMatch_(values[0],DMAX_HEADERS))error_(422,'Cabeçalhos inválidos');
   const ids={},names={},rows=[];
   values.slice(1).forEach((cells,index)=>{
     if(cells.every(v=>String(v).trim()===''))return;
@@ -253,7 +258,7 @@ function prepararAssinaturas() {
     sheet.getRange(1,1,1,6).setValues([DMAX_SUB_HEADERS]);sheet.setFrozenRows(1);
     sheet.getRange(1,1,1,6).setBackground('#06264a').setFontColor('#ffffff').setFontWeight('bold');
     sheet.autoResizeColumns(1,6);
-  }else if(JSON.stringify(sheet.getRange(1,1,1,6).getValues()[0])!==JSON.stringify(DMAX_SUB_HEADERS)){
+  }else if(!headersMatch_(sheet.getRange(1,1,1,6).getValues()[0],DMAX_SUB_HEADERS)){
     throw new Error('Cabeçalhos diferentes. Nenhum dado foi substituído.');
   }
   SpreadsheetApp.getUi().alert('Use uma linha por D-Max. Situação: regular ou pendente. O prazo é fixo de dez dias; aviso_em e prazo_final são preenchidos pelo serviço. Para liberar, altere para regular. Apagar a linha não libera o equipamento.');
@@ -261,10 +266,10 @@ function prepararAssinaturas() {
 function subscription_(props,id) {
   const book=SpreadsheetApp.openById(DMAX_SHEET_ID);
   const unified=book.getSheetByName(DMAX_REMOTE_TAB);
-  if(unified && unified.getRange(1,8,1,4).getValues()[0].join(',')==='situacao,aviso_em,prazo_final,mensagem')return unifiedSubscription_(props,id,unified);
+  if(unified && headersMatch_(unified.getRange(1,8,1,4).getValues()[0],['situacao','aviso_em','prazo_final','mensagem']))return unifiedSubscription_(props,id,unified);
   const sheet=book.getSheetByName('Assinaturas');
   if(!sheet||sheet.getLastRow()<2)return null;
-  if(JSON.stringify(sheet.getRange(1,1,1,6).getValues()[0])!==JSON.stringify(DMAX_SUB_HEADERS))error_(422,'Cabeçalhos de assinaturas inválidos');
+  if(!headersMatch_(sheet.getRange(1,1,1,6).getValues()[0],DMAX_SUB_HEADERS))error_(422,'Cabeçalhos de assinaturas inválidos');
   const matches=sheet.getRange(2,1,sheet.getLastRow()-1,6).getValues().map((v,i)=>({v:v,row:i+2})).filter(r=>String(r.v[0]).trim()===id);
   if(!matches.length)return null;
   if(matches.length!==1)error_(422,'Assinatura duplicada');
@@ -301,7 +306,7 @@ function accounts_(props){
   const book=SpreadsheetApp.openById(DMAX_SHEET_ID),sheet=book.getSheetByName('Contas');
   if(!sheet)return [];
   const values=sheet.getRange(1,1,sheet.getLastRow(),7).getValues();
-  if(JSON.stringify(values[0])!==JSON.stringify(DMAX_ACCOUNT_HEADERS))error_(422,'Cabeçalhos Contas incompatíveis');
+  if(!headersMatch_(values[0],DMAX_ACCOUNT_HEADERS))error_(422,'Cabeçalhos Contas incompatíveis');
   const ids=new Set(),names=new Set(),records=[];
   values.slice(1).forEach(c=>{
     if(c.every(v=>String(v).trim()===''))return;
@@ -340,7 +345,7 @@ function unifiedSheet_(props){
 function userRows_(sheet,book){
   if(!sheet.getLastRow())error_(422,'Cabeçalhos Usuarios ausentes','users_headers');
   const values=sheet.getRange(1,1,sheet.getLastRow(),7).getValues();
-  if(JSON.stringify(values[0])!==JSON.stringify(DMAX_USERS_HEADERS))error_(422,'Cabeçalhos Usuarios incompatíveis','users_headers');
+  if(!headersMatch_(values[0],DMAX_USERS_HEADERS))error_(422,'Cabeçalhos Usuarios incompatíveis','users_headers');
   const ids=new Set(),names=new Set();
   const rows=[];
   values.slice(1).forEach((c,index)=>{
@@ -463,7 +468,7 @@ function migrarUsuarios(){
     }
     if(accounts){
       const header=accounts.getRange(1,1,1,7).getValues()[0];
-      if(JSON.stringify(header)!==JSON.stringify(DMAX_USERS_HEADERS))throw new Error('Cabeçalhos Contas incompatíveis');
+      if(!headersMatch_(header,DMAX_USERS_HEADERS))throw new Error('Cabeçalhos Contas incompatíveis');
       userRows_(accounts,book).forEach(r=>{
         if(r.role==='technician')throw new Error('Perfil inesperado na antiga aba Contas');
         merge(r,true);
@@ -498,12 +503,12 @@ function unificarEquipamentos(){
   try {
     const book=SpreadsheetApp.openById(DMAX_SHEET_ID),remote=remoteSheet_(),old=book.getSheetByName('Assinaturas');
     const extra=['situacao','aviso_em','prazo_final','mensagem'];
-    if(remote.getRange(1,8,1,4).getValues()[0].join(',')===extra.join(','))return;
+    if(headersMatch_(remote.getRange(1,8,1,4).getValues()[0],extra))return;
     const data=remote.getRange(1,1,remote.getLastRow(),11).getValues();
     if(data.some(row=>row.slice(7).some(v=>String(v)!=='')))throw new Error('Colunas H:K ocupadas; nenhum dado alterado');
     const seen=new Set();data.slice(1).forEach(row=>{if(seen.has(String(row[0])))throw new Error('D-Max duplicado');seen.add(String(row[0]));});
     const billing=old&&old.getLastRow()?old.getRange(1,1,old.getLastRow(),6).getValues():[DMAX_SUB_HEADERS];
-    if(JSON.stringify(billing[0])!==JSON.stringify(DMAX_SUB_HEADERS))throw new Error('Cabeçalhos de assinaturas inválidos');
+    if(!headersMatch_(billing[0],DMAX_SUB_HEADERS))throw new Error('Cabeçalhos de assinaturas inválidos');
     const billed=new Set();
     billing.slice(1).forEach(row=>{
       const id=String(row[0]).trim();if(!id)return;
@@ -533,7 +538,7 @@ function unifiedSubscription_(props,id,sheet){
 
 /** Editor-only read-only diagnosis. Never logs credentials or full records. */
 function diagnosticarUsuarios(){
-  SpreadsheetApp.getUi(); // Requires the bound spreadsheet editor, not the public web app.
+  const ui=SpreadsheetApp.getUi(); // Requires the bound spreadsheet editor, not the public web app.
 
   try {
     const props=PropertiesService.getScriptProperties(),all=props.getProperties();
@@ -546,9 +551,11 @@ function diagnosticarUsuarios(){
       if(history.byName[r.name]&&history.byName[r.name]!==r.id)
         error_(409,'Login associado a outro ID: '+r.name);
     });
-    console.log('Validação de usuários OK. Cadastro unificado: '+Boolean(sheet)+'. Linhas: '+rows.length+'. Nenhum dado alterado.');
+    const message='Validação de usuários OK. Cadastro unificado: '+Boolean(sheet)+'. Linhas: '+rows.length+'. Nenhum dado alterado.'+(sheet?'':' A central Windows exige cadastro unificado; este resultado valida apenas o cadastro legado do Raspberry.');
+    console.log(message);ui.alert(message);
   } catch(e){
-    console.log('Diagnóstico de usuários: código '+(e.code||503)+'; '+e.message);
+    const message='Diagnóstico de usuários: código '+(e.code||503)+'; '+e.message;
+    console.log(message);ui.alert(message);
   }
 }
 
