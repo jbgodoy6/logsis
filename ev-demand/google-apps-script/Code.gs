@@ -1,12 +1,13 @@
 /** D-Max global directory. Bound to Google Sheets; no external server required. */
 const DMAX_SHEET_ID = '17HCp2CX3eUZXqQsTkTNDZvrLkGqzZQrJkCfeHo-toPQ';
 const DMAX_TAB = 'Tecnicos';
-const DMAX_SCRIPT_REVISION='central-sso-devices-2';
+const DMAX_SCRIPT_REVISION='alphabetical-directory-1';
 const DMAX_HEADERS = ['id', 'nome', 'login', 'situacao', 'valido_ate'];
 const DMAX_DEFAULT_HASH = 'pbkdf2_sha256$600000$0cc644386557630153579d018267d636$07eb3cfc2778a1ee08fa321b86c897f72237f6749cecda0eee2ea788cb678c53';
 
 function onOpen() {
   SpreadsheetApp.getUi().createMenu('D-Max')
+    .addItem('Ordenar usuários e clientes de A a Z', 'ordenarCadastros')
     .addItem('Organizar equipamentos (situação na coluna E)', 'organizarEquipamentos')
     .addItem('Definir senha da linha selecionada', 'definirSenhaDaLinha')
     .addItem('Verificar cadastro (sem alterar dados)', 'diagnosticarUsuarios')
@@ -15,6 +16,28 @@ function onOpen() {
     .addItem('Preparar diretório de acesso remoto', 'prepararRemoto')
     .addItem('Autorizar um D-Max', 'autorizarDMax')
     .addItem('Revogar chave de um D-Max', 'revogarDMax').addToUi();
+}
+
+// Move complete rows, including extra columns, formulas and cell formatting.
+// Call only after row-index based writes and read-back confirmations are finished.
+function ordenarLinhas_(sheet){
+  const count=sheet.getLastRow()-1;
+  if(count<2)return;
+  sheet.getRange(2,1,count,sheet.getLastColumn()).sort([{column:2,ascending:true},{column:1,ascending:true}]);
+}
+function ordenarCadastros(){
+  const book=passwordEditorBook_(),lock=LockService.getScriptLock();
+  if(!lock.tryLock(5000))throw new Error('Cadastro ocupado. Tente novamente.');
+  try{for(const name of [DMAX_USERS_TAB,DMAX_REMOTE_TAB]){const sheet=book.getSheetByName(name);if(sheet)ordenarLinhas_(sheet);}}
+  finally{lock.releaseLock();}
+}
+function onEdit(event){
+  if(!event||!event.range||!event.source||event.source.getId()!==DMAX_SHEET_ID)return;
+  const sheet=event.range.getSheet();
+  if(![DMAX_USERS_TAB,DMAX_REMOTE_TAB].includes(sheet.getName())||event.range.getRow()<2)return;
+  const lock=LockService.getScriptLock();
+  if(!lock.tryLock(5000))return; // The menu can retry if another write is in progress.
+  try{ordenarLinhas_(sheet);}finally{lock.releaseLock();}
 }
 
 function prepararTecnicos() {return migrarUsuarios();}
@@ -214,6 +237,7 @@ function remote_(id,data){
     sheet.getRange(sheet.getLastRow()+1,1,1,11).setValues([[...values.slice(0,4),history&&history.state==='pending'?'pendente':'ativo',...values.slice(4),'','',history?history.message:'']]);
   }
   else sheet.getRange(old?old.index:sheet.getLastRow()+1,1,1,7).setValues([values]);
+  ordenarLinhas_(sheet);
   return {revision:data.revision,accepted:true};
 }
 
@@ -540,6 +564,7 @@ function updateUnified_(props,r){
   // Recompute metadata versions through the same canonical path as snapshots.
   props.setProperty('identity.'+r.id,JSON.stringify(record));
   unifiedState_(props);
+  ordenarLinhas_(state.source.sheet);
   return {ok:true,acknowledged_id:r.id};
 }
 function migrarUsuarios(){
@@ -716,6 +741,7 @@ function bridgeManageUser_(props,data,trace){
   props.deleteProperty('pending.'+r.id);
   saveStage_(trace,'sync_identity');
   unifiedState_(props);
+  ordenarLinhas_(state.source.sheet);
   return {ok:true,acknowledged_id:r.id};
 }
 
@@ -1624,6 +1650,7 @@ function portalSaveDevice(token,f){return portalReply_(props=>{
   const saved=state.sheet.getRange(destination,1,1,11).getValues()[0];
   if([0,1,2,4,10].some(i=>String(saved[i])!==String(row[i])&&String(saved[i])!==sheetText_(String(row[i]))))error_(503,'Cadastro de equipamento não confirmado');
   let key='';if(!props.getProperty('device.'+f.controller_id)){key=(Utilities.getUuid()+Utilities.getUuid()+Utilities.getUuid()).replace(/-/g,'');props.setProperty('device.'+f.controller_id,sha_(key));}
+  ordenarLinhas_(state.sheet);
   return {controller_id:f.controller_id,key,message:key?'Equipamento cadastrado. Configure esta chave no D-Max instalado.':'Equipamento atualizado. A chave existente foi preservada.'};
 });}
 function portalOpenClient(token,id){return portalReply_(props=>{
