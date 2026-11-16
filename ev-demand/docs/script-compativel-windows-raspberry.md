@@ -10,6 +10,10 @@ Na sincronização Raspberry, uma identidade já conhecida com verificador vazio
 
 Se a própria conta usada para entrar estiver sem verificador, ela ainda precisa de uma senha configurada. Um desenvolvedor com acesso válido pode defini-la pela gestão de usuários existente. Se nenhuma conta de desenvolvedor tiver credencial válida, é necessário tratar a recuperação de acesso; não existe autenticação válida sem credencial.
 
+Na edição pelo Windows, preencher **Nova senha**, a confirmação e a senha do desenvolvedor faz o Apps Script gerar o verificador e gravá-lo automaticamente em G, na mesma linha/ID. Não é necessário copiá-lo manualmente. Para uma conta pendente, deixar a nova senha vazia permite salvar os outros campos, mantendo G vazia e a conta sem acesso. A revisão corrige a rejeição desse salvamento de metadados. Depois de escrever a linha, o serviço faz `flush` e relê o ID e o verificador; uma gravação não confirmada retorna erro em vez de sucesso. O cliente antigo continua compatível.
+
+Os testes incluem a operação real `desktop_save_user`, geração de verificador para uma linha já existente sem credencial, gravação em G, login posterior com a senha fictícia, manutenção do mesmo ID e rejeição de uma escrita simulada que não persistiu. Nenhuma senha ou verificador real foi usado.
+
 Uma única função compara os cabeçalhos de Usuarios, Tecnicos, Contas, Assinaturas e do diretório remoto. Diferenças de maiúsculas/minúsculas, espaços nas extremidades e BOM não provocam mais recusa. A ordem e os nomes das colunas continuam necessários para ler os campos corretamente. A leitura não reescreve as células.
 
 O menu D-Max oferece **Verificar cadastro (sem alterar dados)**. O diagnóstico aparece na tela, além do log. Se o cadastro legado for válido mas o unificado não estiver habilitado, a mensagem explicita que esse resultado não valida o login Windows. Não habilitar propriedades ou migrar contas às cegas.

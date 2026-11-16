@@ -591,21 +591,25 @@ function bridgeManageUser_(props,data){
   if(!verifyPlatformPassword_(data.actor_password,actor.password))error_(401,'Credenciais inválidas');
   props.deleteProperty(attemptKey);
   const r=data.record;
+  const current=r&&state.source.rows.find(x=>x.id===r.id);
+  const keepPending=current&&current.credential_pending&&r.password==='';
   if(!r||Object.keys(r).sort().join(',')!=='expires,full_name,id,name,password,role,status'||
      !/^[A-Za-z0-9_-]{1,100}$/.test(r.id||'')||!/^[a-z0-9._-]{3,40}$/.test(r.name||'')||['root','admin'].includes(r.name)||
      typeof r.full_name!=='string'||!r.full_name.trim()||r.full_name.length>100||!['developer','commercial','technician'].includes(r.role)||
-     !['ativo','bloqueado','excluido'].includes(r.status)||!validHash_(r.password)||typeof r.expires!=='string'||
+     !['ativo','bloqueado','excluido'].includes(r.status)||(!validHash_(r.password)&&!keepPending)||typeof r.expires!=='string'||
      (r.expires!==''&&!/^\d{4}-\d{2}-\d{2}$/.test(r.expires)))error_(422,'Dados inválidos');
   const history=historicalUsers_(props.getProperties()),old=history.byId[r.id];
   if(old&&old.name!==r.name)error_(409,'Login/id permanente');
   if(history.byName[r.name]&&history.byName[r.name]!==r.id)error_(409,'Login já pertence a outro ID');
   const book=SpreadsheetApp.openById(DMAX_SHEET_ID);
   date_(r.expires,book.getSpreadsheetTimeZone());
-  const current=state.source.rows.find(x=>x.id===r.id);
   if(!current&&state.source.rows.length>=2000)error_(422,'Limite de usuários atingido');
   const index=current?current.row:state.source.sheet.getLastRow()+1;
   const row=[r.id,r.full_name.trim(),r.name,r.role,r.status,r.expires,r.password];
   state.source.sheet.getRange(index,1,1,7).setValues([row.map(v=>sheetText_(v))]);
+  SpreadsheetApp.flush();
+  const saved=state.source.sheet.getRange(index,1,1,7).getValues()[0];
+  if(String(saved[0]).trim()!==r.id||String(saved[6]).trim()!==r.password)error_(503,'Não foi possível confirmar a gravação do verificador');
   // Explicit developer changes supersede a queued technical password reset.
   props.deleteProperty('pending.'+r.id);
   unifiedState_(props);

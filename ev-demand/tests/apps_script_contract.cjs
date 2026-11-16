@@ -258,8 +258,13 @@ assert.equal(webLogin.user.role,'developer');assert.equal(webLogin.user.password
 assert.equal(context.portalMembers('not-a-session').code,401);
 let webMembers=context.portalMembers(webLogin.token);assert.equal(webMembers.ok,true);
 assert.equal(JSON.stringify(webMembers).includes('pbkdf2_sha256'),false);
-const webSave=context.portalSaveUser(webLogin.token,{id:'',name:'web.sales',full_name:'Comercial web',role:'commercial',status:'ativo',expires:'',password:'fixture-web-sales-pass',confirmation:'fixture-web-sales-pass',actor_password:devPassword});
+// Edit an existing blank-verifier row through the exact Windows endpoint.
+unified.data.push(['WEB-PENDING','Comercial web','web.sales','comercial','ativo','','']);
+const webSave=JSON.parse(context.doPost({postData:{contents:JSON.stringify({action:'desktop_save_user',token:webLogin.token,fields:{id:'WEB-PENDING',name:'web.sales',full_name:'Comercial web',role:'commercial',status:'ativo',expires:'',password:'fixture-web-sales-pass',confirmation:'fixture-web-sales-pass',actor_password:devPassword}})}}).text);
 assert.equal(webSave.ok,true);assert.match(webSave.verifier,/^pbkdf2_sha256\$600000\$/);
+assert.equal(webSave.acknowledged_id,'WEB-PENDING');
+assert.equal(unified.data.filter(r=>r[0]==='WEB-PENDING').length,1);
+assert.equal(unified.data.find(r=>r[0]==='WEB-PENDING')[6],webSave.verifier,'generated verifier was saved in column G of the same row');
 const webCommercial=context.portalLogin('web.sales','fixture-web-sales-pass');assert.equal(webCommercial.ok,true);
 assert.equal(context.portalMembers(webCommercial.token).code,403);
 assert.equal(context.portalSaveUser(webCommercial.token,{}).code,403);
