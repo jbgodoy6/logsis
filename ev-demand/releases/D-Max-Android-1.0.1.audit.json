@@ -1,0 +1,42 @@
+{
+  "version": "1.0.1",
+  "source_commit": "f61b51dd86fdbcec4b58f63932f96973b5c36e6a",
+  "validated_on": "2026-11-16",
+  "artifact": "D-Max-Android-1.0.1.apk",
+  "sha256": "b216688dc9e67bcb35f289e1346ba296bb0dbe02807f8ff8ee92d80f6bae79ee",
+  "bytes": 1557288,
+  "package": "com.energycube.dmax",
+  "min_android": "10",
+  "min_sdk": 29,
+  "target_sdk": 35,
+  "permissions": [
+    "android.permission.INTERNET"
+  ],
+  "signature_scheme": "v3",
+  "signing_certificate_sha256": "e8b5e6482cd18b50b0d17412662c647baad17ec84b2b639d7ee8fc1ff42b70df",
+  "private_signing_material_in_repository": false,
+  "windows_required": false,
+  "requires_raspberry": "0.15.0 for SSO",
+  "requires_apps_script": "central-sso-devices-2 or alphabetical-directory-1",
+  "checks": {
+    "compiled": true,
+    "apk_signature_verified": true,
+    "zip_integrity": true,
+    "assets_match_generated_sources": true,
+    "jvm_session_contract": "passed with fixture transport",
+    "jvm_transport_contract": "passed with in-memory HTTPS interception",
+    "chromium_interface": "passed again with fixture native bridge; refreshed mobile layout, original logo and no page overflow",
+    "android_device_tested": false,
+    "android_emulator_tested": false,
+    "real_google_login_tested": false,
+    "real_raspberry_sso_tested": false,
+    "adaptive_icon_packaged": true,
+    "previous_signing_certificate_preserved": true
+  },
+  "unchanged_external_systems": [
+    "Google deployment",
+    "spreadsheet",
+    "Raspberry installation",
+    "Windows installation"
+  ]
+}
