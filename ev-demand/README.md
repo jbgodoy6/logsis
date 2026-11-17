@@ -4,13 +4,16 @@
 | --- | --- | --- |
 | Central Windows | 1.3.0, runtime incluído | [Instalador MSI](releases/D-Max-Central-Rede-1.3.0-Completo.msi) |
 | Controlador Raspberry | 0.15.0, instalação manual | [Pacote Linux ARM64](releases/D-Max-Raspberry-0.15.0-SEM-ASSINATURA.zip) |
-| Google Planilhas | `central-sso-devices-2` | [Code.gs](google-apps-script/Code.gs) |
+| Central Android | 1.0.0, Android 10+ · teste em aparelho pendente | [Instalador APK](releases/D-Max-Android-1.0.0.apk) |
+| Google Planilhas | `alphabetical-directory-1` | [Code.gs](google-apps-script/Code.gs) |
 
 [Validação, hashes e limites](docs/versoes-validadas.md) · [Arquivos atuais](releases/README.md) · [Administração pela planilha](docs/script-compativel-windows-raspberry.md).
 
-Os pacotes antigos foram removidos da pasta releases; o histórico Git foi preservado. As notas abaixo são histórico de desenvolvimento, não instruções para escolher uma versão antiga. A cópia do Apps Script dentro do ZIP Raspberry está sincronizada com o arquivo atual do repositório.
+Os pacotes antigos foram removidos da pasta releases; o histórico Git foi preservado. As notas abaixo são histórico de desenvolvimento, não instruções para escolher uma versão antiga. O ZIP Raspberry mantém o Apps Script da sua entrega original; use Code.gs do repositório para a ordenação alfabética posterior.
 
 [Acesso único, equipamentos, senha inicial e aprendizado AC/DC](docs/release-v0150.md).
+
+[Android independente do Windows: instalação, recursos e limites](android/README.md).
 
 ## Histórico de desenvolvimento
 
