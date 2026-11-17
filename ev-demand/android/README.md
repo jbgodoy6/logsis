@@ -1,10 +1,14 @@
-# D-Max Android 1.0.0
+# D-Max Android 1.0.1
 
 Central Android independente do servidor Windows, para Android 10 ou superior (API 29), com Android System WebView atualizado. Conecta por HTTPS diretamente à implantação Google existente; os equipamentos remotos são Raspberry com acesso Cloudflare ativo. Não cria um servidor HTTP local.
 
+## Identidade visual
+
+Versão 1.0.1: logo original completo na central, ícone adaptativo baseado no cubo D-Max, tela inicial Android 12+, cores azul/amarelo, cartões e formulários para celular, navegação inferior e barra de retorno ao cliente. O ícone foi adaptado a partir da marca; o logo completo permanece o arquivo original. A assinatura é a mesma da 1.0.0 e permite atualização sem desinstalar.
+
 ## Instalar e usar
 
-Instale `D-Max-Android-1.0.0.apk` no celular. Se o Android solicitar autorização para instalar por essa origem, autorize somente o navegador/gerenciador usado para este APK. Não desative Play Protect ou antivírus. A aplicação não está publicada na Play Store.
+Instale `D-Max-Android-1.0.1.apk` no celular. Se o Android solicitar autorização para instalar por essa origem, autorize somente o navegador/gerenciador usado para este APK. Não desative Play Protect ou antivírus. A aplicação não está publicada na Play Store.
 
 A URL /exec existente já vem configurada. Entre com sua conta da planilha. Novas contas/redefinições usam 12345678 e exigem troca da senha pessoal. A central oferece clientes, busca, simulação isolada e, para desenvolvedor, usuários, equipamentos e configurações da plataforma. A URL da plataforma pode ser alterada por desenvolvedor com confirmação de senha e é salva apenas neste Android. Nome/porta do servidor Windows não se aplicam.
 

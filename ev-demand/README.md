@@ -4,7 +4,7 @@
 | --- | --- | --- |
 | Central Windows | 1.3.0, runtime incluído | [Instalador MSI](releases/D-Max-Central-Rede-1.3.0-Completo.msi) |
 | Controlador Raspberry | 0.15.0, instalação manual | [Pacote Linux ARM64](releases/D-Max-Raspberry-0.15.0-SEM-ASSINATURA.zip) |
-| Central Android | 1.0.0, Android 10+ · teste em aparelho pendente | [Instalador APK](releases/D-Max-Android-1.0.0.apk) |
+| Central Android | 1.0.1, Android 10+ · teste em aparelho pendente | [Instalador APK](releases/D-Max-Android-1.0.1.apk) |
 | Google Planilhas | `alphabetical-directory-1` | [Code.gs](google-apps-script/Code.gs) |
 
 [Validação, hashes e limites](docs/versoes-validadas.md) · [Arquivos atuais](releases/README.md) · [Administração pela planilha](docs/script-compativel-windows-raspberry.md).

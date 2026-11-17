@@ -30,7 +30,7 @@ dex=BUILD/'dex';dex.mkdir(exist_ok=True)
 run(BT/'d8','--release','--min-api','29','--lib',JAR,'--output',dex,classjar)
 with zipfile.ZipFile(base,'a',zipfile.ZIP_DEFLATED) as z:z.write(dex/'classes.dex','classes.dex')
 aligned=BUILD/'aligned.apk';run(BT/'zipalign','-f','-p','4',base,aligned)
-output=BUILD/'D-Max-Android-1.0.0.apk'
+output=BUILD/'D-Max-Android-1.0.1.apk'
 run(BT/'apksigner','sign','--ks',KEY,'--ks-key-alias','dmaxandroid','--ks-pass','file:'+str(PASSWORD),'--out',output,aligned)
 run(BT/'apksigner','verify','--verbose','--print-certs',output)
 run(BT/'aapt2','dump','badging',output)
